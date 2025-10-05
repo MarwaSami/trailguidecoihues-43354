@@ -12,7 +12,7 @@ import CategorySection from '../components/CategorySection';
 import BeachesSection from '../components/BeachesSection';
 import { useTrailFilters } from '../hooks/useTrailFilters';
 import { useTrailLists } from '../hooks/useTrailLists';
-import { Helmet } from 'react-helmet';
+
 import { Separator } from '../components/ui/separator';
 import { useIsMobile } from '../hooks/use-mobile';
 
@@ -96,9 +96,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky to-white">
-      <Helmet>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" />
-      </Helmet>
       <LanguageSwitcher />
       <div className="container mx-auto px-4 py-8">
         <header className={`text-center ${isMobile ? 'mb-4 pt-6' : 'mb-10 pt-12 sm:pt-0'} animate-fadeIn`}>

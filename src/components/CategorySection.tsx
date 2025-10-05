@@ -61,9 +61,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({
       {isHighMountainCategory && (
         <div className="mb-6">
           <div className="flex flex-col items-start">
-            <Button
-              variant="region"
-              className="flex items-center gap-2 uppercase mb-2"
+          <Button
+            variant="default"
+            className="flex items-center gap-2 uppercase mb-2"
               onClick={() => window.open('https://docs.google.com/forms/d/e/1FAIpQLScL5EuxLZGDb0tOrAsg9Bgm3-C5FFcvpmDncHzSo9NSI3v4sw/viewform', '_blank', 'noopener,noreferrer')}
             >
               {t('registrationFormButton')}

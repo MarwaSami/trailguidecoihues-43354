@@ -132,7 +132,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isJakobRefugioTrail && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
@@ -149,7 +149,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isRefugioFreyTrail && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
@@ -166,7 +166,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isRefugioCerroLopez && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
@@ -183,7 +183,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isRefugioOttoMeiling && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
@@ -200,7 +200,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isRefugioLagunaNegra && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
@@ -217,7 +217,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isLagunaIlonTrail && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
@@ -234,7 +234,7 @@ const TrailCard: React.FC<TrailCardProps> = ({ trail, transportIcons }) => {
             {isRefugioAgostinoRocca && !shouldExcludeReservationButton && (
               <div className="mt-4">
                 <Button
-                  variant="region"
+                  variant="default"
                   className="flex items-center gap-2 uppercase"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the card click
