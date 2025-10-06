@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload } from "lucide-react";
 import { z } from "zod";
+import { evaluateProfile, uploadCVToPythonBackend, ProfileEvaluationResponse } from "@/services/pythonBackendApi";
+import { ProfileEvaluationResult } from "@/components/ProfileEvaluationResult";
 
 const profileSchema = z.object({
   bio: z.string().max(1000, "Bio must be less than 1000 characters").optional(),
@@ -31,11 +33,13 @@ interface FreelancerProfile {
 }
 
 export const ProfileForm = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState<ProfileEvaluationResponse | null>(null);
   const [profile, setProfile] = useState<FreelancerProfile>({
     bio: "",
     skills: [],
@@ -82,6 +86,7 @@ export const ProfileForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setEvaluating(true);
 
     try {
       const validation = profileSchema.safeParse({
@@ -101,9 +106,11 @@ export const ProfileForm = () => {
           variant: "destructive"
         });
         setSaving(false);
+        setEvaluating(false);
         return;
       }
 
+      // Save to Supabase
       const { error } = await supabase
         .from('freelancer_profiles')
         .upsert({
@@ -114,10 +121,34 @@ export const ProfileForm = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Profile updated successfully",
-        description: "Your profile has been saved."
-      });
+      // Send to Python backend for evaluation
+      try {
+        const token = session?.access_token || '';
+        const result = await evaluateProfile({
+          userId: user?.id || '',
+          bio: profile.bio || '',
+          skills: profile.skills,
+          experience_years: profile.experience_years,
+          hourly_rate: profile.hourly_rate,
+          portfolio_url: profile.portfolio_url,
+          linkedin_url: profile.linkedin_url,
+          github_url: profile.github_url,
+        }, token);
+
+        setEvaluationResult(result);
+
+        toast({
+          title: "Profile updated and evaluated",
+          description: `Score: ${result.score}/100 - ${result.comments}`,
+        });
+      } catch (backendError: any) {
+        console.error('Python backend error:', backendError);
+        toast({
+          title: "Profile saved",
+          description: "Profile saved to database, but backend evaluation is unavailable.",
+          variant: "default"
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error updating profile",
@@ -126,6 +157,7 @@ export const ProfileForm = () => {
       });
     } finally {
       setSaving(false);
+      setEvaluating(false);
     }
   };
 
@@ -152,12 +184,14 @@ export const ProfileForm = () => {
     }
 
     setUploading(true);
+    setEvaluating(true);
 
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
       const filePath = `cvs/${fileName}`;
 
+      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
@@ -170,10 +204,24 @@ export const ProfileForm = () => {
 
       setProfile({ ...profile, cv_url: publicUrl });
 
-      toast({
-        title: "CV uploaded successfully",
-        description: "Your CV has been uploaded."
-      });
+      // Send CV to Python backend for evaluation
+      try {
+        const token = session?.access_token || '';
+        const result = await uploadCVToPythonBackend(file, user?.id || '', token);
+        
+        setEvaluationResult(result);
+
+        toast({
+          title: "CV uploaded and evaluated",
+          description: `Score: ${result.score}/100 - ${result.comments}`,
+        });
+      } catch (backendError: any) {
+        console.error('Python backend error:', backendError);
+        toast({
+          title: "CV uploaded",
+          description: "CV uploaded to storage, but backend evaluation is unavailable.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error uploading CV",
@@ -182,6 +230,7 @@ export const ProfileForm = () => {
       });
     } finally {
       setUploading(false);
+      setEvaluating(false);
     }
   };
 
@@ -311,18 +360,20 @@ export const ProfileForm = () => {
 
       <Button
         type="submit"
-        disabled={saving}
+        disabled={saving || evaluating}
         className="w-full"
       >
-        {saving ? (
+        {saving || evaluating ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving...
+            {evaluating ? 'Evaluating...' : 'Saving...'}
           </>
         ) : (
-          'Save Profile'
+          'Save & Evaluate Profile'
         )}
       </Button>
+
+      <ProfileEvaluationResult result={evaluationResult} />
     </form>
   );
 };
