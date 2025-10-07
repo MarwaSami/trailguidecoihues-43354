@@ -29,7 +29,6 @@ const Auth = () => {
     email: "",
     password: "",
     role: "freelancer" as "freelancer" | "client",
-    linkedinprofile: "",
   });
   
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
@@ -85,8 +84,7 @@ const Auth = () => {
           formData.email,
           formData.password,
           formData.fullName,
-          formData.linkedinprofile,
-          formData.role
+           formData.role      
         );
         
         if (!error) {
@@ -96,7 +94,6 @@ const Auth = () => {
             email: "",
             password: "",
             role: "freelancer",
-            linkedinprofile: "",
           });
         }
       }
@@ -208,26 +205,7 @@ const Auth = () => {
                 />
               </div>
             </div>
-              {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="linkedinprofile" className="text-sm font-medium">
-                 linkedin profile
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="linkedinprofile"
-                    type="text"
-                    placeholder="linkedin profile"
-                    value={formData.linkedinprofile}
-                    onChange={(e) => setFormData({ ...formData, linkedinprofile: e.target.value })}
-                    className="pl-10 h-11 bg-background/50 border-border/50 focus:bg-background transition-colors"
-                    required={!isLogin}
-                  />
-                </div>
-              </div>
-              
-            )}
+            
             {!isLogin && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">I am a</Label>

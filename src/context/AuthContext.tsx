@@ -8,7 +8,7 @@ interface AuthContextType {
   user: any | null; // Adjusted to `any` since the user structure may differ
   session: any | null; // Adjusted to `any` since session structure may differ
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, linkedinprofile: string, role: 'freelancer' | 'client') => Promise<{ error: any | null }>;
+  signUp: (email: string, password: string, fullName: string,  role: 'freelancer' | 'client') => Promise<{ error: any | null }>;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signInWithGoogle: () => Promise<{ error: any | null }>;
   signOut: () => Promise<void>;
@@ -41,13 +41,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 const baseURL = 'http://localhost:2000'; // Replace with your API base URL
 
-const signUp = async (email: string, password: string, fullName: string,linkedinprofile:'', role: 'freelancer' | 'client'): Promise<{ error: any | null }> => {
+const signUp = async (email: string, password: string, fullName: string, role: 'freelancer' | 'client'): Promise<{ error: any | null }> => {
   try {
     console.log("Signing up with", { email, password, fullName, role });
 
     const response = await axios.post(
      ` ${baseURL}/signup`,
-      { email, password, fullName,linkedinprofile, role },
+      { email, password, fullName, role },
       { withCredentials: true }
     );
     const { user, session } = response.data;

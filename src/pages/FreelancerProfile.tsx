@@ -4,15 +4,16 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { CVUploadForm } from "@/components/uploadCv";
 
 const FreelancerProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
+    // if (!loading && !user) {
+    //   navigate('/auth');
+    // }
   }, [user, loading, navigate]);
 
   if (loading) {
@@ -23,9 +24,9 @@ const FreelancerProfile = () => {
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  // if (!user) {
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,7 +42,8 @@ const FreelancerProfile = () => {
           </div>
           
           <div className="bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)] rounded-lg p-8">
-            <ProfileForm />
+           <CVUploadForm />
+            {/* <ProfileForm /> */}
           </div>
         </div>
       </main>

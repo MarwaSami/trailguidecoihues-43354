@@ -10,6 +10,7 @@ import { Loader2, Upload } from "lucide-react";
 import { z } from "zod";
 import { evaluateProfile, uploadCVToPythonBackend, ProfileEvaluationResponse } from "@/services/pythonBackendApi";
 import { ProfileEvaluationResult } from "@/components/ProfileEvaluationResult";
+import { GetProfile } from "@/context/ProfileformContext";
 
 const profileSchema = z.object({
   bio: z.string().max(1000, "Bio must be less than 1000 characters").optional(),
@@ -21,7 +22,7 @@ const profileSchema = z.object({
   githubUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
 });
 
-interface FreelancerProfile {
+export interface FreelancerProfile {
   bio: string;
   skills: string[];
   experience_years: number | null;
@@ -52,6 +53,7 @@ export const ProfileForm = () => {
   });
 
   useEffect(() => {
+    setLoading(false);
     if (user) {
       fetchProfile();
     }
@@ -59,17 +61,10 @@ export const ProfileForm = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from('freelancer_profiles')
-        .select('*')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      if (data) {
+    
+     
+   const data: FreelancerProfile | null = await GetProfile(user?.id);
+      if (data !== undefined && data !== null) {
         setProfile(data);
       }
     } catch (error: any) {
