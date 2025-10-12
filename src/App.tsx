@@ -17,6 +17,8 @@ import CandidateDiscovery from "./pages/CandidateDiscovery";
 import SkillEvaluation from "./pages/SkillEvaluation";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import { ProfileForm } from "./components/ProfileForm";
+import { ProfileformProvider } from "./context/ProfileformContext";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+       <ProfileformProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -51,6 +54,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ProfileformProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

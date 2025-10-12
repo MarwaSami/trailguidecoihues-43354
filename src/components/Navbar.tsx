@@ -1,14 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, Menu } from "lucide-react";
+import { Brain, LogOut, Menu } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+  const { user, token,signOut } = useAuth();
   const isActive = (path: string) => location.pathname === path;
-  
+  const isloggedin = token != null;
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/50 shadow-[var(--shadow-glass)]">
       <div className="container mx-auto px-4">
@@ -21,59 +22,66 @@ export const Navbar = () => {
               SmartLance
             </span>
           </Link>
-          
+
           <div className="hidden md:flex items-center gap-6">
-            <Link 
-              to="/" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/") ? "text-primary" : "text-foreground"
-              }`}
+            <Link
+              to="/"
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/") ? "text-primary" : "text-foreground"
+                }`}
             >
               Home
             </Link>
-            <Link 
-              to="/skills" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/skills") ? "text-primary" : "text-foreground"
-              }`}
+            <Link
+              to="/skills"
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/skills") ? "text-primary" : "text-foreground"
+                }`}
             >
               Skills
             </Link>
-            <Link 
-              to="/client-dashboard" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/client-dashboard") ? "text-primary" : "text-foreground"
-              }`}
+            <Link
+              to="/client-dashboard"
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/client-dashboard") ? "text-primary" : "text-foreground"
+                }`}
             >
               For Clients
             </Link>
-            <Link 
-              to="/freelancer-profile" 
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/freelancer-profile") ? "text-primary" : "text-foreground"
-              }`}
+            <Link
+              to="/freelancer-profile"
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/freelancer-profile") ? "text-primary" : "text-foreground"
+                }`}
             >
               For Freelancers
             </Link>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/auth">
-              <Button variant="hero">Get Started</Button>
-            </Link>
+            {
+              !isloggedin &&
+              <>
+
+                <Link to="/auth">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="hero">Get Started</Button>
+                </Link>
+              </>
+            }{
+              isloggedin &&
+              <button onClick={() => signOut()}>
+                <Button variant="ghost">Log out</Button>
+              </button>
+            }
           </div>
-          
-          <button 
+
+          <button
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <Menu className="w-6 h-6" />
           </button>
         </div>
-        
+
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-3 border-t border-border/50 bg-background/40 backdrop-blur-lg">
             <Link to="/" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Home</Link>

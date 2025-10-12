@@ -3,10 +3,11 @@ import axios from 'axios'; // Import axios for API calls
 import { useToast } from '@/hooks/use-toast';
 import { ca } from 'date-fns/locale';
 import { log } from 'console';
+import { json } from 'stream/consumers';
 
 interface AuthContextType {
   user: any | null; // Adjusted to `any` since the user structure may differ
-  session: any | null; // Adjusted to `any` since session structure may differ
+  token: any | null; // Adjusted to `any` since session structure may differ
   loading: boolean;
   signUp: (email: string, password: string, fullName: string,  role: 'freelancer' | 'client') => Promise<{ error: any | null }>;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
@@ -15,10 +16,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const baseURL = 'https://localhost:44372'; // Replace with your API base URL
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
-  const [session, setSession] = useState<any | null>(null);
+  const [token, settoken] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -26,10 +28,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Fetch the current session from the API
     const fetchSession = async () => {
       try {
-        const response = await axios.get('http://localhost:2000/session', { withCredentials: true });
-        const { user, session } = response.data;
-        setUser(user);
-        setSession(session);
+        // const response = await axios.get(`${baseURL}`, { withCredentials: true });
+        const user =localStorage.getItem("user")
+        const token= localStorage.getItem("token")
+        // setUser(user);
+        // setSession(session);
+        
       } catch (error) {
         console.error('Failed to fetch session:', error);
       } finally {
@@ -39,20 +43,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     fetchSession();
   }, []);
-const baseURL = 'http://localhost:2000'; // Replace with your API base URL
 
 const signUp = async (email: string, password: string, fullName: string, role: 'freelancer' | 'client'): Promise<{ error: any | null }> => {
   try {
     console.log("Signing up with", { email, password, fullName, role });
 
     const response = await axios.post(
-     ` ${baseURL}/signup`,
+     ` ${baseURL}/Register`,
       { email, password, fullName, role },
       { withCredentials: true }
     );
-    const { user, session } = response.data;
-    setUser(user);
-    setSession(session);
+     setuserinlocalstorage(response.data.user,response.data.token)
+   toast({
+      title: "Signup Sucessfullydone",
+      description: "user is created",
+      variant:"default"
+    });
     return { error: null };
   } catch (error: any) {
     toast({
@@ -72,13 +78,11 @@ const signUp = async (email: string, password: string, fullName: string, role: '
         { withCredentials: true }
       );
 
-      const { user, session } = response.data;
-      setUser(user);
-      setSession(session);
-
+     setuserinlocalstorage(response.data.user,response.data.token)
       toast({
         title: "Login successful",
         description: "You are now logged in."
+
       });
 
       return { error: null };
@@ -104,10 +108,11 @@ const signUp = async (email: string, password: string, fullName: string, role: '
 
   const signOut = async () => {
     try {
-     await axios.post(`${baseURL}/logout`, {}, { withCredentials: true });
+    //  await axios.post(`${baseURL}/logout`, {}, { withCredentials: true });
       setUser(null);
-      setSession(null);
-
+      settoken(null);
+      localStorage.removeItem("user");
+      localStorage.removeItem("token")
       toast({
         title: "Signed out successfully"
       });
@@ -119,11 +124,17 @@ const signUp = async (email: string, password: string, fullName: string, role: '
       });
     }
   };
+  const  setuserinlocalstorage=async (user,token)=>{
 
+      setUser(user);
+      localStorage.setItem("user",JSON.stringify(user));
+      settoken(token);
+      localStorage.setItem("token",token)
+}
   return (
     <AuthContext.Provider value={{
       user,
-      session,
+      token,
       loading,
       signUp,
       signIn,
@@ -142,3 +153,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

@@ -4,12 +4,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { CVUploadForm } from "@/components/uploadCv";
+import { ProfileformProvider } from "@/context/ProfileformContext";
 
 const FreelancerProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-
+  const profilestep = 1;
   useEffect(() => {
     // if (!loading && !user) {
     //   navigate('/auth');
@@ -24,14 +24,12 @@ const FreelancerProfile = () => {
     );
   }
 
-  // if (!user) {
-  //   return null;
-  // }
+
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
@@ -40,10 +38,9 @@ const FreelancerProfile = () => {
               Manage your freelancer profile and showcase your skills to potential clients.
             </p>
           </div>
-          
+
           <div className="bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)] rounded-lg p-8">
-           <CVUploadForm />
-            {/* <ProfileForm /> */}
+         <ProfileForm />
           </div>
         </div>
       </main>
