@@ -64,10 +64,10 @@ export const uploadCvTodb = async (
 ): Promise<CvUploadedResponse> => {
   const formData = new FormData();
   formData.append("file", file);
-
-  const response = await axios.post(`${baseURL}/uploadCv`, formData, {
+  console.log(token);  
+  const response = await axios.post(`${baseURL}users/upload-cv/${user_id}/`, formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token}`
     },
   });
 
@@ -81,7 +81,7 @@ export  interface AddProfileResponce{
 }
 export const AddProfileinDB=async (profile:Profile,token,user_id)=>{
   console.log(profile)
-  const response = await axios.post<AddProfileResponce>(`${baseURL}/addProfile`, profile, {
+  const response = await axios.post<AddProfileResponce>(`${baseURL}jobs/freelancer-profiles/`, profile, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
