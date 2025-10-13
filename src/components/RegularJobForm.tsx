@@ -25,9 +25,10 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 // Base URL - Replace with your actual API base URL
-const baseURL = "YOUR_API_BASE_URL";
+const baseURL = "http://127.0.0.1:8000/api/v1/";
 
 // TypeScript interfaces
 export interface JobPosting {
@@ -64,6 +65,7 @@ export const RegularJobForm = () => {
     screening_questions: "",
   });
   
+  const {user,token} = useAuth()
   const [newSkill, setNewSkill] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -160,7 +162,7 @@ export const RegularJobForm = () => {
   // Submit job posting to backend
   const submitJobPosting = async (jobData: JobPosting, token: string): Promise<JobPostingResponse> => {
     const response = await axios.post<JobPostingResponse>(
-      `${baseURL}/postJob`,
+      `${baseURL}jobs/jobs/`,
       jobData,
       {
         headers: {
@@ -184,7 +186,7 @@ export const RegularJobForm = () => {
 
     try {
       // Get token from your auth context/storage
-      const token = localStorage.getItem("authToken") || "YOUR_AUTH_TOKEN";
+      const token = localStorage.getItem("token") || "";
       
       const response = await submitJobPosting(formData, token);
 

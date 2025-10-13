@@ -55,7 +55,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
       { email, password, username, user_type },
       { withCredentials: true }
     );
-     setuserinlocalstorage(response.data.user,response.data.token)
+    //  setuserinlocalstorage(response.data.user,response.data.token)
    toast({
       title: "Signup Sucessfullydone",
       description: "user is created",
