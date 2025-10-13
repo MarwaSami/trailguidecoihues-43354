@@ -33,8 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // const response = await axios.get(`${baseURL}`, { withCredentials: true });
         const user =localStorage.getItem("user")
         const token= localStorage.getItem("token")
-        // setUser(user);
-        // setSession(session);
+       setUser(user);
+      settoken(token);
         
       } catch (error) {
         console.error('Failed to fetch session:', error);
