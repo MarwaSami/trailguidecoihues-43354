@@ -16,7 +16,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-export const baseURL = 'https://localhost:44372'; // Replace with your API base URL
+//export const baseURL = 'https://localhost:44372'; // Replace with your API base URL
+export const baseURL = 'http://localhost:8000/api/v1/'; // Replace with your API base URL
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
@@ -44,13 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchSession();
   }, []);
 
-const signUp = async (email: string, password: string, fullName: string, role: 'freelancer' | 'client'): Promise<{ error: any | null }> => {
+const signUp = async (email: string, password: string, username: string, user_type: 'freelancer' | 'client'): Promise<{ error: any | null }> => {
   try {
-    console.log("Signing up with", { email, password, fullName, role });
+    console.log("Signing up with", { email, password, username, user_type });
 
     const response = await axios.post(
-     ` ${baseURL}/Register`,
-      { email, password, fullName, role },
+     ` ${baseURL}users/register/`,
+     //not full name 
+      { email, password, username, user_type },
       { withCredentials: true }
     );
      setuserinlocalstorage(response.data.user,response.data.token)
@@ -73,12 +75,12 @@ const signUp = async (email: string, password: string, fullName: string, role: '
   const signIn = async (email: string, password: string) => {
     try {
       const response = await axios.post(
-       ` ${baseURL}/login`,
+       ` ${baseURL}users/login/`,
         { email, password },
         { withCredentials: true }
       );
-
-     setuserinlocalstorage(response.data.user,response.data.token)
+    console.log(response);
+     setuserinlocalstorage(response.data.user,response.data.access,response.data.refresh)
       toast({
         title: "Login successful",
         description: "You are now logged in."
@@ -124,12 +126,13 @@ const signUp = async (email: string, password: string, fullName: string, role: '
       });
     }
   };
-  const  setuserinlocalstorage=async (user,token)=>{
+  const  setuserinlocalstorage=async (user,token,refresh)=>{
 
       setUser(user);
       localStorage.setItem("user",JSON.stringify(user));
       settoken(token);
       localStorage.setItem("token",token)
+      localStorage.setItem("refresh",refresh)
 }
   return (
     <AuthContext.Provider value={{
