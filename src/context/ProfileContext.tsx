@@ -14,6 +14,7 @@ export interface Profile {
   linkedin_profile: string;
   github_profile: string;
   score: number;
+  categories_of_expertise:string;
 }
 
 export interface CvUploadedResponse {
@@ -39,6 +40,7 @@ export const ProfileformProvider = ({ children }: { children: ReactNode }) => {
   linkedin_profile: "",
   github_profile: "",
   score: 0,
+  categories_of_expertise:""
   });
 
   return (

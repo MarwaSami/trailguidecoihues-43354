@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { AddProfileinDB, uploadCvTodb, useProfileData } from "@/context/ProfileContext";
+import { number } from "zod/v4-mini";
 
 export const ProfileForm = () => {
   const { toast } = useToast();
@@ -213,7 +214,33 @@ const handleSubmit = async (e: React.FormEvent) => {
           }
         />
       </div>
-
+ <div className="space-y-2">
+        <Label htmlFor="Hourlyrate">Hourlyrate</Label>
+        <Input
+          id="github_profile"
+          value={profile.hourly_rate || 0}
+          type="number"
+          onChange={(e) =>
+            setProfile({
+              ...profile,
+              hourly_rate:  Number(e.target.value),
+            })
+          }
+        />
+      </div>
+       <div className="space-y-2">
+        <Label htmlFor="categories_of_expertise">categories_of_expertise </Label>
+        <Input
+          id="github_profile"
+          value={profile.categories_of_expertise || 0}
+          onChange={(e) =>
+            setProfile({
+              ...profile,
+              categories_of_expertise:  e.target.value,
+            })
+          }
+        />
+      </div>
       <Button type="submit" className="w-full" disabled={uploading}>
         {uploading ? (
           <Loader2 className="w-4 h-4 animate-spin mx-auto" />
