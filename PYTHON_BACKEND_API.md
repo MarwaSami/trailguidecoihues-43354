@@ -209,6 +209,87 @@ Content-Type: application/json
 
 ---
 
+## Job Management
+
+### 6. Get All Jobs
+**Endpoint:** `GET /jobs/all`
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "title": "Senior Full-Stack Developer",
+    "description": "Looking for an experienced developer to join our growing team...",
+    "budget": "$5000-$8000",
+    "location": "Remote",
+    "job_type": "Full-time",
+    "experience_level": "Senior",
+    "status": "open",
+    "created_at": "2025-01-15T10:30:00Z",
+    "updated_at": "2025-01-15T10:30:00Z",
+    "ai_generated_criteria": {
+      "min_years_experience": 5,
+      "required_skills": ["React", "Node.js", "TypeScript"],
+      "preferred_skills": ["AWS", "Docker"]
+    },
+    "client": 123,
+    "required_skills": ["React", "Node.js", "TypeScript", "AWS"]
+  },
+  {
+    "id": 2,
+    "title": "React Native Developer",
+    "description": "Build cutting-edge mobile applications for top-tier clients...",
+    "budget": "$4000-$6000",
+    "location": "San Francisco, CA",
+    "job_type": "Contract",
+    "experience_level": "Mid-level",
+    "status": "open",
+    "created_at": "2025-01-16T14:20:00Z",
+    "updated_at": "2025-01-16T14:20:00Z",
+    "ai_generated_criteria": null,
+    "client": 456,
+    "required_skills": ["React Native", "iOS", "Android", "Firebase"]
+  }
+]
+```
+
+**Implementation Notes:**
+- Return all active jobs from the database
+- Filter by status (default: only return "open" jobs)
+- Include pagination for large datasets (query params: `?page=1&limit=20`)
+- Sort by created_at (newest first)
+- Optionally filter by location, job_type, experience_level via query params
+
+**FastAPI Example:**
+```python
+@app.get("/api/jobs/all")
+async def get_all_jobs(
+    page: int = 1,
+    limit: int = 20,
+    status: str = "open",
+    job_type: Optional[str] = None,
+    location: Optional[str] = None
+):
+    # Query database with filters
+    jobs = query_jobs_from_db(
+        page=page,
+        limit=limit,
+        status=status,
+        job_type=job_type,
+        location=location
+    )
+    
+    return jobs
+```
+
+---
+
 ## Python Backend Implementation Example
 
 ### Using FastAPI

@@ -6,14 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useJobs } from "@/context/JobContext";
+import { Loader2 } from "lucide-react";
 import {
   Search,
-  Filter,
   MapPin,
   Briefcase,
   Clock,
   DollarSign,
-  Target,
   Bookmark,
   Send,
   Zap,
@@ -23,65 +23,7 @@ import {
 const JobBrowse = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [salaryRange, setSalaryRange] = useState([50]);
-
-  const jobs = [
-    {
-      id: 1,
-      title: "Senior Full-Stack Developer",
-      company: "TechCorp Inc.",
-      location: "Remote",
-      type: "Full-time",
-      salary: "$80-120/hr",
-      match: 95,
-      posted: "2 hours ago",
-      description: "Looking for an experienced developer to join our growing team...",
-      tags: ["React", "Node.js", "TypeScript", "AWS"],
-      applicants: 24,
-      saved: false
-    },
-    {
-      id: 2,
-      title: "React Native Developer",
-      company: "Mobile Innovations",
-      location: "San Francisco, CA",
-      type: "Contract",
-      salary: "$70-100/hr",
-      match: 92,
-      posted: "5 hours ago",
-      description: "Build cutting-edge mobile applications for top-tier clients...",
-      tags: ["React Native", "iOS", "Android", "Firebase"],
-      applicants: 18,
-      saved: true
-    },
-    {
-      id: 3,
-      title: "Frontend Architect",
-      company: "Digital Solutions",
-      location: "Remote",
-      type: "Full-time",
-      salary: "$100-140/hr",
-      match: 88,
-      posted: "1 day ago",
-      description: "Lead the frontend architecture for enterprise applications...",
-      tags: ["React", "Architecture", "Leadership", "TypeScript"],
-      applicants: 31,
-      saved: false
-    },
-    {
-      id: 4,
-      title: "UI/UX Developer",
-      company: "Creative Studio",
-      location: "New York, NY",
-      type: "Part-time",
-      salary: "$60-90/hr",
-      match: 85,
-      posted: "2 days ago",
-      description: "Design and implement beautiful user interfaces...",
-      tags: ["UI/UX", "Figma", "React", "CSS"],
-      applicants: 12,
-      saved: false
-    },
-  ];
+  const { jobs, loading, error } = useJobs();
 
   const categories = ["Development", "Design", "Marketing", "Writing", "Data Science"];
   const jobTypes = ["Full-time", "Part-time", "Contract", "Remote"];
@@ -221,89 +163,106 @@ const JobBrowse = () => {
 
           {/* Jobs List */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-muted-foreground">
-                <span className="font-bold text-foreground">{jobs.length} jobs</span> found • Sorted by match
-              </p>
-              <Button variant="outline" size="sm" className="gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Best Match
-              </Button>
-            </div>
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : error ? (
+              <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
+                <p className="text-destructive mb-2">{error}</p>
+                <p className="text-sm text-muted-foreground">Please make sure your Python backend is running.</p>
+              </Card>
+            ) : jobs.length === 0 ? (
+              <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
+                <p className="text-muted-foreground">No jobs found</p>
+              </Card>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-muted-foreground">
+                    <span className="font-bold text-foreground">{jobs.length} jobs</span> found • Sorted by match
+                  </p>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Best Match
+                  </Button>
+                </div>
 
-            {jobs.map((job) => (
-              <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-bold">{job.title}</h3>
-                          <div className="px-3 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold">
-                            {job.match}% Match
+                {jobs.map((job) => (
+                  <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-bold">{job.title}</h3>
+                              <Badge variant="secondary">{job.status}</Badge>
+                            </div>
+                            <p className="text-muted-foreground">Client ID: {job.client}</p>
+                          </div>
+                          <Button variant="ghost" size="icon">
+                            <Bookmark className="w-5 h-5" />
+                          </Button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4" />
+                            {job.location}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Briefcase className="w-4 h-4" />
+                            {job.job_type}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="w-4 h-4" />
+                            <span className="font-bold text-primary">{job.budget}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {new Date(job.created_at).toLocaleDateString()}
                           </div>
                         </div>
-                        <p className="text-muted-foreground">{job.company}</p>
-                      </div>
-                      <Button variant="ghost" size="icon">
-                        <Bookmark className={`w-5 h-5 ${job.saved ? 'fill-primary text-primary' : ''}`} />
-                      </Button>
-                    </div>
 
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {job.location}
+                        <p className="text-muted-foreground mb-4 leading-relaxed">
+                          {job.description}
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {job.required_skills.map((skill, idx) => (
+                            <Badge key={idx} variant="secondary">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        <div className="text-sm text-muted-foreground">
+                          Experience Level: <span className="font-medium text-foreground">{job.experience_level}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Briefcase className="w-4 h-4" />
-                        {job.type}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
-                        <span className="font-bold text-primary">{job.salary}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {job.posted}
+
+                      <div className="flex flex-col gap-3 lg:w-48">
+                        <Button variant="hero" className="gap-2">
+                          <Send className="w-4 h-4" />
+                          Apply Now
+                        </Button>
+                        <Button variant="outline">
+                          View Details
+                        </Button>
                       </div>
                     </div>
+                  </Card>
+                ))}
 
-                    <p className="text-muted-foreground mb-4 leading-relaxed">
-                      {job.description}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2">
-                      {job.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 lg:w-48">
-                    <Button variant="hero" className="gap-2">
-                      <Send className="w-4 h-4" />
-                      Apply Now
-                    </Button>
-                    <Button variant="outline">
-                      View Details
-                    </Button>
-                    <div className="text-center text-sm text-muted-foreground mt-2">
-                      {job.applicants} applicants
-                    </div>
-                  </div>
+                {/* Load More */}
+                <div className="text-center pt-8">
+                  <Button variant="glass" size="lg">
+                    Load More Jobs
+                  </Button>
                 </div>
-              </Card>
-            ))}
+              </>
+            )}
 
-            {/* Load More */}
-            <div className="text-center pt-8">
-              <Button variant="glass" size="lg">
-                Load More Jobs
-              </Button>
-            </div>
           </div>
         </div>
       </main>
