@@ -18,18 +18,18 @@ import SkillEvaluation from "./pages/SkillEvaluation";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import { ProfileForm } from "./components/ProfileForm";
-import { ProfileformProvider } from "./context/ProfileformContext";
+import { ProfileformProvider } from "./context/ProfileContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
        <ProfileformProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+      <AuthProvider>
           <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
@@ -53,9 +53,9 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
           </Routes>
+      </AuthProvider>
         </BrowserRouter>
         </ProfileformProvider>
-      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
