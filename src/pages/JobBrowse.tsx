@@ -22,11 +22,75 @@ import {
 
 const JobBrowse = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
   const [salaryRange, setSalaryRange] = useState([50]);
+  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedMatchScores, setSelectedMatchScores] = useState<number[]>([]);
   const { jobs, loading, error } = useJobs();
 
   const categories = ["Development", "Design", "Marketing", "Writing", "Data Science"];
   const jobTypes = ["Full-time", "Part-time", "Contract", "Remote"];
+
+  // Filter and search logic
+  const filteredJobs = jobs.filter((job) => {
+    // Search filter (title, description, skills)
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery || 
+      job.title.toLowerCase().includes(searchLower) ||
+      job.description.toLowerCase().includes(searchLower) ||
+      job.required_skills.some(skill => skill.toLowerCase().includes(searchLower));
+
+    // Location filter
+    const matchesLocation = !locationQuery || 
+      job.location.toLowerCase().includes(locationQuery.toLowerCase());
+
+    // Job type filter
+    const matchesJobType = selectedJobTypes.length === 0 || 
+      selectedJobTypes.includes(job.job_type);
+
+    // Category filter (based on required_skills)
+    const matchesCategory = selectedCategories.length === 0 ||
+      selectedCategories.some(cat => 
+        job.required_skills.some(skill => 
+          skill.toLowerCase().includes(cat.toLowerCase())
+        )
+      );
+
+    // Salary filter (extract numeric value from budget string)
+    const budgetMatch = job.budget.match(/\$(\d+)/);
+    const minBudget = budgetMatch ? parseInt(budgetMatch[1]) : 0;
+    const matchesSalary = minBudget >= salaryRange[0];
+
+    return matchesSearch && matchesLocation && matchesJobType && matchesCategory && matchesSalary;
+  });
+
+  const toggleJobType = (type: string) => {
+    setSelectedJobTypes(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    );
+  };
+
+  const toggleMatchScore = (score: number) => {
+    setSelectedMatchScores(prev => 
+      prev.includes(score) ? prev.filter(s => s !== score) : [...prev, score]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setLocationQuery("");
+    setSalaryRange([50]);
+    setSelectedJobTypes([]);
+    setSelectedCategories([]);
+    setSelectedMatchScores([]);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,6 +126,8 @@ const JobBrowse = () => {
                 type="text"
                 placeholder="Location"
                 className="pl-10 h-11 bg-background/50 backdrop-blur-sm"
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
               />
             </div>
             <Button variant="hero" className="gap-2">
@@ -77,7 +143,9 @@ const JobBrowse = () => {
             <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold text-lg">Filters</h3>
-                <Button variant="ghost" size="sm" className="text-xs">Clear All</Button>
+                <Button variant="ghost" size="sm" className="text-xs" onClick={clearAllFilters}>
+                  Clear All
+                </Button>
               </div>
 
               {/* Job Type */}
@@ -86,7 +154,11 @@ const JobBrowse = () => {
                 <div className="space-y-3">
                   {jobTypes.map((type, idx) => (
                     <div key={idx} className="flex items-center space-x-2">
-                      <Checkbox id={`type-${idx}`} />
+                      <Checkbox 
+                        id={`type-${idx}`}
+                        checked={selectedJobTypes.includes(type)}
+                        onCheckedChange={() => toggleJobType(type)}
+                      />
                       <label htmlFor={`type-${idx}`} className="text-sm cursor-pointer">
                         {type}
                       </label>
@@ -101,7 +173,11 @@ const JobBrowse = () => {
                 <div className="space-y-3">
                   {categories.map((category, idx) => (
                     <div key={idx} className="flex items-center space-x-2">
-                      <Checkbox id={`cat-${idx}`} />
+                      <Checkbox 
+                        id={`cat-${idx}`}
+                        checked={selectedCategories.includes(category)}
+                        onCheckedChange={() => toggleCategory(category)}
+                      />
                       <label htmlFor={`cat-${idx}`} className="text-sm cursor-pointer">
                         {category}
                       </label>
@@ -135,7 +211,11 @@ const JobBrowse = () => {
                 <div className="space-y-2">
                   {[90, 80, 70].map((score) => (
                     <div key={score} className="flex items-center space-x-2">
-                      <Checkbox id={`match-${score}`} />
+                      <Checkbox 
+                        id={`match-${score}`}
+                        checked={selectedMatchScores.includes(score)}
+                        onCheckedChange={() => toggleMatchScore(score)}
+                      />
                       <label htmlFor={`match-${score}`} className="text-sm cursor-pointer">
                         {score}%+ match
                       </label>
@@ -172,15 +252,18 @@ const JobBrowse = () => {
                 <p className="text-destructive mb-2">{error}</p>
                 <p className="text-sm text-muted-foreground">Please make sure your Python backend is running.</p>
               </Card>
-            ) : jobs.length === 0 ? (
+            ) : filteredJobs.length === 0 ? (
               <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
-                <p className="text-muted-foreground">No jobs found</p>
+                <p className="text-muted-foreground">No jobs found matching your filters</p>
+                <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}>
+                  Clear Filters
+                </Button>
               </Card>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-muted-foreground">
-                    <span className="font-bold text-foreground">{jobs.length} jobs</span> found • Sorted by match
+                    <span className="font-bold text-foreground">{filteredJobs.length} jobs</span> found • Sorted by match
                   </p>
                   <Button variant="outline" size="sm" className="gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -188,7 +271,7 @@ const JobBrowse = () => {
                   </Button>
                 </div>
 
-                {jobs.map((job) => (
+                {filteredJobs.map((job) => (
                   <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
                     <div className="flex flex-col lg:flex-row gap-6">
                       <div className="flex-1">
