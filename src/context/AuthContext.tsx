@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ca } from 'date-fns/locale';
 import { log } from 'console';
 import { json } from 'stream/consumers';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: any | null; // Adjusted to `any` since the user structure may differ
@@ -24,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, settoken] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
+  const navigate = useNavigate();
   useEffect(() => {
     // Fetch the current session from the API
     const fetchSession = async () => {
@@ -55,7 +56,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
       { email, password, username, user_type },
       { withCredentials: true }
     );
-    //  setuserinlocalstorage(response.data.user,response.data.token)
+        navigate('/login'); 
    toast({
       title: "Signup Sucessfullydone",
       description: "user is created",
