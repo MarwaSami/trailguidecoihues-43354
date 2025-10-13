@@ -36,12 +36,13 @@ export interface JobPosting {
   category: string;
   job_type: string;
   location: string;
-  salary_range: string;
+  budget: number;
   experience_level: string;
   duration: string;
   description: string;
   required_skills: string[];
   screening_questions: string;
+  client: number;
 }
 
 export interface JobPostingResponse {
@@ -51,21 +52,22 @@ export interface JobPostingResponse {
 }
 
 export const RegularJobForm = () => {
+  const {user,token} = useAuth()
   // Form state
   const [formData, setFormData] = useState<JobPosting>({
     title: "",
     category: "",
     job_type: "",
     location: "",
-    salary_range: "",
+    budget: 1,
     experience_level: "",
     duration: "",
     description: "",
     required_skills: ["React", "Node.js"],
     screening_questions: "",
+    client: user.id || 0,
   });
   
-  const {user,token} = useAuth()
   const [newSkill, setNewSkill] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,10 +122,10 @@ export const RegularJobForm = () => {
       return false;
     }
 
-    if (!formData.salary_range || formData.salary_range.trim().length < 3) {
+    if (!formData.budget || formData.budget < 5) {
       toast({
         title: "Validation Error",
-        description: "Please provide a valid salary range",
+        description: "Please provide a valid Budget (minimum $5)",
         variant: "destructive",
       });
       return false;
@@ -161,9 +163,12 @@ export const RegularJobForm = () => {
 
   // Submit job posting to backend
   const submitJobPosting = async (jobData: JobPosting, token: string): Promise<JobPostingResponse> => {
+  const list = formData.required_skills.map(s => ({ name: s }));
+console.log(list);
+
     const response = await axios.post<JobPostingResponse>(
       `${baseURL}jobs/jobs/`,
-      jobData,
+      {...jobData ,required_skills: list },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -224,7 +229,7 @@ export const RegularJobForm = () => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("authToken") || "YOUR_AUTH_TOKEN";
+      const token = localStorage.getItem("token") || "";
       
       const response = await axios.post<JobPostingResponse>(
         `${baseURL}/saveDraft`,
@@ -326,14 +331,14 @@ export const RegularJobForm = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="salary" className="flex items-center gap-2">
+            <Label htmlFor="budget" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
-              Salary Range *
+              Budget *
             </Label>
             <Input
-              id="salary"
-              value={formData.salary_range}
-              onChange={(e) => handleInputChange("salary_range", e.target.value)}
+              id="budget"
+              value={formData.budget}
+              onChange={(e) => handleInputChange("budget", e.target.value)}
               placeholder="e.g., $80-120/hr"
               className="bg-background/50 backdrop-blur-sm"
               required
