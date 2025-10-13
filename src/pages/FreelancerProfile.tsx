@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { ProfileformProvider } from "@/context/ProfileformContext";
+import { ProfileformProvider } from "@/context/ProfileContext";
 
 const FreelancerProfile = () => {
   const { user, loading } = useAuth();
