@@ -39,7 +39,7 @@ const JobBrowse = () => {
     const matchesSearch = !searchQuery || 
       job.title.toLowerCase().includes(searchLower) ||
       job.description.toLowerCase().includes(searchLower) ||
-      job.required_skills.some(skill => skill.toLowerCase().includes(searchLower));
+      job.required_skills?.some(skill => skill.toLowerCase().includes(searchLower));
 
     // Location filter
     const matchesLocation = !locationQuery || 
@@ -52,7 +52,7 @@ const JobBrowse = () => {
     // Category filter (based on required_skills)
     const matchesCategory = selectedCategories.length === 0 ||
       selectedCategories.some(cat => 
-        job.required_skills.some(skill => 
+        job.required_skills?.some(skill => 
           skill.toLowerCase().includes(cat.toLowerCase())
         )
       );
@@ -312,7 +312,7 @@ const JobBrowse = () => {
                         </p>
 
                         <div className="flex flex-wrap gap-2 mb-3">
-                          {job.required_skills.map((skill, idx) => (
+                          {job.required_skills?.map((skill, idx) => (
                             <Badge key={idx} variant="secondary">
                               {skill}
                             </Badge>
