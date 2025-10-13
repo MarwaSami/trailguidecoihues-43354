@@ -162,13 +162,13 @@ export const RegularJobForm = () => {
   };
 
   // Submit job posting to backend
-  const submitJobPosting = async (jobData: JobPosting, token: string): Promise<JobPostingResponse> => {
+  const submitJobPosting = async (jobData: JobPosting, token: string,userId:number): Promise<JobPostingResponse> => {
+  
   const list = formData.required_skills.map(s => ({ name: s }));
-console.log(list);
 
     const response = await axios.post<JobPostingResponse>(
       `${baseURL}jobs/jobs/`,
-      {...jobData ,required_skills: list },
+      {...jobData ,required_skills: list, client:userId },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -192,8 +192,9 @@ console.log(list);
     try {
       // Get token from your auth context/storage
       const token = localStorage.getItem("token") || "";
+      const user = JSON.parse(localStorage.getItem("user") || "");
       
-      const response = await submitJobPosting(formData, token);
+      const response = await submitJobPosting(formData, token,user.id);
 
       if (response.is_success) {
         toast({
