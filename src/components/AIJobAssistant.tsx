@@ -1,18 +1,46 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Mic, MicOff, FileText, Briefcase } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sparkles,
+  Mic,
+  MicOff,
+  Send,
+  Plus,
+  X,
+  Briefcase,
+  DollarSign,
+  MapPin,
+  Clock,
+  Users,
+  Bot,
+  Brain,
+  MessageSquare,
+  Target,
+  Zap,
+  FileQuestion,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Define API base URL - replace with your actual backend URL
 const baseURL = "YOUR_BACKEND_URL";
 
 // Get auth token from localStorage or your auth context
 const getAuthToken = () => {
-  return localStorage.getItem("authToken") || ""; // Adjust based on your auth implementation
+  return localStorage.getItem("authToken") || "";
 };
 
 // Define response interfaces
@@ -22,33 +50,67 @@ interface AudioToTextResponse {
   detail?: string;
 }
 
-interface GeneratedJobPosting {
+export interface JobPosting {
   title: string;
-  description: string;
-  requirements: string[];
-  skills_required: string[];
-  budget_range: {
-    min: number;
-    max: number;
-  };
-  experience_level: string;
+  category: string;
   job_type: string;
-  duration?: string;
+  location: string;
+  budget: number;
+  experience_level: string;
+  duration: string;
+  description: string;
+  required_skills: string[];
+  screening_questions: string;
+  client: number;
 }
 
-interface GenerateJobResponse {
+export interface JobPostingResponse {
   is_success: boolean;
-  job_posting: GeneratedJobPosting;
+  detail: string;
+  job_id?: number;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+interface AIAssistResponse {
+  is_success: boolean;
+  message: string;
+  suggestions?: Partial<JobPosting>;
   detail?: string;
 }
 
 export const AIJobAssistant = () => {
+  // Form state
+  const [formData, setFormData] = useState<JobPosting>({
+    title: "",
+    category: "",
+    job_type: "",
+    location: "",
+    budget: 0,
+    experience_level: "",
+    duration: "",
+    description: "",
+    required_skills: [],
+    screening_questions: "",
+    client: 0, // Will be populated from auth context
+  });
+
+  // Chat state
   const [inputMethod, setInputMethod] = useState<"text" | "voice">("text");
-  const [jobDescription, setJobDescription] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newSkill, setNewSkill] = useState("");
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const startRecording = async () => {
@@ -74,7 +136,8 @@ export const AIJobAssistant = () => {
 
         try {
           const transcribedText = await convertAudioToText(audioBlob);
-          setJobDescription(transcribedText);
+          // Send transcribed text as chat message
+          sendChatMessage(transcribedText);
           toast({
             title: "Success",
             description: "Voice input converted to text",
@@ -144,62 +207,119 @@ export const AIJobAssistant = () => {
     }
   };
 
-  const validateJobDescription = (description: string): { valid: boolean; error?: string } => {
-    const trimmedDesc = description.trim();
-    
-    if (!trimmedDesc) {
-      return { valid: false, error: "Job description cannot be empty" };
-    }
-    
-    if (trimmedDesc.length < 50) {
-      return { valid: false, error: "Job description must be at least 50 characters" };
-    }
-    
-    if (trimmedDesc.length > 5000) {
-      return { valid: false, error: "Job description must not exceed 5000 characters" };
-    }
-    
-    // Check for required information keywords
-    const hasRoleInfo = /\b(role|position|job|title)\b/i.test(trimmedDesc);
-    const hasSkillsInfo = /\b(skill|experience|knowledge|requirement)\b/i.test(trimmedDesc);
-    
-    if (!hasRoleInfo || !hasSkillsInfo) {
-      return { 
-        valid: false, 
-        error: "Please include information about the role and required skills/experience" 
-      };
-    }
-    
-    return { valid: true };
+  // Handle form input changes
+  const handleInputChange = (field: keyof JobPosting, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const generateJobPosting = async () => {
-    // Validate input
-    const validation = validateJobDescription(jobDescription);
-    if (!validation.valid) {
+  const addSkill = () => {
+    if (newSkill && !formData.required_skills.includes(newSkill)) {
+      setFormData(prev => ({
+        ...prev,
+        required_skills: [...prev.required_skills, newSkill]
+      }));
+      setNewSkill("");
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setFormData(prev => ({
+      ...prev,
+      required_skills: prev.required_skills.filter(s => s !== skill)
+    }));
+  };
+
+  // Validation function
+  const validateForm = (): boolean => {
+    if (!formData.title || formData.title.trim().length < 3) {
       toast({
         title: "Validation Error",
-        description: validation.error,
+        description: "Job title must be at least 3 characters long",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
-    setIsGenerating(true);
+    if (!formData.category) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a job category",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.job_type) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a job type",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.budget || formData.budget <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please provide a valid budget",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.experience_level) {
+      toast({
+        title: "Validation Error",
+        description: "Please select an experience level",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.description || formData.description.trim().length < 50) {
+      toast({
+        title: "Validation Error",
+        description: "Job description must be at least 50 characters long",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (formData.required_skills.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one required skill",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  // Send chat message to AI assistant
+  const sendChatMessage = async (message: string) => {
+    if (!message.trim()) return;
+
+    // Add user message to chat
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: message,
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput("");
+    setIsSendingMessage(true);
 
     try {
       const token = getAuthToken();
-      
-      if (!token) {
-        throw new Error("Authentication required. Please log in.");
-      }
 
-      const response = await axios.post<GenerateJobResponse>(
-        `${baseURL}/generateJobPosting`,
+      const response = await axios.post<AIAssistResponse>(
+        `${baseURL}/aiJobAssist`,
         {
-          description: jobDescription.trim(),
-          format: 'structured',
-          includeKeywords: true,
+          message: message.trim(),
+          current_form_data: formData,
+          conversation_history: chatMessages.map(m => ({ role: m.role, content: m.content })),
         },
         {
           headers: {
@@ -210,160 +330,504 @@ export const AIJobAssistant = () => {
       );
 
       if (!response.data.is_success) {
-        throw new Error(response.data.detail || 'Failed to generate job posting');
+        throw new Error(response.data.detail || 'Failed to get AI response');
       }
 
-      const generatedData = response.data.job_posting;
-      
-      console.log('Generated job posting:', generatedData);
-      
-      toast({
-        title: "Job posting generated!",
-        description: "Review and publish your AI-generated job posting",
-      });
+      // Add assistant response to chat
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: response.data.message,
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, assistantMessage]);
 
-      // Here you would typically navigate to a review page or update state
-      // with the generated job posting data
-      // Example: navigate('/job-review', { state: { jobPosting: generatedData } });
-      
+      // Apply AI suggestions to form if available
+      if (response.data.suggestions) {
+        setFormData(prev => ({ ...prev, ...response.data.suggestions }));
+        toast({
+          title: "Form Updated",
+          description: "AI suggestions applied to the form",
+        });
+      }
+
+      // Scroll to bottom
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+
     } catch (error) {
-      console.error('Job generation error:', error);
-      
-      let errorMessage = "Failed to generate job posting. Please try again.";
-      
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          errorMessage = "Authentication failed. Please log in again.";
-        } else if (error.response?.status === 400) {
-          errorMessage = error.response.data?.detail || "Invalid input. Please check your job description.";
-        } else if (error.response?.data?.detail) {
-          errorMessage = error.response.data.detail;
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
+      console.error('Chat error:', error);
       toast({
-        title: "Generation Failed",
-        description: errorMessage,
+        title: "Error",
+        description: axios.isAxiosError(error)
+          ? error.response?.data?.detail || "Failed to send message"
+          : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsSendingMessage(false);
+    }
+  };
+
+  // Submit job posting
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = getAuthToken();
+
+      const response = await axios.post<JobPostingResponse>(
+        `${baseURL}/postJob`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.is_success) {
+        toast({
+          title: "Success!",
+          description: response.data.detail || "Job posting created successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.detail || "Failed to create job posting",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting job posting:", error);
+      toast({
+        title: "Error",
+        description: axios.isAxiosError(error)
+          ? error.response?.data?.detail || error.message
+          : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Input Method Selection */}
+    <div className="grid lg:grid-cols-2 gap-5">
+      {/* LEFT SIDE - Job Posting Form */}
       <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-        <Label className="mb-4 block">Choose Input Method</Label>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Button
-            variant={inputMethod === "text" ? "default" : "outline"}
-            onClick={() => setInputMethod("text")}
-            className="h-auto py-4 flex-col gap-2"
-          >
-            <FileText className="w-6 h-6" />
-            <span>Text Input</span>
-          </Button>
-          <Button
-            variant={inputMethod === "voice" ? "default" : "outline"}
-            onClick={() => setInputMethod("voice")}
-            className="h-auto py-4 flex-col gap-2"
-          >
-            <Mic className="w-6 h-6" />
-            <span>Voice Input</span>
-          </Button>
+        <div className="mb-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <Briefcase className="w-5 h-5" />
+            Job Details
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Fill in the details or use the AI assistant to help you
+          </p>
         </div>
-      </Card>
 
-      {/* Input Area */}
-      <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-        {inputMethod === "text" ? (
-          <div className="space-y-4">
-            <Label htmlFor="ai-description">
-              Describe Your Job Requirements
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Job Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title" className="flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              Job Title *
             </Label>
-            <Textarea
-              id="ai-description"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Tell us about the position you're hiring for. Include role title, required skills, experience level, job type, salary range, and any other important details..."
-              className="min-h-[300px] bg-background/50 backdrop-blur-sm"
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => handleInputChange("title", e.target.value)}
+              placeholder="e.g., Senior Full-Stack Developer"
+              className="bg-background/50 backdrop-blur-sm"
+              required
             />
-            <p className="text-sm text-muted-foreground">
-              Example: "I need a senior React developer with 5+ years experience for a full-time remote position. Must know TypeScript, Node.js, and have experience with AWS. Salary range $100-150k annually."
-            </p>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <Label>Record Your Job Requirements</Label>
-            <div className="flex flex-col items-center justify-center py-12 gap-6">
-              <div className={`p-8 rounded-full ${isRecording ? 'bg-destructive/20 animate-pulse' : 'bg-primary/20'}`}>
-                {isRecording ? (
-                  <MicOff className="w-16 h-16 text-destructive" />
-                ) : (
-                  <Mic className="w-16 h-16 text-primary" />
-                )}
-              </div>
-              <Button
-                onClick={isRecording ? stopRecording : startRecording}
-                variant={isRecording ? "destructive" : "default"}
-                size="lg"
-                className="gap-2"
-              >
-                {isRecording ? (
-                  <>
-                    <MicOff className="w-5 h-5" />
-                    Stop Recording
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-5 h-5" />
-                    Start Recording
-                  </>
-                )}
-              </Button>
-              <p className="text-sm text-muted-foreground text-center max-w-md">
-                {isRecording
-                  ? "Recording... Click stop when you're done describing the position"
-                  : "Click to start recording. Describe the role, requirements, and any details about the position."}
-              </p>
+
+          {/* Category & Job Type */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category *</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+                <SelectTrigger className="bg-background/50 backdrop-blur-sm">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="development">Development</SelectItem>
+                  <SelectItem value="design">Design</SelectItem>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                  <SelectItem value="writing">Writing</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Job Type *</Label>
+              <Select value={formData.job_type} onValueChange={(value) => handleInputChange("job_type", value)}>
+                <SelectTrigger className="bg-background/50 backdrop-blur-sm">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fulltime">Full-time</SelectItem>
+                  <SelectItem value="parttime">Part-time</SelectItem>
+                  <SelectItem value="contract">Contract</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        )}
+
+          {/* Location & Budget */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location" className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Location
+              </Label>
+              <Input
+                id="location"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="e.g., Remote"
+                className="bg-background/50 backdrop-blur-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="budget" className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Budget *
+              </Label>
+              <Input
+                id="budget"
+                type="number"
+                value={formData.budget || ""}
+                onChange={(e) => handleInputChange("budget", parseFloat(e.target.value) || 0)}
+                placeholder="e.g., 5000"
+                className="bg-background/50 backdrop-blur-sm"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Experience & Duration */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="experience">Experience Level *</Label>
+              <Select value={formData.experience_level} onValueChange={(value) => handleInputChange("experience_level", value)}>
+                <SelectTrigger className="bg-background/50 backdrop-blur-sm">
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entry">Entry Level</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="senior">Senior</SelectItem>
+                  <SelectItem value="expert">Expert</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="duration" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Duration
+              </Label>
+              <Input
+                id="duration"
+                value={formData.duration}
+                onChange={(e) => handleInputChange("duration", e.target.value)}
+                placeholder="e.g., 3-6 months"
+                className="bg-background/50 backdrop-blur-sm"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Job Description *</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
+              placeholder="Describe the role, responsibilities, and requirements..."
+              className="min-h-[120px] bg-background/50 backdrop-blur-sm"
+              required
+            />
+          </div>
+
+          {/* Required Skills */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Required Skills *
+            </Label>
+
+            {/* Current Skills */}
+            <div className="flex flex-wrap gap-2">
+              {formData.required_skills.map((skill) => (
+                <Badge key={skill} variant="secondary" className="px-3 py-1.5 gap-2">
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(skill)}
+                    className="hover:text-destructive"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+
+            {/* Add Skill */}
+            <div className="flex gap-2">
+              <Input
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                placeholder="Add a skill..."
+                className="bg-background/50 backdrop-blur-sm"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+              />
+              <Button type="button" onClick={addSkill} variant="secondary">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Screening Questions */}
+          <div className="space-y-2">
+            <Label>Screening Questions (Optional)</Label>
+            <Textarea
+              value={formData.screening_questions}
+              onChange={(e) => handleInputChange("screening_questions", e.target.value)}
+              placeholder="Add custom questions for applicants..."
+              className="min-h-[80px] bg-background/50 backdrop-blur-sm"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            variant="hero"
+            className="w-full gap-2"
+            disabled={isSubmitting}
+          >
+            <Briefcase className="w-5 h-5" />
+            {isSubmitting ? "Posting..." : "Post Job"}
+          </Button>
+        </form>
       </Card>
 
-      {/* Generate Button */}
-      <div className="flex gap-4">
-        <Button
-          onClick={generateJobPosting}
-          variant="hero"
-          className="flex-1 gap-2"
-          disabled={isGenerating}
-        >
-          <Sparkles className="w-5 h-5" />
-          {isGenerating ? "Generating..." : "Generate Job Posting"}
-        </Button>
-        <Button variant="outline" className="flex-1">
-          Cancel
-        </Button>
-      </div>
-
-      {/* AI Preview Card */}
-      <Card className="p-6 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 border-2 border-primary/20">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold mb-2">AI-Powered Job Creation</h3>
-            <p className="text-sm text-muted-foreground">
-              Our AI will analyze your input and generate a professional job posting with proper formatting, skill requirements, and optimized content to attract the best candidates.
-            </p>
-          </div>
+      {/* RIGHT SIDE - AI Chat Assistant */}
+      <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)] flex flex-col">
+        <div className="mb-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary" />
+            AI Job Assistant
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Get AI-powered help to craft the perfect job posting
+          </p>
         </div>
+
+        {/* Input Method Toggle */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            type="button"
+            variant={inputMethod === "text" ? "default" : "outline"}
+            onClick={() => setInputMethod("text")}
+            size="sm"
+            className="flex-1 gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Text
+          </Button>
+          <Button
+            type="button"
+            variant={inputMethod === "voice" ? "default" : "outline"}
+            onClick={() => setInputMethod("voice")}
+            size="sm"
+            className="flex-1 gap-2"
+          >
+            <Mic className="w-4 h-4" />
+            Voice
+          </Button>
+        </div>
+
+        {/* Chat Messages */}
+        <ScrollArea className="flex-1 pr-4 mb-4 h-[500px]">
+          <div className="space-y-4">
+            {/* Suggested Prompts - Only show when no messages */}
+            {chatMessages.length === 0 && (
+              <div className="space-y-4">
+                <div className="text-center mb-6">
+                  <p className="text-sm text-muted-foreground">
+                    Choose a prompt below or ask your own question
+                  </p>
+                </div>
+                
+                {/* Suggested Prompts Grid */}
+                <div className="grid gap-3">
+                  {[
+                    {
+                      icon: <Target className="w-5 h-5" />,
+                      title: "Define Job Role",
+                      prompt: "Help me create a job posting for a senior software developer position",
+                      gradient: "from-blue-500/10 to-cyan-500/10",
+                      border: "border-blue-500/30",
+                      iconColor: "text-blue-500"
+                    },
+                    {
+                      icon: <DollarSign className="w-5 h-5" />,
+                      title: "Set Budget & Duration",
+                      prompt: "What's a competitive budget and timeline for a 3-month web development project?",
+                      gradient: "from-purple-500/10 to-pink-500/10",
+                      border: "border-purple-500/30",
+                      iconColor: "text-purple-500"
+                    },
+                    {
+                      icon: <Zap className="w-5 h-5" />,
+                      title: "Required Skills",
+                      prompt: "What skills should I require for a full-stack developer role?",
+                      gradient: "from-orange-500/10 to-red-500/10",
+                      border: "border-orange-500/30",
+                      iconColor: "text-orange-500"
+                    },
+                    {
+                      icon: <Sparkles className="w-5 h-5" />,
+                      title: "Improve Description",
+                      prompt: "Review my job description and suggest improvements to attract top talent",
+                      gradient: "from-indigo-500/10 to-violet-500/10",
+                      border: "border-indigo-500/30",
+                      iconColor: "text-indigo-500"
+                    },
+                  ].map((suggestion, idx) => (
+                    <Card
+                      key={idx}
+                      className={`p-4 cursor-pointer transition-all bg-gradient-to-br ${suggestion.gradient} border-2 ${suggestion.border} hover:scale-[1.02] group`}
+                      onClick={() => setChatInput(suggestion.prompt)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-lg bg-background/50 ${suggestion.iconColor}`}>
+                          {suggestion.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
+                            {suggestion.title}
+                          </h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {suggestion.prompt}
+                          </p>
+                        </div>
+                        <Sparkles className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+             
+              </div>
+            )}
+
+            {/* Chat Messages */}
+            {chatMessages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-xs opacity-70 mt-1">
+                    {message.timestamp.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {/* AI Thinking Indicator */}
+            {isSendingMessage && (
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">AI is thinking...</span>
+                </div>
+              </div>
+            )}
+
+            <div ref={chatEndRef} />
+          </div>
+        </ScrollArea>
+
+        {/* Chat Input */}
+        {inputMethod === "text" ? (
+          <div className="flex gap-2">
+            <Input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask AI to help with your job posting..."
+              className="bg-background/50 backdrop-blur-sm"
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendChatMessage(chatInput);
+                }
+              }}
+              disabled={isSendingMessage}
+            />
+            <Button
+              type="button"
+              onClick={() => sendChatMessage(chatInput)}
+              disabled={isSendingMessage || !chatInput.trim()}
+              variant="default"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <div className={`p-6 rounded-full ${isRecording ? 'bg-destructive/20 animate-pulse' : 'bg-primary/20'}`}>
+              {isRecording ? (
+                <MicOff className="w-8 h-8 text-destructive" />
+              ) : (
+                <Mic className="w-8 h-8 text-primary" />
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={isRecording ? stopRecording : startRecording}
+              variant={isRecording ? "destructive" : "default"}
+              className="gap-2"
+            >
+              {isRecording ? (
+                <>
+                  <MicOff className="w-4 h-4" />
+                  Stop Recording
+                </>
+              ) : (
+                <>
+                  <Mic className="w-4 h-4" />
+                  Start Recording
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
