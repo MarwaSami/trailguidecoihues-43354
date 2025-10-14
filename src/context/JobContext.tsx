@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import axios from "axios";
+import { baseURL } from "./AuthContext";
 
-const PYTHON_BACKEND_URL = import.meta.env.VITE_PYTHON_BACKEND_URL || "http://localhost:8000";
 
 export interface allfreelancerJobs {
   id: number;
@@ -15,8 +15,10 @@ export interface allfreelancerJobs {
   created_at: string; 
   updated_at: string;
   ai_generated_criteria: any | null;
-  client: number;
+  client_name: string;
   required_skills: string[]; 
+  match_score:number;
+  
 }
 
 interface JobContextType {
@@ -37,7 +39,7 @@ export const JobProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${PYTHON_BACKEND_URL}/jobs/all`);
+      const response = await axios.get(`${baseURL}jobs/jobs/matched-jobs`);
       setJobs(response.data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch jobs");

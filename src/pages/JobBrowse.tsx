@@ -7,26 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
-import { Loader2 } from "lucide-react";
-import { useJobs } from "@/context/JobContext";
-import { Loader2 } from "lucide-react";
-import {
-  Search,
-  MapPin,
-  Briefcase,
-  Clock,
-  DollarSign,
-  Bookmark,
-  Send,
-  Zap,
-  TrendingUp
-} from "lucide-react";
+import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star } from "lucide-react";
 
 const JobBrowse = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const [salaryRange, setSalaryRange] = useState([50]);
-  const { jobs, loading, error } = useJobs();
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMatchScores, setSelectedMatchScores] = useState<number[]>([]);
@@ -37,52 +23,48 @@ const JobBrowse = () => {
 
   // Filter and search logic
   const filteredJobs = jobs.filter((job) => {
-    // Search filter (title, description, skills)
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = !searchQuery || 
+    const matchesSearch =
+      !searchQuery ||
       job.title.toLowerCase().includes(searchLower) ||
       job.description.toLowerCase().includes(searchLower) ||
-      job.required_skills?.some(skill => skill.toLowerCase().includes(searchLower));
+      job.required_skills?.some((skill) => skill.toLowerCase().includes(searchLower));
 
-    // Location filter
-    const matchesLocation = !locationQuery || 
-      job.location.toLowerCase().includes(locationQuery.toLowerCase());
+    const matchesLocation =
+      !locationQuery || job.location.toLowerCase().includes(locationQuery.toLowerCase());
 
-    // Job type filter
-    const matchesJobType = selectedJobTypes.length === 0 || 
-      selectedJobTypes.includes(job.job_type);
+    const matchesJobType =
+      selectedJobTypes.length === 0 || selectedJobTypes.includes(job.job_type);
 
-    // Category filter (based on required_skills)
-    const matchesCategory = selectedCategories.length === 0 ||
-      selectedCategories.some(cat => 
-        job.required_skills?.some(skill => 
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      selectedCategories.some((cat) =>
+        job.required_skills?.some((skill) =>
           skill.toLowerCase().includes(cat.toLowerCase())
         )
       );
 
-    // Salary filter (extract numeric value from budget string)
-    const budgetMatch = job.budget.match(/\$(\d+)/);
-    const minBudget = budgetMatch ? parseInt(budgetMatch[1]) : 0;
-    const matchesSalary = minBudget >= salaryRange[0];
+    // Salary comparison (budget is a number)
+    const matchesSalary = Number(job.budget) >= salaryRange[0];
 
     return matchesSearch && matchesLocation && matchesJobType && matchesCategory && matchesSalary;
   });
 
   const toggleJobType = (type: string) => {
-    setSelectedJobTypes(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    setSelectedJobTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   };
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
   };
 
   const toggleMatchScore = (score: number) => {
-    setSelectedMatchScores(prev => 
-      prev.includes(score) ? prev.filter(s => s !== score) : [...prev, score]
+    setSelectedMatchScores((prev) =>
+      prev.includes(score) ? prev.filter((s) => s !== score) : [...prev, score]
     );
   };
 
@@ -98,13 +80,11 @@ const JobBrowse = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-8">
-          <h1 className="text-4xl font-bold mb-3">
-            Find Your Perfect Job
-          </h1>
+          <h1 className="text-4xl font-bold mb-3">Find Your Perfect Job</h1>
           <p className="text-lg text-muted-foreground">
             AI-powered job matching based on your skills and preferences
           </p>
@@ -157,7 +137,7 @@ const JobBrowse = () => {
                 <div className="space-y-3">
                   {jobTypes.map((type, idx) => (
                     <div key={idx} className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={`type-${idx}`}
                         checked={selectedJobTypes.includes(type)}
                         onCheckedChange={() => toggleJobType(type)}
@@ -176,7 +156,7 @@ const JobBrowse = () => {
                 <div className="space-y-3">
                   {categories.map((category, idx) => (
                     <div key={idx} className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={`cat-${idx}`}
                         checked={selectedCategories.includes(category)}
                         onCheckedChange={() => toggleCategory(category)}
@@ -193,13 +173,7 @@ const JobBrowse = () => {
               <div className="mb-6">
                 <h4 className="font-medium mb-3">Minimum Hourly Rate</h4>
                 <div className="space-y-4">
-                  <Slider
-                    value={salaryRange}
-                    onValueChange={setSalaryRange}
-                    max={200}
-                    step={10}
-                    className="w-full"
-                  />
+                  <Slider value={salaryRange} onValueChange={setSalaryRange} max={200} step={10} />
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">$0</span>
                     <span className="font-bold text-primary">${salaryRange[0]}/hr</span>
@@ -214,7 +188,7 @@ const JobBrowse = () => {
                 <div className="space-y-2">
                   {[90, 80, 70].map((score) => (
                     <div key={score} className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={`match-${score}`}
                         checked={selectedMatchScores.includes(score)}
                         onCheckedChange={() => toggleMatchScore(score)}
@@ -255,30 +229,6 @@ const JobBrowse = () => {
                 <p className="text-destructive mb-2">{error}</p>
                 <p className="text-sm text-muted-foreground">Please make sure your Python backend is running.</p>
               </Card>
-            ) : jobs.length === 0 ? (
-              <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
-                <p className="text-muted-foreground">No jobs found</p>
-              </Card>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-muted-foreground">
-                    <span className="font-bold text-foreground">{jobs.length} jobs</span> found • Sorted by match
-                  </p>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Best Match
-                  </Button>
-                </div>
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : error ? (
-              <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
-                <p className="text-destructive mb-2">{error}</p>
-                <p className="text-sm text-muted-foreground">Please make sure your Python backend is running.</p>
-              </Card>
             ) : filteredJobs.length === 0 ? (
               <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
                 <p className="text-muted-foreground">No jobs found matching your filters</p>
@@ -290,7 +240,10 @@ const JobBrowse = () => {
               <>
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-muted-foreground">
-                    <span className="font-bold text-foreground">{filteredJobs.length} jobs</span> found • Sorted by match
+                    <span className="font-bold text-foreground">
+                      {filteredJobs.length} jobs
+                    </span>{" "}
+                    found • Sorted by match
                   </p>
                   <Button variant="outline" size="sm" className="gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -298,19 +251,11 @@ const JobBrowse = () => {
                   </Button>
                 </div>
 
-                {jobs.map((job) => (
-                  <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold">{job.title}</h3>
-                              <Badge variant="secondary">{job.status}</Badge>
-                            </div>
-                            <p className="text-muted-foreground">Client ID: {job.client}</p>
                 {filteredJobs.map((job) => (
-                  <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
+                  <Card
+                    key={job.id}
+                    className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400"
+                  >
                     <div className="flex flex-col lg:flex-row gap-6">
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-3">
@@ -319,14 +264,15 @@ const JobBrowse = () => {
                               <h3 className="text-xl font-bold">{job.title}</h3>
                               <Badge variant="secondary">{job.status}</Badge>
                             </div>
-                            <p className="text-muted-foreground">Client ID: {job.client}</p>
+                            <p className="text-muted-foreground">Client Name: {job.client_name}</p>
                           </div>
                           <Button variant="ghost" size="icon">
-                            <Bookmark className="w-5 h-5" />
-                          </Button>
-                        </div>
-                          <Button variant="ghost" size="icon">
-                            <Bookmark className="w-5 h-5" />
+                            {/* <Bookmark className="w-5 h-5" /> */}
+                           <div>
+                             <Star className="w-5 h-5" />Matched Score : {job.match_score}
+                             
+                           </div>
+
                           </Button>
                         </div>
 
@@ -341,25 +287,9 @@ const JobBrowse = () => {
                           </div>
                           <div className="flex items-center gap-1">
                             <DollarSign className="w-4 h-4" />
-                            <span className="font-bold text-primary">{job.budget}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {new Date(job.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {job.location}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
-                            {job.job_type}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4" />
-                            <span className="font-bold text-primary">{job.budget}</span>
+                            <span className="font-bold text-primary">
+                              ${job.budget.toLocaleString()}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
@@ -367,19 +297,6 @@ const JobBrowse = () => {
                           </div>
                         </div>
 
-                        <p className="text-muted-foreground mb-4 leading-relaxed">
-                          {job.description}
-                        </p>
-{job.required_skills?.map((skill, index) => (
-  <Badge key={index} variant="secondary">
-    {skill}
-  </Badge>
-))}
-
-                        <div className="text-sm text-muted-foreground">
-                          Experience Level: <span className="font-medium text-foreground">{job.experience_level}</span>
-                        </div>
-                      </div>
                         <p className="text-muted-foreground mb-4 leading-relaxed">
                           {job.description}
                         </p>
@@ -393,7 +310,10 @@ const JobBrowse = () => {
                         </div>
 
                         <div className="text-sm text-muted-foreground">
-                          Experience Level: <span className="font-medium text-foreground">{job.experience_level}</span>
+                          Experience Level:{" "}
+                          <span className="font-medium text-foreground">
+                            {job.experience_level}
+                          </span>
                         </div>
                       </div>
 
@@ -402,21 +322,7 @@ const JobBrowse = () => {
                           <Send className="w-4 h-4" />
                           Apply Now
                         </Button>
-                        <Button variant="outline">
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-                      <div className="flex flex-col gap-3 lg:w-48">
-                        <Button variant="hero" className="gap-2">
-                          <Send className="w-4 h-4" />
-                          Apply Now
-                        </Button>
-                        <Button variant="outline">
-                          View Details
-                        </Button>
+                        <Button variant="outline">View Details</Button>
                       </div>
                     </div>
                   </Card>
@@ -430,16 +336,6 @@ const JobBrowse = () => {
                 </div>
               </>
             )}
-
-                {/* Load More */}
-                <div className="text-center pt-8">
-                  <Button variant="glass" size="lg">
-                    Load More Jobs
-                  </Button>
-                </div>
-              </>
-            )}
-
           </div>
         </div>
       </main>
