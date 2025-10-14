@@ -162,7 +162,7 @@ export const RegularJobForm = () => {
   };
 
   // Submit job posting to backend
-  const submitJobPosting = async (jobData: JobPosting, token: string,userId:number): Promise<JobPostingResponse> => {
+  const submitJobPosting = async (jobData: JobPosting, token: string,userId:number): Promise<object> => {
   
   const list = formData.required_skills.map(s => ({ name: s }));
 
@@ -176,7 +176,7 @@ export const RegularJobForm = () => {
         },
       }
     );
-    return response.data;
+    return response;
   };
 
   // Handle form submission
@@ -196,10 +196,10 @@ export const RegularJobForm = () => {
       
       const response = await submitJobPosting(formData, token,user.id);
 
-      if (response.is_success) {
+      if (response) {
         toast({
           title: "Success!",
-          description: response.detail || "Job posting created successfully",
+          description:"Job posting created successfully",
         });
         
         // Reset form or redirect
@@ -207,7 +207,7 @@ export const RegularJobForm = () => {
       } else {
         toast({
           title: "Error",
-          description: response.detail || "Failed to create job posting",
+          description:  "Failed to create job posting",
           variant: "destructive",
         });
       }

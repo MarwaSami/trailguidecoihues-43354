@@ -56,7 +56,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
       { email, password, username, user_type },
       { withCredentials: true }
     );
-        navigate('/login'); 
+        navigate('/auth'); 
    toast({
       title: "Signup Sucessfullydone",
       description: "user is created",

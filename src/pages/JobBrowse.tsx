@@ -269,7 +269,17 @@ const JobBrowse = () => {
                           <Button variant="ghost" size="icon">
                             {/* <Bookmark className="w-5 h-5" /> */}
                            <div>
-                             <Star className="w-5 h-5" />Matched Score : {job.match_score}
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                             <Star className="w-5 h-5" />Matched Score : {Math.floor( job.match_score*100)}%
                              
                            </div>
 
@@ -297,9 +307,9 @@ const JobBrowse = () => {
                           </div>
                         </div>
 
-                        <p className="text-muted-foreground mb-4 leading-relaxed">
-                          {job.description}
-                        </p>
+                        {/* <p className="text-muted-foreground mb-4 leading-relaxed">
+                          {job.description.substring(0,10)}
+                        </p> */}
 
                         <div className="flex flex-wrap gap-2 mb-3">
                           {job.required_skills?.map((skill, idx) => (
