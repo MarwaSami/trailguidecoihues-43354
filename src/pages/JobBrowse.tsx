@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
 import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const JobBrowse = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,6 +18,7 @@ const JobBrowse = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMatchScores, setSelectedMatchScores] = useState<number[]>([]);
   const { jobs, loading, error } = useJobs();
+  const navigate = useNavigate();
 
   const categories = ["Development", "Design", "Marketing", "Writing", "Data Science"];
   const jobTypes = ["Full-time", "Part-time", "Contract", "Remote"];
@@ -332,6 +334,11 @@ const JobBrowse = () => {
                           <Send className="w-4 h-4" />
                           Apply Now
                         </Button>
+                        <Button 
+                          variant="hero" 
+                          className="gap-2"
+                          onClick={() => navigate("/job-proposal", { state: { job } })}
+                        ></Button>
                         <Button variant="outline">View Details</Button>
                       </div>
                     </div>

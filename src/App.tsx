@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import { ProfileForm } from "./components/ProfileForm";
 import { ProfileformProvider } from "./context/ProfileContext";
 import { JobProvider } from "./context/JobContext";
+import JobProposal from "./pages/JobProposal";
 
 const queryClient = new QueryClient();
 
@@ -42,7 +43,7 @@ const App = () => (
                 <Route path="/job-browse" element={<JobBrowse />} />
                 <Route path="/interview-practice" element={<InterviewPractice />} />
                 <Route path="/skill-evaluation" element={<SkillEvaluation />} />
-                
+                <Route path="/job-proposal" element={<JobProposal />} />
                 {/* Client Routes */}
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
                 <Route path="/job-posting" element={<JobPosting />} />

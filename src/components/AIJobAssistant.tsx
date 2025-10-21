@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -434,10 +434,10 @@ export const AIJobAssistant = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Job Title */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="flex items-center gap-2">
+            <label htmlFor="title" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
               Job Title *
-            </Label>
+            </label>
             <Input
               id="title"
               value={formData.title}
@@ -451,7 +451,7 @@ export const AIJobAssistant = () => {
           {/* Category & Job Type */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+              <label htmlFor="category">Category *</label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                 <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                   <SelectValue placeholder="Select category" />
@@ -466,7 +466,7 @@ export const AIJobAssistant = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">Job Type *</Label>
+              <label htmlFor="type">Job Type *</label>
               <Select value={formData.job_type} onValueChange={(value) => handleInputChange("job_type", value)}>
                 <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                   <SelectValue placeholder="Select type" />
@@ -484,10 +484,10 @@ export const AIJobAssistant = () => {
           {/* Location & Budget */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="location" className="flex items-center gap-2">
+              <label htmlFor="location" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Location
-              </Label>
+              </label>
               <Input
                 id="location"
                 value={formData.location}
@@ -498,10 +498,10 @@ export const AIJobAssistant = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="budget" className="flex items-center gap-2">
+              <label htmlFor="budget" className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
                 Budget *
-              </Label>
+              </label>
               <Input
                 id="budget"
                 type="number"
@@ -517,7 +517,7 @@ export const AIJobAssistant = () => {
           {/* Experience & Duration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="experience">Experience Level *</Label>
+              <label htmlFor="experience">Experience Level *</label>
               <Select value={formData.experience_level} onValueChange={(value) => handleInputChange("experience_level", value)}>
                 <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                   <SelectValue placeholder="Select level" />
@@ -532,10 +532,10 @@ export const AIJobAssistant = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="duration" className="flex items-center gap-2">
+              <label htmlFor="duration" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 Duration
-              </Label>
+              </label>
               <Input
                 id="duration"
                 value={formData.duration}
@@ -548,7 +548,7 @@ export const AIJobAssistant = () => {
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Job Description *</Label>
+            <label htmlFor="description">Job Description *</label>
             <Textarea
               id="description"
               value={formData.description}
@@ -561,10 +561,10 @@ export const AIJobAssistant = () => {
 
           {/* Required Skills */}
           <div className="space-y-3">
-            <Label className="flex items-center gap-2">
+            <label className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Required Skills *
-            </Label>
+            </label>
 
             {/* Current Skills */}
             <div className="flex flex-wrap gap-2">
@@ -599,7 +599,7 @@ export const AIJobAssistant = () => {
 
           {/* Screening Questions */}
           <div className="space-y-2">
-            <Label>Screening Questions (Optional)</Label>
+            <label>Screening Questions (Optional)</label>
             <Textarea
               value={formData.screening_questions}
               onChange={(e) => handleInputChange("screening_questions", e.target.value)}
