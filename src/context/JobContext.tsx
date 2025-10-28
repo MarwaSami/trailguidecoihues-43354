@@ -40,12 +40,16 @@ export const JobProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem("token") || "";
+      console.log(token);
+      
       const response = await axios.get(`${baseURL}jobs/jobs/matched-jobs/`,{
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
+      console.log(response);
+      
       setJobs(response.data);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch jobs");

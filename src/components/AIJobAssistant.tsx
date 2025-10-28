@@ -357,7 +357,15 @@ export const AIJobAssistant = () => {
 
     const response = await axios.post(
       `${baseURL}jobs/jobs/`,
-      {...formData ,required_skills: list, client:user.id },
+      {
+        ...formData,
+        required_skills: list,
+        client:user.id,
+        status:"published",
+        experience_level: formData.experienceLevel,
+        job_type:formData.jobType,
+        title:formData.jobTitle
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`,
