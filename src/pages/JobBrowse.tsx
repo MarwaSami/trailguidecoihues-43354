@@ -339,7 +339,7 @@ const JobBrowse = () => {
                           className="gap-2"
                           onClick={() => navigate("/job-proposal", { state: { job } })}
                         ></Button>
-                        <Button variant="outline">View Details</Button>
+                        
                       </div>
                     </div>
                   </Card>

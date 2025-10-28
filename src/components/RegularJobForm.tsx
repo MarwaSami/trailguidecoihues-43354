@@ -28,7 +28,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
 // Base URL - Replace with your actual API base URL
-const baseURL = "http://127.0.0.1:8000/api/v1/";
+const baseURL = "https://long-nonciteable-rolf.ngrok-free.dev/api/v1/";
 
 // TypeScript interfaces
 export interface JobPosting {
