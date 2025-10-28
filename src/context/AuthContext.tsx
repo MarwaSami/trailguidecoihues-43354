@@ -17,8 +17,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-//export const baseURL = 'http://localhost:5224/api/v1/'; // Replace with your API base URL
-export const baseURL = 'http://localhost:8000/api/v1/'; // Replace with your API base URL
+//export const baseURL = 'http://localhost:5224/api/v1/'; 
+export const baseURL = 'http://localhost:8000/api/v1/'; 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
@@ -56,7 +56,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
       { email, password, username, user_type },
       { withCredentials: true }
     );
-        navigate('/login'); 
+        navigate('/Auth'); 
    toast({
       title: "Signup Sucessfullydone",
       description: "user is created",
