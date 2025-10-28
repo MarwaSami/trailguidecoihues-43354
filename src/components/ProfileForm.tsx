@@ -228,7 +228,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           }
         />
       </div>
-       <div className="space-y-2">
+       {/* <div className="space-y-2">
         <Label htmlFor="categories_of_expertise">categories_of_expertise </Label>
         <Input
           id="github_profile"
@@ -240,7 +240,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             })
           }
         />
-      </div>
+      </div> */}
       <Button type="submit" className="w-full" disabled={uploading}>
         {uploading ? (
           <Loader2 className="w-4 h-4 animate-spin mx-auto" />

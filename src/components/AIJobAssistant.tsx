@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -36,32 +35,23 @@ import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Define API base URL - replace with your actual backend URL
-const baseURL = "YOUR_BACKEND_URL";
+const baseURL = "https://long-nonciteable-rolf.ngrok-free.dev/api/v1/";
 
-// Get auth token from localStorage or your auth context
-const getAuthToken = () => {
-  return localStorage.getItem("authToken") || "";
-};
-
-// Define response interfaces
-interface AudioToTextResponse {
-  is_success: boolean;
-  text: string;
-  detail?: string;
-}
 
 export interface JobPosting {
-  title: string;
   category: string;
-  job_type: string;
-  location: string;
-  budget: number;
-  experience_level: string;
   duration: string;
-  description: string;
   required_skills: string[];
-  screening_questions: string;
-  client: number;
+
+  jobTitle: string,
+  description: string,
+  budget: number,
+  location: string,
+  jobType: string,
+  experienceLevel: string,
+  status: string,
+  requiredSkills: string,
+  qualifications: string
 }
 
 export interface JobPostingResponse {
@@ -72,31 +62,35 @@ export interface JobPostingResponse {
 
 interface ChatMessage {
   role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
+  message: string;
 }
 
 interface AIAssistResponse {
-  is_success: boolean;
-  message: string;
-  suggestions?: Partial<JobPosting>;
-  detail?: string;
+  data: {
+    history: ChatMessage[],
+    job: JobPosting
+  },
+  issuccess: Boolean,
+  errors: string[],
+
+
 }
 
 export const AIJobAssistant = () => {
   // Form state
   const [formData, setFormData] = useState<JobPosting>({
-    title: "",
+    jobTitle: "",
     category: "",
-    job_type: "",
+    jobType: "",
     location: "",
     budget: 0,
-    experience_level: "",
+    experienceLevel: "",
     duration: "",
     description: "",
     required_skills: [],
-    screening_questions: "",
-    client: 0, // Will be populated from auth context
+    status: "",
+    requiredSkills: "",
+    qualifications: ""
   });
 
   // Chat state
@@ -128,28 +122,31 @@ export const AIJobAssistant = () => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        
+
         toast({
           title: "Recording stopped",
           description: "Converting speech to text...",
         });
 
         try {
-          const transcribedText = await convertAudioToText(audioBlob);
+          // const transcribedText = await convertAudioToText(audioBlob);
+
+          //formData.append('file', audioBlob, 'recording.webm');
+
           // Send transcribed text as chat message
-          sendChatMessage(transcribedText);
+          sendChatMessage("", audioBlob);
           toast({
             title: "Success",
             description: "Voice input converted to text",
           });
         } catch (error) {
           toast({
-            title: "Error",
+            title: "Info",
             description: "Failed to process voice input",
             variant: "destructive",
           });
         }
-        
+
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -161,7 +158,7 @@ export const AIJobAssistant = () => {
       });
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Info",
         description: "Could not access microphone",
         variant: "destructive",
       });
@@ -172,38 +169,6 @@ export const AIJobAssistant = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-    }
-  };
-
-  const convertAudioToText = async (audioBlob: Blob): Promise<string> => {
-    try {
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.webm');
-      
-      const token = getAuthToken();
-      
-      const response = await axios.post<AudioToTextResponse>(
-        `${baseURL}/speechToText`,
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      if (!response.data.is_success) {
-        throw new Error(response.data.detail || 'Failed to convert audio to text');
-      }
-
-      return response.data.text;
-    } catch (error) {
-      console.error('Speech-to-text error:', error);
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.detail || 'Failed to process voice input');
-      }
-      throw error;
     }
   };
 
@@ -231,7 +196,7 @@ export const AIJobAssistant = () => {
 
   // Validation function
   const validateForm = (): boolean => {
-    if (!formData.title || formData.title.trim().length < 3) {
+    if (!formData.jobTitle || formData.jobTitle.trim().length < 3) {
       toast({
         title: "Validation Error",
         description: "Job title must be at least 3 characters long",
@@ -249,7 +214,7 @@ export const AIJobAssistant = () => {
       return false;
     }
 
-    if (!formData.job_type) {
+    if (!formData.jobType) {
       toast({
         title: "Validation Error",
         description: "Please select a job type",
@@ -267,7 +232,7 @@ export const AIJobAssistant = () => {
       return false;
     }
 
-    if (!formData.experience_level) {
+    if (!formData.experienceLevel) {
       toast({
         title: "Validation Error",
         description: "Please select an experience level",
@@ -298,73 +263,81 @@ export const AIJobAssistant = () => {
   };
 
   // Send chat message to AI assistant
-  const sendChatMessage = async (message: string) => {
-    if (!message.trim()) return;
+  const sendChatMessage = async (message?: string,audioBlob?:Blob ) => {
+    let isText= message.trim().length>0;
+    if (!isText && !audioBlob) return;
 
     // Add user message to chat
     const userMessage: ChatMessage = {
       role: "user",
-      content: message,
-      timestamp: new Date(),
+      message: message
     };
     setChatMessages(prev => [...prev, userMessage]);
     setChatInput("");
     setIsSendingMessage(true);
 
-    try {
-      const token = getAuthToken();
+    let formData = new FormData();
+    formData.append('promptText', message.trim());
+    formData.append('promptType', isText? '1': '2');
+    if (!isText) {
+      formData.append('promptAudio', audioBlob, 'recording.webm');
+    }
 
-      const response = await axios.post<AIAssistResponse>(
-        `${baseURL}/aiJobAssist`,
-        {
-          message: message.trim(),
-          current_form_data: formData,
-          conversation_history: chatMessages.map(m => ({ role: m.role, content: m.content })),
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+    formData.append('isDone', 'false');
+    chatMessages.forEach((m, index) => {
+      formData.append(`history[${index}][role]`, m.role);
+      formData.append(`history[${index}][message]`, m.message);
+    });
 
-      if (!response.data.is_success) {
-        throw new Error(response.data.detail || 'Failed to get AI response');
-      }
+    const response = await axios.post<AIAssistResponse>(
+      `http://localhost:5136/Job/POST`,
+      formData,
+      // {
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${token}`,
+      //   },
+      // }
+    );
+    
 
-      // Add assistant response to chat
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: response.data.message,
-        timestamp: new Date(),
-      };
-      setChatMessages(prev => [...prev, assistantMessage]);
-
-      // Apply AI suggestions to form if available
-      if (response.data.suggestions) {
-        setFormData(prev => ({ ...prev, ...response.data.suggestions }));
-        toast({
-          title: "Form Updated",
-          description: "AI suggestions applied to the form",
-        });
-      }
-
-      // Scroll to bottom
-      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-
-    } catch (error) {
-      console.error('Chat error:', error);
+    if (!response.data.issuccess) {
       toast({
-        title: "Error",
-        description: axios.isAxiosError(error)
-          ? error.response?.data?.detail || "Failed to send message"
-          : "An unexpected error occurred",
+        title: "Info",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
-      setIsSendingMessage(false);
     }
+    else {
+
+      setChatMessages(prev => response.data.data.history);
+      console.log(response.data);
+      
+
+      // Apply AI suggestions to form if available
+      if (response.data.data.job) {
+        if (response.data.data.job.jobTitle) {
+          response.data.data.job.required_skills =  response.data.data.job.requiredSkills.split(', ');
+          
+          setFormData(prev => ({ ...prev, ...response.data.data.job }));
+          toast({
+            title: "Form Updated",
+            description: "AI suggestions applied to the form",
+          });
+          
+        }
+      }
+    }
+
+
+
+    // Scroll to bottom
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+
+
+
+    setIsSendingMessage(false);
+
   };
 
   // Submit job posting
@@ -378,27 +351,39 @@ export const AIJobAssistant = () => {
     setIsSubmitting(true);
 
     try {
-      const token = getAuthToken();
+      const token = localStorage.getItem("token") || "";
+      const user = JSON.parse(localStorage.getItem("user") || "");
+      const list = formData.required_skills.map(s => ({ name: s }));
 
-      const response = await axios.post<JobPostingResponse>(
-        `${baseURL}/postJob`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    const response = await axios.post(
+      `${baseURL}jobs/jobs/`,
+      {
+        ...formData,
+        required_skills: list,
+        client:user.id,
+        status:"published",
+        experience_level: formData.experienceLevel,
+        job_type:formData.jobType,
+        title:formData.jobTitle
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      if (response.data.is_success) {
+      
+
+      if (response) {
         toast({
           title: "Success!",
           description: response.data.detail || "Job posting created successfully",
         });
       } else {
         toast({
-          title: "Error",
+          title: "Info",
           description: response.data.detail || "Failed to create job posting",
           variant: "destructive",
         });
@@ -406,7 +391,7 @@ export const AIJobAssistant = () => {
     } catch (error) {
       console.error("Error submitting job posting:", error);
       toast({
-        title: "Error",
+        title: "Info",
         description: axios.isAxiosError(error)
           ? error.response?.data?.detail || error.message
           : "An unexpected error occurred",
@@ -434,14 +419,14 @@ export const AIJobAssistant = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Job Title */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="flex items-center gap-2">
+            <label htmlFor="title" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
               Job Title *
-            </Label>
+            </label>
             <Input
               id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange("title", e.target.value)}
+              value={formData.jobTitle}
+              onChange={(e) => handleInputChange("jobTitle", e.target.value)}
               placeholder="e.g., Senior Full-Stack Developer"
               className="bg-background/50 backdrop-blur-sm"
               required
@@ -451,7 +436,7 @@ export const AIJobAssistant = () => {
           {/* Category & Job Type */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+              <label htmlFor="category">Category *</label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                 <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                   <SelectValue placeholder="Select category" />
@@ -461,17 +446,19 @@ export const AIJobAssistant = () => {
                   <SelectItem value="design">Design</SelectItem>
                   <SelectItem value="marketing">Marketing</SelectItem>
                   <SelectItem value="writing">Writing</SelectItem>
+                  <SelectItem value="others">Others</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">Job Type *</Label>
-              <Select value={formData.job_type} onValueChange={(value) => handleInputChange("job_type", value)}>
+              <label htmlFor="type">Job Type *</label>
+              <Select value={formData.jobType} onValueChange={(value) => handleInputChange("jobType", value)}>
                 <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Freelance">Freelancing</SelectItem>
                   <SelectItem value="fulltime">Full-time</SelectItem>
                   <SelectItem value="parttime">Part-time</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
@@ -484,10 +471,10 @@ export const AIJobAssistant = () => {
           {/* Location & Budget */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="location" className="flex items-center gap-2">
+              <label htmlFor="location" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Location
-              </Label>
+              </label>
               <Input
                 id="location"
                 value={formData.location}
@@ -498,10 +485,10 @@ export const AIJobAssistant = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="budget" className="flex items-center gap-2">
+              <label htmlFor="budget" className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
                 Budget *
-              </Label>
+              </label>
               <Input
                 id="budget"
                 type="number"
@@ -517,25 +504,25 @@ export const AIJobAssistant = () => {
           {/* Experience & Duration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="experience">Experience Level *</Label>
-              <Select value={formData.experience_level} onValueChange={(value) => handleInputChange("experience_level", value)}>
+              <label htmlFor="experience">Experience Level *</label>
+              <Select value={formData.experienceLevel} onValueChange={(value) => handleInputChange("experienceLevel", value)}>
                 <SelectTrigger className="bg-background/50 backdrop-blur-sm">
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="entry">Entry Level</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="senior">Senior</SelectItem>
-                  <SelectItem value="expert">Expert</SelectItem>
+                  <SelectItem value="Junior">Entry Level</SelectItem>
+                  <SelectItem value="Mid">Intermediate</SelectItem>
+                  <SelectItem value="Senior">Senior</SelectItem>
+                  <SelectItem value="Expert">Expert</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="duration" className="flex items-center gap-2">
+              <label htmlFor="duration" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 Duration
-              </Label>
+              </label>
               <Input
                 id="duration"
                 value={formData.duration}
@@ -548,7 +535,7 @@ export const AIJobAssistant = () => {
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Job Description *</Label>
+            <label htmlFor="description">Job Description *</label>
             <Textarea
               id="description"
               value={formData.description}
@@ -558,13 +545,25 @@ export const AIJobAssistant = () => {
               required
             />
           </div>
+          {/* Description */}
+          <div className="space-y-2">
+            <label htmlFor="description">Job Qualifications *</label>
+            <Textarea
+              id="description"
+              value={formData.qualifications}
+              onChange={(e) => handleInputChange("qualifications", e.target.value)}
+              placeholder="Add Qualifications..."
+              className="min-h-[120px] bg-background/50 backdrop-blur-sm"
+              required
+            />
+          </div>
 
           {/* Required Skills */}
           <div className="space-y-3">
-            <Label className="flex items-center gap-2">
+            <label className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Required Skills *
-            </Label>
+            </label>
 
             {/* Current Skills */}
             <div className="flex flex-wrap gap-2">
@@ -597,16 +596,7 @@ export const AIJobAssistant = () => {
             </div>
           </div>
 
-          {/* Screening Questions */}
-          <div className="space-y-2">
-            <Label>Screening Questions (Optional)</Label>
-            <Textarea
-              value={formData.screening_questions}
-              onChange={(e) => handleInputChange("screening_questions", e.target.value)}
-              placeholder="Add custom questions for applicants..."
-              className="min-h-[80px] bg-background/50 backdrop-blur-sm"
-            />
-          </div>
+
 
           {/* Submit Button */}
           <Button
@@ -668,7 +658,7 @@ export const AIJobAssistant = () => {
                     Choose a prompt below or ask your own question
                   </p>
                 </div>
-                
+
                 {/* Suggested Prompts Grid */}
                 <div className="grid gap-3">
                   {[
@@ -728,7 +718,7 @@ export const AIJobAssistant = () => {
                   ))}
                 </div>
 
-             
+
               </div>
             )}
 
@@ -739,19 +729,13 @@ export const AIJobAssistant = () => {
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  }`}
+                  className={`max-w-[80%] rounded-lg p-3 ${message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                    }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+                  <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+
                 </div>
               </div>
             ))}
@@ -785,14 +769,14 @@ export const AIJobAssistant = () => {
               onKeyPress={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  sendChatMessage(chatInput);
+                  sendChatMessage(chatInput,null);
                 }
               }}
               disabled={isSendingMessage}
             />
             <Button
               type="button"
-              onClick={() => sendChatMessage(chatInput)}
+              onClick={() => sendChatMessage(chatInput,null)}
               disabled={isSendingMessage || !chatInput.trim()}
               variant="default"
             >

@@ -12,9 +12,11 @@ import {
   XCircle,
   Eye,
   BarChart3,
-  Search
+  Search,
+  Target
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 
 const ClientDashboard = () => {
   const stats = [
@@ -83,10 +85,13 @@ const ClientDashboard = () => {
             <h1 className="text-4xl font-bold mb-2">Client Dashboard</h1>
             <p className="text-muted-foreground">Manage your jobs and find the perfect talent</p>
           </div>
-          <Button variant="hero" size="lg" className="gap-2">
-            <Plus className="w-5 h-5" />
-            Post New Job
-          </Button>
+
+           <Link to="/job-posting">
+            <Button variant="hero" size="lg" className="gap-2">
+              <Target className="w-5 h-5" />
+              Post New Job
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Grid */}

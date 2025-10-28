@@ -32,25 +32,25 @@ export const Navbar = () => {
               Home
             </Link>
             <Link
-              to="/skills"
+              to="/job-posting"
               className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/skills") ? "text-primary" : "text-foreground"
                 }`}
             >
-              Skills
-            </Link>
-            <Link
-              to="/client-dashboard"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/client-dashboard") ? "text-primary" : "text-foreground"
-                }`}
-            >
-              For Clients
+              Post Job
             </Link>
             <Link
               to="/freelancer-profile"
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/client-dashboard") ? "text-primary" : "text-foreground"
+                }`}
+            >
+              Add Profile
+            </Link>
+            <Link
+              to="/job-browse"
               className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/freelancer-profile") ? "text-primary" : "text-foreground"
                 }`}
             >
-              For Freelancers
+              Job Browsing
             </Link>
           </div>
 

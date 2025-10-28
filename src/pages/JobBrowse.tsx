@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
 import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const JobBrowse = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,6 +18,7 @@ const JobBrowse = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMatchScores, setSelectedMatchScores] = useState<number[]>([]);
   const { jobs, loading, error } = useJobs();
+  const navigate = useNavigate();
 
   const categories = ["Development", "Design", "Marketing", "Writing", "Data Science"];
   const jobTypes = ["Full-time", "Part-time", "Contract", "Remote"];
@@ -269,7 +271,17 @@ const JobBrowse = () => {
                           <Button variant="ghost" size="icon">
                             {/* <Bookmark className="w-5 h-5" /> */}
                            <div>
-                             <Star className="w-5 h-5" />Matched Score : {job.match_score}
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                             <Star className="w-5 h-5" />Matched Score : {Math.floor( job.match_score*100)}%
                              
                            </div>
 
@@ -297,9 +309,9 @@ const JobBrowse = () => {
                           </div>
                         </div>
 
-                        <p className="text-muted-foreground mb-4 leading-relaxed">
-                          {job.description}
-                        </p>
+                        {/* <p className="text-muted-foreground mb-4 leading-relaxed">
+                          {job.description.substring(0,10)}
+                        </p> */}
 
                         <div className="flex flex-wrap gap-2 mb-3">
                           {job.required_skills?.map((skill, idx) => (
@@ -322,7 +334,12 @@ const JobBrowse = () => {
                           <Send className="w-4 h-4" />
                           Apply Now
                         </Button>
-                        <Button variant="outline">View Details</Button>
+                        <Button 
+                          variant="hero" 
+                          className="gap-2"
+                          onClick={() => navigate("/job-proposal", { state: { job } })}
+                        ></Button>
+                        
                       </div>
                     </div>
                   </Card>
