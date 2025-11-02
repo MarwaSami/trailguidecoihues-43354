@@ -7,6 +7,8 @@
 
 const PYTHON_BACKEND_URL = import.meta.env.VITE_PYTHON_BACKEND_URL || 'http://localhost:8000/api';
 
+export const baseUrl = PYTHON_BACKEND_URL;
+
 export interface ProfileEvaluationResponse {
   success: boolean;
   score: number;

@@ -1,1 +1,7 @@
 project_id = "uwipbqbqhdlylvubzdto"
+
+[functions.profile-evaluation]
+verify_jwt = false
+
+[functions.realtime-interview]
+verify_jwt = false
