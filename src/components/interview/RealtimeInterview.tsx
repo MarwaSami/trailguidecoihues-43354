@@ -4,7 +4,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { AudioRecorder, encodeAudioForAPI, playAudioData, clearAudioQueue } from '@/utils/RealtimeInterview';
-import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff } from 'lucide-react';
+import { useMotionDetection } from '@/hooks/useMotionDetection';
+import { useAudioCapture } from '@/hooks/useAudioCapture';
+import { Mic, MicOff, Video, VideoOff, Phone, PhoneOff, Activity } from 'lucide-react';
 
 export function RealtimeInterview() {
   const { toast } = useToast();
@@ -19,6 +21,22 @@ export function RealtimeInterview() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoStreamRef = useRef<MediaStream | null>(null);
+
+  // Motion detection hook
+  const { motionDetected, motionLevel } = useMotionDetection({
+    videoRef,
+    isActive: isCameraOn,
+    threshold: 15,
+    interval: 500
+  });
+
+  // Audio capture hook for later API use
+  const {
+    isCapturing: isAudioCapturing,
+    startCapture: startAudioCapture,
+    stopCapture: stopAudioCapture,
+    exportAudioAsBase64
+  } = useAudioCapture();
 
   useEffect(() => {
     return () => {
@@ -207,6 +225,18 @@ export function RealtimeInterview() {
                   Recording
                 </Badge>
               )}
+              {isCameraOn && (
+                <Badge 
+                  className={`absolute bottom-4 left-4 ${
+                    motionDetected 
+                      ? 'bg-green-500/90 animate-pulse' 
+                      : 'bg-muted/90'
+                  }`}
+                >
+                  <Activity className="w-3 h-3 mr-1" />
+                  Motion: {motionLevel.toFixed(1)}%
+                </Badge>
+              )}
             </div>
           </div>
 
@@ -244,6 +274,28 @@ export function RealtimeInterview() {
                 {isRecording ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                 {isRecording ? "Mute" : "Unmute"}
               </Button>
+            )}
+
+            {/* Audio Capture for API */}
+            <Button
+              onClick={isAudioCapturing ? stopAudioCapture : startAudioCapture}
+              variant={isAudioCapturing ? "secondary" : "outline"}
+              className="gap-2"
+            >
+              <Activity className="w-4 h-4" />
+              {isAudioCapturing ? "Stop Audio Capture" : "Capture Audio for API"}
+            </Button>
+
+            {/* Motion Detection Info */}
+            {isCameraOn && (
+              <Card className="p-3 bg-background/60">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Motion Status:</span>
+                  <span className={`font-semibold ${motionDetected ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    {motionDetected ? 'Detected' : 'No Motion'}
+                  </span>
+                </div>
+              </Card>
             )}
           </div>
         </div>
