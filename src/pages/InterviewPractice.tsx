@@ -1,13 +1,85 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { InterviewProvider } from "@/context/InterviewContext";
+import { MockInterview } from "@/components/interview/MockInterview";
+import { useUser } from "@/hooks/use-user";
+// icons are imported in the consolidated lucide-react import below
+
+const skillCategories = [
+  'React',
+  'TypeScript',
+  'Node.js',
+  'Python',
+  'Database Design',
+  'System Architecture',
+  'API Development',
+  'Testing',
+];
+
+function InterviewSkillsComponent() {
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const { user } = useUser();
+  const navigate = useNavigate();
+
+  if (!user) {
+    navigate('/auth');
+    return null;
+  }
+
+  const toggleSkill = (skill: string) => {
+    setSelectedSkills((prev) =>
+      prev.includes(skill)
+        ? prev.filter((s) => s !== skill)
+        : [...prev, skill]
+    );
+  };
+
+  return (
+    <div>
+      <Navbar />
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-6">Mock Interview Practice</h1>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Select Skills to Test</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {skillCategories.map((skill) => (
+                <div key={skill} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={skill}
+                    checked={selectedSkills.includes(skill)}
+                    onCheckedChange={() => toggleSkill(skill)}
+                  />
+                  <Label htmlFor={skill}>{skill}</Label>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <div className="space-y-6">
+            {selectedSkills.length > 0 && (
+              <InterviewProvider>
+                <MockInterview
+                  freelancerId={user.id}
+                  selectedSkills={selectedSkills}
+                />
+              </InterviewProvider>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 import {
-  MessageSquare,
-  Mic,
-  MicOff,
   Video,
   VideoOff,
   Play,
@@ -19,10 +91,13 @@ import {
   Brain,
   CheckCircle,
   XCircle,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  Mic,
+  MicOff
 } from "lucide-react";
 
-const InterviewPractice = () => {
+export default function InterviewPractice() {
   const [isRecording, setIsRecording] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
@@ -292,4 +367,3 @@ const InterviewPractice = () => {
   );
 };
 
-export default InterviewPractice;
