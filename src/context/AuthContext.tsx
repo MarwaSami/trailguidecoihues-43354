@@ -1,9 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import axios from 'axios'; // Import axios for API calls
+import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
-import { ca } from 'date-fns/locale';
-import { log } from 'console';
-import { json } from 'stream/consumers';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {

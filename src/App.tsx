@@ -21,6 +21,7 @@ import { ProfileForm } from "./components/ProfileForm";
 import { ProfileformProvider } from "./context/ProfileContext";
 import { JobProvider } from "./context/JobContext";
 import JobProposal from "./pages/JobProposal";
+import ProctoringComponent from "./components/Proctoring";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 
                 {/* Freelancer Routes */}
+                <Route path="/test" element={<ProctoringComponent />} />
                 <Route path="/freelancer-dashboard" element={<FreelancerDashboard />} />
                 <Route path="/freelancer-profile" element={<FreelancerProfile />} />
                 <Route path="/job-browse" element={<JobBrowse />} />

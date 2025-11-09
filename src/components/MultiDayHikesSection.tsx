@@ -102,7 +102,7 @@ const MultiDayHikesSection: React.FC<MultiDayHikesSectionProps> = ({
               />
             ))}
           </div>
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <div className="mt-4 p-2 bg-gray-100 text-xs">
               <p>Debug - Bariloche multi-day hikes:</p>
               <p>Found Jakob Circuit (id=11): {hasJakobCircuit ? 'Yes' : 'No'}</p>
@@ -134,7 +134,7 @@ const MultiDayHikesSection: React.FC<MultiDayHikesSectionProps> = ({
               />
             ))}
           </div>
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <div className="mt-4 p-2 bg-gray-100 text-xs">
               <p>Debug - Pampa Linda trails:</p>
               <p>Total trails: {pampLindaHikes.length}</p>

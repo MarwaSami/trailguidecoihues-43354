@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import axios from "axios";
 import { baseURL } from "./AuthContext";
-import { log, profile } from "console";
-import { boolean } from "zod/v4";
 
 // Define the profile structure
 export interface Profile {
