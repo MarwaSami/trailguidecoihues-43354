@@ -37,8 +37,17 @@ const Auth = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (user && isLogin && user.user_type === 'freelancer') {
+      console.log("here")
       navigate('/freelancer-dashboard');
+    }
+    else if (user && isLogin && user.user_type === 'client') {
+
+      navigate('/client-dashboard');
+
+    }
+    else{
+      navigate('/auth');
     }
   }, [user, navigate]);
 
@@ -65,7 +74,7 @@ const Auth = () => {
 
         const { error } = await signIn(formData.email, formData.password);
         if (!error) {
-          navigate('/freelancer-dashboard');
+          //navigate('/freelancer-dashboard');
         }
       } else {
         const validation = signUpSchema.safeParse(formData);

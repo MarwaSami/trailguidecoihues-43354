@@ -53,9 +53,9 @@ const App = () => (
                 <Route path="/test" element={<InterviewProvider><InterviewPractice /></InterviewProvider>} />
                 <Route path="/freelancer-dashboard" element={<FreelancerDashboard />} />
                 <Route path="/freelancer-profile" element={<FreelancerProfile />} />
-            <Route path="/add-portfolio" element={<AddPortfolio />} />
-            <Route path="/view-portfolio" element={<ViewPortfolio />} />
-            <Route path="/chat" element={<Chat />} />
+                <Route path="/add-portfolio" element={<AddPortfolio />} />
+                <Route path="/view-portfolio" element={<ViewPortfolio />} />
+                <Route path="/chat" element={<Chat />} />
                 <Route path="/job-browse" element={<JobBrowse />} />
                 <Route path="/interview-practice" element={<InterviewProvider><InterviewPractice /></InterviewProvider>} />
                 <Route path="/interview-results" element={<InterviewProvider><InterviewResults /></InterviewProvider>} />

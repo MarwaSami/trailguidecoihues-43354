@@ -85,6 +85,7 @@ const JobProposal = () => {
     freelancer: 0,
   });
 
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [proposalId, setProposalId] = useState<number | null>(null);
@@ -100,25 +101,37 @@ const JobProposal = () => {
       try {
         const token = localStorage.getItem("token");
         
-        // Fetch freelancer profile
-        const profileResponse = await axios.get(
-          `${baseURL}jobs/freelancer-profiles/?user=${userData.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        // // Fetch freelancer profile
+        // const profileResponse = await axios.get(
+        //   `${baseURL}jobs/freelancer-profiles/?user=${userData.id}`,
+        //   {
+        //     headers: { Authorization: `Bearer ${token}` },
+        //   }
+        // );
         
-        if (profileResponse.data.results && profileResponse.data.results.length > 0) {
-          setFreelancerProfile(profileResponse.data.results[0]);
-        }
+        // if (profileResponse.data.results && profileResponse.data.results.length > 0) {
+        //   setFreelancerProfile(profileResponse.data.results[0]);
+        // }
 
         // Check for existing proposal
-        const proposalResponse = await axios.get(
-          `${baseURL}jobs/proposals/?job=${job.id}&freelancer=${userData.id}`,
+        console.log(job.id);
+        console.log(user.id);
+        const proposalResponse = await axios.post(
+          `${baseURL}jobs/proposals/`,
           {
             headers: { Authorization: `Bearer ${token}` },
+            body:{
+                cover_letter: "",
+                proposed_budget: "",
+                duration_in_days: "",
+                experience: "",
+                status: "pending",
+                job: job.id,
+                freelancer: user.id,
+            }
           }
         );
+        console.log(proposalResponse.data);
 
         if (proposalResponse.data.results && proposalResponse.data.results.length > 0) {
           const existingProposal = proposalResponse.data.results[0];

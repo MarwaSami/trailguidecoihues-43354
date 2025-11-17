@@ -117,6 +117,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
         title: "Signed out successfully",
         variant:"success"
       });
+      navigate('/auth');
     } catch (error: any) {
       toast({
         title: "Sign out failed",
