@@ -18,6 +18,8 @@ import {
   Calendar,
   Link as LinkIcon,
 } from "lucide-react";
+import axios from "axios";
+import { baseURL, useAuth } from "@/context/AuthContext";
 
 interface Job {
   id: number;
@@ -37,17 +39,24 @@ const JobProposal = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const {user}=useAuth();
   const job = location.state?.job as Job;
 
   const [formData, setFormData] = useState({
-    coverLetter: "",
-    proposedRate: "",
-    timeline: "",
-    experience: "",
-    portfolioLinks: "",
+    cover_letter: "",
+    proposed_budget: "",
+    availability: "",
+    status: "pending",
+    job: 0,
+    freelancer: 0,
+    ai_suggestion_score: 0,
+    ai_feedback: "",
+    // experience: "",
+    // portfolioLinks: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   if (!job) {
     return (
@@ -71,36 +80,137 @@ const JobProposal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.coverLetter || !formData.proposedRate || !formData.timeline) {
+
+    // Validation utility function for better maintainability
+    const validateProposalForm = (data: typeof formData) => {
+      const errors: string[] = [];
+
+      // Required fields with trimming for whitespace handling
+      if (!data.cover_letter?.trim()) {
+        errors.push("Cover letter is required.");
+      }
+
+      const proposedBudget = parseFloat(data.proposed_budget);
+      if (!data.proposed_budget?.trim() || isNaN(proposedBudget) || proposedBudget <= 0) {
+        errors.push("Please provide a valid positive proposed rate.");
+      }
+
+      if (!data.availability?.trim()) {
+        errors.push("Project timeline is required.");
+      }
+
+      return errors;
+    };
+
+    const validationErrors = validateProposalForm(formData);
+    if (validationErrors.length > 0) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
+        title: "Validation Error",
+        description: validationErrors.join(" "),
         variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
+    setFieldErrors({}); // Clear previous errors
 
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await axios.post(
+        `${baseURL}jobs/proposals/`,
+        {
+          cover_letter: formData.cover_letter,
+          proposed_budget: formData.proposed_budget,
+          availability: formData.availability,
+          status: formData.status,
+          job: job.id,
+          freelancer: JSON.parse(localStorage.getItem("user") || "{}").id,
+          ai_suggestion_score: formData.ai_suggestion_score,
+          ai_feedback: formData.ai_feedback,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
 
       toast({
         title: "Proposal Submitted!",
         description: "Your application has been sent to the client.",
       });
 
-      // Navigate back after success
+      // Navigate to My Proposals after success
       setTimeout(() => {
-        navigate("/job-browse");
+        navigate("/my-proposals");
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
+      let errorTitle = "Submission Failed";
+      let errorMessage = "An unexpected error occurred.";
+
+      if (error.response) {
+        if (error.response.status === 400) {
+          // Handle validation errors
+          const data = error.response.data;
+          if (typeof data === 'object' && data !== null) {
+            const fieldErrors: Record<string, string> = {};
+            let hasNonFieldErrors = false;
+
+            for (const [field, messages] of Object.entries(data)) {
+              if (field === 'non_field_errors') {
+                // Handle non-field errors (like unique constraints)
+                if (Array.isArray(messages)) {
+                  const errorMsg = messages.join(', ');
+                  if (errorMsg.includes('must make a unique set')) {
+                    errorMessage = "You have already submitted a proposal for this job.";
+                  } else {
+                    errorMessage = errorMsg;
+                  }
+                } else if (typeof messages === 'string') {
+                  errorMessage = messages;
+                }
+                hasNonFieldErrors = true;
+              } else if (Array.isArray(messages)) {
+                fieldErrors[field] = messages.join(', ');
+              } else if (typeof messages === 'string') {
+                fieldErrors[field] = messages;
+              }
+            }
+
+            setFieldErrors(fieldErrors);
+
+            if (hasNonFieldErrors) {
+              // Show toast for non-field errors
+              toast({
+                title: "Already Submitted",
+                description: errorMessage,
+                variant: "default",
+              });
+              return;
+            } else if (Object.keys(fieldErrors).length > 0) {
+              // Don't show toast for field errors, just set them
+              return;
+            } else {
+              errorMessage = data?.message || data?.detail || "Invalid request data.";
+            }
+          } else {
+            errorMessage = data?.message || data?.detail || "Invalid request data.";
+          }
+        } else {
+          // Other backend errors
+          errorMessage = error.response.data?.message || error.response.data?.detail || `Error ${error.response.status}: ${error.response.statusText}`;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = "Network error. Please check your connection.";
+      } else {
+        // Other error
+        errorMessage = error.message || errorMessage;
+      }
+
       toast({
-        title: "Submission Failed",
-        description: "Please try again later.",
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -113,6 +223,10 @@ const JobProposal = () => {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   console.log("JobProposal Rendered with job:", job);
@@ -202,19 +316,22 @@ const JobProposal = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Cover Letter */}
                 <div>
-                  <label htmlFor="coverLetter" className="flex items-center gap-2 mb-2">
+                  <label htmlFor="cover_letter" className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4" />
                     Cover Letter *
                   </label>
                   <Textarea
-                    id="coverLetter"
-                    name="coverLetter"
+                    id="cover_letter"
+                    name="cover_letter"
                     placeholder="Introduce yourself and explain why you're the perfect fit for this role..."
-                    value={formData.coverLetter}
+                    value={formData.cover_letter}
                     onChange={handleChange}
                     className="min-h-[200px] bg-background/50"
                     required
                   />
+                  {fieldErrors.cover_letter && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.cover_letter}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-2">
                     Tip: Highlight your relevant experience and how you can add value
                   </p>
@@ -222,73 +339,52 @@ const JobProposal = () => {
 
                 {/* Proposed Rate */}
                 <div>
-                  <label htmlFor="proposedRate" className="flex items-center gap-2 mb-2">
+                  <label htmlFor="proposed_budget" className="flex items-center gap-2 mb-2">
                     <DollarSign className="w-4 h-4" />
                     Your Proposed Rate (per hour) *
                   </label>
                   <Input
-                    id="proposedRate"
-                    name="proposedRate"
+                    id="proposed_budget"
+                    name="proposed_budget"
                     type="number"
                     placeholder="e.g., 85"
-                    value={formData.proposedRate}
+                    value={formData.proposed_budget}
                     onChange={handleChange}
                     className="bg-background/50"
                     required
                   />
+                  {fieldErrors.proposed_budget && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.proposed_budget}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-2">
                     Client's budget: {job.budget}
                   </p>
                 </div>
-
+                <div style={{ display: "none" }}>
+                  <input type="text"  name="freelancer" value={user.id} />
+                  <input type="text"  name="job" value={job.id} />
+                  <input type="text" name="status" value="pending" />
+                </div>
                 {/* Timeline */}
                 <div>
-                  <label htmlFor="timeline" className="flex items-center gap-2 mb-2">
+                  <label htmlFor="availability" className="flex items-center gap-2 mb-2">
                     <Calendar className="w-4 h-4" />
                     Project Timeline *
                   </label>
                   <Input
-                    id="timeline"
-                    name="timeline"
+                    id="availability"
+                    name="availability"
                     placeholder="e.g., I can start immediately and deliver within 4 weeks"
-                    value={formData.timeline}
+                    value={formData.availability}
                     onChange={handleChange}
                     className="bg-background/50"
                     required
                   />
+                  {fieldErrors.availability && (
+                    <p className="text-xs text-red-500 mt-1">{fieldErrors.availability}</p>
+                  )}
                 </div>
 
-                {/* Relevant Experience */}
-                <div>
-                  <label htmlFor="experience" className="flex items-center gap-2 mb-2">
-                    <Briefcase className="w-4 h-4" />
-                    Relevant Experience
-                  </label>
-                  <Textarea
-                    id="experience"
-                    name="experience"
-                    placeholder="Share specific projects or experience related to this job..."
-                    value={formData.experience}
-                    onChange={handleChange}
-                    className="min-h-[120px] bg-background/50"
-                  />
-                </div>
-
-                {/* Portfolio Links */}
-                <div>
-                  <label htmlFor="portfolioLinks" className="flex items-center gap-2 mb-2">
-                    <LinkIcon className="w-4 h-4" />
-                    Portfolio / Work Samples
-                  </label>
-                  <Textarea
-                    id="portfolioLinks"
-                    name="portfolioLinks"
-                    placeholder="Add links to your portfolio, GitHub, or relevant work samples (one per line)"
-                    value={formData.portfolioLinks}
-                    onChange={handleChange}
-                    className="min-h-[100px] bg-background/50"
-                  />
-                </div>
 
                 {/* Submit Button */}
                 <div className="pt-4 border-t border-border">
