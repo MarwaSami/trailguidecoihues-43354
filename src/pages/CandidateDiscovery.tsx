@@ -3,29 +3,25 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Search,
-  Filter,
   Target,
   MapPin,
   Briefcase,
   Star,
-  Award,
-  Eye,
   Mail,
   Download,
   Heart,
-  TrendingUp,
-  Users
+  CheckCircle,
+  Clock
 } from "lucide-react";
 
 const CandidateDiscovery = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [matchScore, setMatchScore] = useState([80]);
+  const [allPrepared, setAllPrepared] = useState(false);
+  const [candidatesData, setCandidatesData] = useState<Record<number, {
+    interviewed: boolean;
+    passingScore: number;
+  }>>({});
 
   const candidates = [
     {
@@ -75,8 +71,17 @@ const CandidateDiscovery = () => {
     },
   ];
 
-  const categories = ["Development", "Design", "Marketing", "Writing"];
-  const experienceLevels = ["Junior", "Intermediate", "Senior", "Expert"];
+  const handlePrepareAllCandidates = () => {
+    const newData: Record<number, { interviewed: boolean; passingScore: number }> = {};
+    candidates.forEach(candidate => {
+      newData[candidate.id] = {
+        interviewed: Math.random() > 0.5,
+        passingScore: Math.floor(Math.random() * 30) + 70
+      };
+    });
+    setCandidatesData(newData);
+    setAllPrepared(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,141 +99,41 @@ const CandidateDiscovery = () => {
               <Download className="w-4 h-4" />
               Export Results
             </Button>
-            <Button variant="hero" className="gap-2">
-              <Target className="w-4 h-4" />
-              AI Match
-            </Button>
+            {!allPrepared && (
+              <Button variant="hero" className="gap-2" onClick={handlePrepareAllCandidates}>
+                <Target className="w-4 h-4" />
+                Make Candidates Prepare for Interview
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Search Bar */}
-        <Card className="p-6 mb-8 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by name, skills, or title..."
-                className="pl-10 h-11 bg-background/50 backdrop-blur-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button variant="hero" className="gap-2">
-              <Search className="w-4 h-4" />
-              Search
-            </Button>
-          </div>
-        </Card>
-
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-lg">Filters</h3>
-                <Button variant="ghost" size="sm" className="text-xs">Clear</Button>
-              </div>
-
-              {/* Match Score */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3">Minimum Match Score</h4>
-                <div className="space-y-4">
-                  <Slider
-                    value={matchScore}
-                    onValueChange={setMatchScore}
-                    max={100}
-                    step={5}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">0%</span>
-                    <span className="font-bold text-primary">{matchScore[0]}%</span>
-                    <span className="text-muted-foreground">100%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Categories */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3">Category</h4>
-                <div className="space-y-3">
-                  {categories.map((category, idx) => (
-                    <div key={idx} className="flex items-center space-x-2">
-                      <Checkbox id={`cat-${idx}`} />
-                      <label htmlFor={`cat-${idx}`} className="text-sm cursor-pointer">
-                        {category}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Experience Level */}
-              <div className="mb-6">
-                <h4 className="font-medium mb-3">Experience Level</h4>
-                <div className="space-y-3">
-                  {experienceLevels.map((level, idx) => (
-                    <div key={idx} className="flex items-center space-x-2">
-                      <Checkbox id={`exp-${idx}`} />
-                      <label htmlFor={`exp-${idx}`} className="text-sm cursor-pointer">
-                        {level}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Availability */}
-              <div>
-                <h4 className="font-medium mb-3">Availability</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="avail-now" />
-                    <label htmlFor="avail-now" className="text-sm cursor-pointer">
-                      Available Now
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="avail-soon" />
-                    <label htmlFor="avail-soon" className="text-sm cursor-pointer">
-                      Within 2 Weeks
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </Card>
+        {/* Candidates List */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-muted-foreground">
+              <span className="font-bold text-foreground">{candidates.length} candidates</span> found
+              {allPrepared && <span className="ml-2 text-primary">• All prepared for interview</span>}
+            </p>
           </div>
 
-          {/* Candidates List */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-muted-foreground">
-                <span className="font-bold text-foreground">{candidates.length} candidates</span> found • Sorted by match
-              </p>
-              <Button variant="outline" size="sm" className="gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Best Match
-              </Button>
-            </div>
-
-            {candidates.map((candidate) => (
+          {candidates.map((candidate) => {
+            const prepData = candidatesData[candidate.id];
+            
+            return (
               <Card key={candidate.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* Avatar & Basic Info */}
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 flex-1">
                     <Avatar className="w-20 h-20">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-bold">
                         {candidate.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="text-xl font-bold mb-1">{candidate.name}</h3>
-                          <p className="text-muted-foreground">{candidate.title}</p>
-                        </div>
-                      </div>
+                      <h3 className="text-xl font-bold mb-1">{candidate.name}</h3>
+                      <p className="text-muted-foreground mb-3">{candidate.title}</p>
+                      
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
@@ -243,68 +148,83 @@ const CandidateDiscovery = () => {
                           {candidate.rating} ({candidate.reviews})
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Skills & Details */}
-                  <div className="flex-1">
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {candidate.skills.map((skill, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center gap-6 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Rate: </span>
-                        <span className="font-bold text-primary">{candidate.rate}</span>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {candidate.skills.map((skill, idx) => (
+                          <Badge key={idx} variant="secondary">
+                            {skill}
+                          </Badge>
+                        ))}
                       </div>
-                      <div>
-                        <Badge variant={candidate.availability === "Available" ? "default" : "secondary"}>
-                          {candidate.availability}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Eye className="w-4 h-4" />
-                        {candidate.profileViews} views
+                      
+                      <div className="flex items-center gap-6 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Rate: </span>
+                          <span className="font-bold text-primary">{candidate.rate}</span>
+                        </div>
+                        <div>
+                          <Badge variant={candidate.availability === "Available" ? "default" : "secondary"}>
+                            {candidate.availability}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Match & Actions */}
-                  <div className="flex flex-col items-end gap-3 lg:w-48">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                        {candidate.match}%
+                  {/* Interview Data & Actions */}
+                  <div className="flex flex-col gap-3 lg:w-64">
+                    {allPrepared && prepData ? (
+                      <>
+                        <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
+                          <div className="flex items-center gap-2 text-sm">
+                            {prepData.interviewed ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <span className="font-medium">Interviewed</span>
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="w-4 h-4 text-orange-500" />
+                                <span className="font-medium">Not Interviewed</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Passing Score: </span>
+                            <span className="font-bold text-primary">{prepData.passingScore}%</span>
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">AI Match: </span>
+                            <span className="font-bold text-accent">{candidate.match}%</span>
+                          </div>
+                        </div>
+                        <Button variant="hero" className="gap-2">
+                          <Mail className="w-4 h-4" />
+                          Contact
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="text-center p-4">
+                        <div className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                          {candidate.match}%
+                        </div>
+                        <p className="text-xs text-muted-foreground">AI Match</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">Match Score</p>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2 w-full">
-                      <Button variant="hero" className="gap-2">
-                        <Mail className="w-4 h-4" />
-                        Contact
-                      </Button>
-                      <Button variant="outline">
-                        View Profile
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Heart className={`w-5 h-5 ${candidate.saved ? 'fill-primary text-primary' : ''}`} />
-                      </Button>
-                    </div>
+                    )}
+                    <Button variant="ghost" size="icon" className="self-end">
+                      <Heart className={`w-5 h-5 ${candidate.saved ? 'fill-primary text-primary' : ''}`} />
+                    </Button>
                   </div>
                 </div>
               </Card>
-            ))}
+            );
+          })}
 
-            {/* Load More */}
-            <div className="text-center pt-8">
-              <Button variant="glass" size="lg">
-                Load More Candidates
-              </Button>
-            </div>
+          {/* Load More */}
+          <div className="text-center pt-8">
+            <Button variant="glass" size="lg">
+              Load More Candidates
+            </Button>
           </div>
         </div>
       </main>

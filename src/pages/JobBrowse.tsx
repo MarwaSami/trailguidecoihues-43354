@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
 import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { set } from "date-fns";
+
 
 const JobBrowse = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,12 +18,16 @@ const JobBrowse = () => {
   const [salaryRange, setSalaryRange] = useState([50]);
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedMatchScores, setSelectedMatchScores] = useState<number[]>([]);
+  const [selectedExpereincelevel, setSelectedExperiencelevel] = useState<string[]>([]);
+  const [minMatchScore, setMinMatchScore] = useState(0); // New: minimum match score
   const { jobs, loading, error } = useJobs();
   const navigate = useNavigate();
-
+  const experience_level = ["begineer", "intermediate", "Mid", "Expert"];
   const categories = ["Development", "Design", "Marketing", "Writing", "Data Science"];
-  const jobTypes = ["Full-time", "Part-time", "Contract", "Remote"];
+  const jobTypes = ["Fulltime", "Parttime", "Contract", "Freelance"];
+
+  // Helper to capitalize job type
+  const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
   // Filter and search logic
   const filteredJobs = jobs.filter((job) => {
@@ -35,8 +41,10 @@ const JobBrowse = () => {
     const matchesLocation =
       !locationQuery || job.location.toLowerCase().includes(locationQuery.toLowerCase());
 
+    // Case-insensitive job type filter
     const matchesJobType =
-      selectedJobTypes.length === 0 || selectedJobTypes.includes(job.job_type);
+      selectedJobTypes.length === 0 ||
+      selectedJobTypes.some((type) => type.toLowerCase() === String(job.job_type).toLowerCase());
 
     const matchesCategory =
       selectedCategories.length === 0 ||
@@ -45,28 +53,39 @@ const JobBrowse = () => {
           skill.toLowerCase().includes(cat.toLowerCase())
         )
       );
+  const matchesExperience_level =
+     selectedExpereincelevel.length === 0 ||
+      selectedExpereincelevel.some((exper) => exper.toLowerCase() === String(job.experience_level).toLowerCase());
 
-    // Salary comparison (budget is a number)
-    const matchesSalary = Number(job.budget) >= salaryRange[0];
 
-    return matchesSearch && matchesLocation && matchesJobType && matchesCategory && matchesSalary;
+    // Salary comparison - extract number from budget string if needed
+    const budgetValue = typeof job.budget === 'string' 
+      ? parseFloat(job.budget.replace(/[^0-9.]/g, '')) || 0
+      : Number(job.budget) || 0;
+    const matchesSalary = budgetValue >= salaryRange[0];
+
+    // Match score filter (exclude jobs below minMatchScore)
+    const matchesMinMatch = (typeof job.match_score === 'number' ? job.match_score * 100 : 0) >= minMatchScore;
+
+    return matchesSearch && matchesLocation && matchesJobType && matchesCategory&&matchesExperience_level && matchesSalary && matchesMinMatch;
   });
 
+  // Always store selected job types as lower case for consistency
   const toggleJobType = (type: string) => {
+    const typeLower = type.toLowerCase();
     setSelectedJobTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      prev.includes(typeLower) ? prev.filter((t) => t !== typeLower) : [...prev, typeLower]
     );
   };
-
+  const toggleExperience_level = (experiencelevel: string) => {
+    const typeLower = experiencelevel.toLowerCase();
+    setSelectedExperiencelevel((prev) =>
+      prev.includes(typeLower) ? prev.filter((t) => t !== typeLower) : [...prev, typeLower]
+    );
+  };
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) =>
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
-  };
-
-  const toggleMatchScore = (score: number) => {
-    setSelectedMatchScores((prev) =>
-      prev.includes(score) ? prev.filter((s) => s !== score) : [...prev, score]
     );
   };
 
@@ -76,7 +95,8 @@ const JobBrowse = () => {
     setSalaryRange([50]);
     setSelectedJobTypes([]);
     setSelectedCategories([]);
-    setSelectedMatchScores([]);
+    setMinMatchScore(0);
+    setSelectedExperiencelevel([]);
   };
 
   return (
@@ -141,17 +161,34 @@ const JobBrowse = () => {
                     <div key={idx} className="flex items-center space-x-2">
                       <Checkbox
                         id={`type-${idx}`}
-                        checked={selectedJobTypes.includes(type)}
+                        checked={selectedJobTypes.includes(type.toLowerCase())}
                         onCheckedChange={() => toggleJobType(type)}
                       />
                       <label htmlFor={`type-${idx}`} className="text-sm cursor-pointer">
-                        {type}
+                        {capitalize(type)}
                       </label>
                     </div>
                   ))}
                 </div>
               </div>
-
+                  {/* Experience Level */}
+              <div className="mb-6">
+                <h4 className="font-medium mb-3">Job Type</h4>
+                <div className="space-y-3">
+                  {experience_level.map((type, idx) => (
+                    <div key={idx} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`type-${idx}`}
+                        checked={selectedExpereincelevel.includes(type.toLowerCase())}
+                        onCheckedChange={() => toggleExperience_level(type)}
+                      />
+                      <label htmlFor={`type-${idx}`} className="text-sm cursor-pointer">
+                        {capitalize(type)}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
               {/* Categories */}
               <div className="mb-6">
                 <h4 className="font-medium mb-3">Category</h4>
@@ -184,22 +221,16 @@ const JobBrowse = () => {
                 </div>
               </div>
 
-              {/* Match Score */}
-              <div>
-                <h4 className="font-medium mb-3">Minimum Match</h4>
-                <div className="space-y-2">
-                  {[90, 80, 70].map((score) => (
-                    <div key={score} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`match-${score}`}
-                        checked={selectedMatchScores.includes(score)}
-                        onCheckedChange={() => toggleMatchScore(score)}
-                      />
-                      <label htmlFor={`match-${score}`} className="text-sm cursor-pointer">
-                        {score}%+ match
-                      </label>
-                    </div>
-                  ))}
+              {/* Match Score (Minimum) */}
+              <div className="mb-6">
+                <h4 className="font-medium mb-3">Minimum Match Score</h4>
+                <div className="space-y-4">
+                  <Slider value={[minMatchScore]} onValueChange={([v]) => setMinMatchScore(v)} max={100} step={5} />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">0%</span>
+                    <span className="font-bold text-primary">{minMatchScore}%</span>
+                    <span className="text-muted-foreground">100%</span>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -268,24 +299,20 @@ const JobBrowse = () => {
                             </div>
                             <p className="text-muted-foreground">Client Name: {job.client_name}</p>
                           </div>
-                          <Button variant="ghost" size="icon">
-                            {/* <Bookmark className="w-5 h-5" /> */}
-                           <div>
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                            <br />
-                             <Star className="w-5 h-5" />Matched Score : {Math.floor( job.match_score*100)}%
-                             
-                           </div>
-
-                          </Button>
+                          <div className="flex flex-col items-end gap-2">
+                            <Button variant="ghost" size="icon">
+                              <Bookmark className="w-5 h-5" />
+                            </Button>
+                            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-accent/10 px-3 py-2 rounded-lg">
+                              <Star className="w-5 h-5 text-primary fill-primary" />
+                              <div className="text-right">
+                                <div className="text-2xl font-bold text-primary">
+                                  {Math.floor(job.match_score * 100)}%
+                                </div>
+                                <div className="text-xs text-muted-foreground">Match</div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
@@ -295,12 +322,14 @@ const JobBrowse = () => {
                           </div>
                           <div className="flex items-center gap-1">
                             <Briefcase className="w-4 h-4" />
-                            {job.job_type}
+                            {capitalize(String(job.job_type))}
                           </div>
                           <div className="flex items-center gap-1">
                             <DollarSign className="w-4 h-4" />
                             <span className="font-bold text-primary">
-                              ${job.budget.toLocaleString()}
+                              {typeof job.budget === 'string' 
+                                ? job.budget 
+                                : `$${Number(job.budget).toLocaleString()}`}
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -330,15 +359,17 @@ const JobBrowse = () => {
                       </div>
 
                       <div className="flex flex-col gap-3 lg:w-48">
-                        <Button variant="hero" className="gap-2">
-                          <Send className="w-4 h-4" />
-                          Apply Now
-                        </Button>
                         <Button 
                           variant="hero" 
                           className="gap-2"
                           onClick={() => navigate("/job-proposal", { state: { job } })}
-                        ></Button>
+                        >
+                          <Send className="w-4 h-4" />
+                          Apply Now
+                        </Button>
+                        <Button variant="outline">
+                          <Bookmark className="w-4 h-4" />
+                        </Button>
                         
                       </div>
                     </div>

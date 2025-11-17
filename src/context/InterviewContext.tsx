@@ -17,6 +17,10 @@ interface InterviewSession {
   answers: Record<string, string>;
   feedback: Record<string, string>;
   overallScore?: number;
+  confidenceScore?: number;
+  technicalScore?: number;
+  transcript: { role: 'user' | 'ai'; text: string; timestamp: Date }[];
+  audioResponses: string[];
   status: 'pending' | 'in-progress' | 'completed';
 }
 
@@ -24,6 +28,8 @@ interface InterviewContextType {
   currentSession: InterviewSession | null;
   startInterview: (freelancerId: string, skillCategories: string[]) => Promise<void>;
   submitAnswer: (questionId: string, answer: string) => Promise<void>;
+  submitAudioAnswer: (audioBlob: Blob) => Promise<void>;
+  sendTextMessage: (text: string) => Promise<void>;
   endInterview: () => Promise<void>;
   loading: boolean;
   error: string | null;
@@ -59,6 +65,8 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
         currentQuestionIndex: 0,
         answers: {},
         feedback: {},
+        transcript: [],
+        audioResponses: [],
         status: 'in-progress',
       };
 
@@ -95,6 +103,77 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const submitAudioAnswer = async (audioBlob: Blob) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (!currentSession) {
+        throw new Error('No active interview session');
+      }
+
+      // TODO: Call backend API to send audio and receive AI response
+      const formData = new FormData();
+      formData.append('audio', audioBlob);
+      formData.append('sessionId', currentSession.id);
+
+      // Mock response
+      const aiResponse = {
+        text: "Thank you for your response. Can you elaborate more on that?",
+        audio: "", // Base64 audio from backend
+      };
+
+      setCurrentSession((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          transcript: [
+            ...prev.transcript,
+            { role: 'user', text: '[Audio Response]', timestamp: new Date() },
+            { role: 'ai', text: aiResponse.text, timestamp: new Date() }
+          ],
+        };
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit audio');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendTextMessage = async (text: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (!currentSession) {
+        throw new Error('No active interview session');
+      }
+
+      // TODO: Call backend API to send text and receive AI response
+      const aiResponse = {
+        text: "I understand. Let me ask you another question...",
+        audio: "", // Optional audio response
+      };
+
+      setCurrentSession((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          transcript: [
+            ...prev.transcript,
+            { role: 'user', text, timestamp: new Date() },
+            { role: 'ai', text: aiResponse.text, timestamp: new Date() }
+          ],
+        };
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const endInterview = async () => {
     try {
       setLoading(true);
@@ -111,7 +190,9 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
           ...prev,
           endTime: new Date(),
           status: 'completed',
-          overallScore: 85, // Mock score
+          overallScore: 85,
+          confidenceScore: 20,
+          technicalScore: 80,
         };
       });
     } catch (err) {
@@ -127,6 +208,8 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
         currentSession,
         startInterview,
         submitAnswer,
+        submitAudioAnswer,
+        sendTextMessage,
         endInterview,
         loading,
         error,

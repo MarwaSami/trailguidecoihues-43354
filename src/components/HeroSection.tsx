@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Play } from "lucide-react";
-
+import { Link } from "react-router-dom";
 const HeroSection =() => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-subtle overflow-hidden">
@@ -46,14 +46,18 @@ const HeroSection =() => {
             
             {/* CTA buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Link to="/Auth">
               <Button variant="default" size="lg" className="group">
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
+              </Link>
               
+              <Link to="/skills">
               <Button variant="outline" size="lg" className="group">
                 Explore Skills
               </Button>
+              </Link>
             </div>
             
             <div className="flex items-center space-x-6 pt-4 text-sm text-muted-foreground">

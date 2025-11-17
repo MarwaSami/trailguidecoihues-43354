@@ -24,12 +24,12 @@ interface Job {
   title: string;
   company: string;
   location: string;
-  type: string;
-  salary: string;
-  match: number;
-  posted: string;
+  job_type: string;
+  budget: string;
+  match_score: number;
+  created_at: string;
   description: string;
-  tags: string[];
+  skills: string[];
   applicants: number;
 }
 
@@ -115,6 +115,7 @@ const JobProposal = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  console.log("JobProposal Rendered with job:", job);
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -146,7 +147,7 @@ const JobProposal = () => {
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="text-2xl font-bold">{job.title}</h2>
                   <div className="px-2 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold">
-                    {job.match}% Match
+                    {(job.match_score * 100).toFixed(0)}% Match
                   </div>
                 </div>
                 <p className="text-lg text-muted-foreground mb-4">{job.company}</p>
@@ -159,15 +160,15 @@ const JobProposal = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Briefcase className="w-4 h-4 text-muted-foreground" />
-                  <span>{job.type}</span>
+                  <span>{job.job_type}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-bold text-primary">{job.salary}</span>
+                  <span className="font-bold text-primary">{job.budget}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{job.posted}</span>
+                  <span>{job.created_at.split("T")[0]}</span>
                 </div>
               </div>
 
@@ -181,7 +182,7 @@ const JobProposal = () => {
               <div className="border-t border-border pt-4">
                 <h3 className="font-bold mb-3">Required Skills</h3>
                 <div className="flex flex-wrap gap-2">
-                  {job.tags.map((tag, idx) => (
+                  {(job.skills || []).map((tag, idx) => (
                     <Badge key={idx} variant="secondary">
                       {tag}
                     </Badge>
@@ -236,7 +237,7 @@ const JobProposal = () => {
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Client's budget: {job.salary}
+                    Client's budget: {job.budget}
                   </p>
                 </div>
 

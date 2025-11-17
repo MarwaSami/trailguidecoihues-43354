@@ -1,10 +1,15 @@
 // src/components/Proctoring.tsx
 import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import * as tf from "@tensorflow/tfjs";
 import * as blazeface from "@tensorflow-models/blazeface";
 import * as handpose from "@tensorflow-models/handpose";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import toast from "react-hot-toast";
+import { useInterview } from "@/context/InterviewContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mic, MicOff, Eye, Play } from "lucide-react";
 
 type Models = {
   face: Awaited<ReturnType<typeof blazeface.load>> | null;
@@ -16,9 +21,12 @@ type ChatMessage = {
   id: string;
   sender: "user" | "ai";
   audioUrl: string;
+  text: string; // Transcribed text (shows in chat)
 };
 
-export default function Proctoring() {
+export default function OldProctoring() {
+  const navigate = useNavigate();
+  const { currentSession, startInterview, submitAudioAnswer, sendTextMessage, endInterview } = useInterview();
   const backendEndpoint = "https://localhost:7153/api/proctor";
   const chatEndpoint = "https://localhost:7153/api/chat";
 
@@ -37,6 +45,41 @@ export default function Proctoring() {
   const [violationCount, setViolationCount] = useState(0);
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+
+  const unlockAudio = async () => {
+    if (audioUnlocked) return;
+
+    try {
+      // Create a silent audio to unlock
+      const silentAudio = new Audio();
+      silentAudio.muted = true;
+      silentAudio.volume = 0;
+      await silentAudio.play();
+      setAudioUnlocked(true);
+      toast.success("Audio enabled");
+    } catch (err) {
+      console.warn("Audio unlock failed:", err);
+    }
+  };
+
+  const playAudio = async (audioUrl: string) => {
+    try {
+      // Unlock audio if not already done
+      if (!audioUnlocked) {
+        await unlockAudio();
+      }
+
+      const audio = new Audio(audioUrl);
+      audio.volume = 1; // Ensure volume is up
+      await audio.play();
+      toast.success("Playing AI audio");
+    } catch (err) {
+      console.warn("Audio play failed:", err);
+      toast.error("Audio still blocked. Try clicking anywhere on the page first, then the play button.");
+    }
+  };
+
 
   /* ------------------- TensorFlow models ------------------- */
   useEffect(() => {
@@ -51,6 +94,7 @@ export default function Proctoring() {
     })();
   }, []);
 
+
   /* ------------------- Camera / Mic start ------------------- */
   const startCam = async () => {
     try {
@@ -58,18 +102,13 @@ export default function Proctoring() {
       setInterviewStopped(false);
 
       if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("Media devices not supported in this browser");
+        throw new Error("Media devices not supported");
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user", frameRate: { ideal: 30 } },
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 44100 },
       });
-
-      const videoTrack = stream.getVideoTracks()[0];
-      const audioTrack = stream.getAudioTracks()[0];
-      if (!videoTrack) throw new Error("No video track");
-      if (!audioTrack) throw new Error("No audio track");
 
       streamRef.current = stream;
       if (videoRef.current) {
@@ -79,13 +118,10 @@ export default function Proctoring() {
         toast.success("Camera & mic ready");
       }
     } catch (e: any) {
-      console.error(e);
       const msg = e.name === "NotAllowedError"
         ? "Permission denied – allow camera/mic"
         : e.name === "NotFoundError"
         ? "Camera/mic not found"
-        : e.name === "NotReadableError"
-        ? "Device already in use"
         : e.message || "Failed to start media";
       setError(msg);
       toast.error(msg);
@@ -104,68 +140,87 @@ export default function Proctoring() {
     setIsRecording(false);
     chunksRef.current = [];
   };
-const toggleMic = async () => {
-  if (!streamRef.current || interviewStopped) return;
 
-  if (isRecording) {
-    recorderRef.current?.stop();
-    setIsRecording(false);
-    return;
-  }
+  const toggleMic = async () => {
+    if (!streamRef.current || interviewStopped) return;
 
-  // ---- start recording -------------------------------------------------
-  chunksRef.current = [];
-  const audioTracks = streamRef.current.getAudioTracks();
-  if (!audioTracks.length) {
-    toast.error("No microphone");
-    return;
-  }
-
-  // Choose best supported MIME (webm with opus is ideal)
-  const mime = ["audio/webm;codecs=opus", "audio/webm"].find(t => MediaRecorder.isTypeSupported(t)) ?? "audio/webm";
-
-  const rec = new MediaRecorder(new MediaStream(audioTracks), { mimeType: mime });
-  rec.ondataavailable = e => e.data.size && chunksRef.current.push(e.data);
-
-  rec.onstop = async () => {
-    // 1. USER AUDIO (recorded locally) – always works
-    const userBlob = new Blob(chunksRef.current, { type: mime });
-    const userUrl = URL.createObjectURL(userBlob);
-    setChat(c => [...c, { id: Date.now().toString(), sender: "user", audioUrl: userUrl }]);
-
-    // 2. SEND TO BACKEND
-    setIsSending(true);
-    try {
-      const res = await fetch(chatEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": mime },
-        body: userBlob,
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt}`);
-      }
-
-      // 3. AI AUDIO (echo from server) – FORCE correct MIME
-      const aiBlob = await res.blob();
-      const fixedAiBlob = new Blob([aiBlob], { type: "audio/webm" }); // <-- critical
-      const aiUrl = URL.createObjectURL(fixedAiBlob);
-
-      setChat(c => [...c, { id: (Date.now() + 1).toString(), sender: "ai", audioUrl: aiUrl }]);
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Echo failed: " + err.message);
-    } finally {
-      setIsSending(false);
+    if (isRecording) {
+      recorderRef.current?.stop();
+      setIsRecording(false);
+      return;
     }
-  };
 
-  recorderRef.current = rec;
-  rec.start(1000); // collect every second
-  setIsRecording(true);
-  toast.success("Recording…");
-};
+    chunksRef.current = [];
+    const audioTracks = streamRef.current.getAudioTracks();
+    if (!audioTracks.length) {
+      toast.error("No microphone");
+      return;
+    }
+
+    const mime = ["audio/webm;codecs=opus", "audio/webm"].find(t => MediaRecorder.isTypeSupported(t)) ?? "audio/webm";
+
+    const rec = new MediaRecorder(new MediaStream(audioTracks), { mimeType: mime });
+    rec.ondataavailable = e => e.data.size && chunksRef.current.push(e.data);
+
+    rec.onstop = async () => {
+      const userBlob = new Blob(chunksRef.current, { type: mime });
+
+
+      setIsSending(true);
+      try {
+        const formData = new FormData();
+        formData.append('audio', userBlob, 'audio.webm');
+
+        const res = await fetch(chatEndpoint, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        // Parse backend response: { File, SenderScript, ReceviedScript }
+        const data = await res.json();
+        
+        // Get audio file from response
+        const audioBlob = await (await fetch(data.File)).blob();
+        const aiAudioUrl = URL.createObjectURL(audioBlob);
+
+        // AI audio URL is set, will be played via UI button
+
+        // Add to context
+        if (currentSession) {
+          await sendTextMessage(data.SenderScript);
+        }
+
+        // Add messages to chat - text only
+        setChat(c => [...c,
+          {
+            id: Date.now().toString(),
+            sender: "user",
+            audioUrl: "",
+            text: data.SenderScript
+          },
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "ai",
+            audioUrl: aiAudioUrl,
+            text: data.ReceviedScript
+          }
+        ]);
+
+      } catch (err: any) {
+        console.error("Chat error:", err);
+        toast.error("Failed to process audio: " + err.message);
+      } finally {
+        setIsSending(false);
+      }
+    };
+
+    recorderRef.current = rec;
+    rec.start(1000);
+    setIsRecording(true);
+    toast.success("Recording…");
+  };
 
   /* ------------------- Violation handling ------------------- */
   const triggerViolation = (msg: string, color: "red" | "blue") => {
@@ -204,7 +259,6 @@ const toggleMic = async () => {
     canvas.height = video.videoHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // face
     if (models.face) {
       const faces = await models.face.estimateFaces(video, false);
       faces.forEach((f: any, i: number) => {
@@ -221,7 +275,6 @@ const toggleMic = async () => {
       if (faces.length === 0) { triggerViolation("No face visible", "red"); return; }
     }
 
-    // hand (no violation)
     if (models.hand) {
       const hands = await models.hand.estimateHands(video);
       hands.forEach((h: any, i: number) => {
@@ -234,7 +287,6 @@ const toggleMic = async () => {
       });
     }
 
-    // object
     if (models.object) {
       const objs = await models.object.detect(video);
       for (const o of objs) {
@@ -264,111 +316,231 @@ const toggleMic = async () => {
 
   /* ------------------- UI ------------------- */
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-gray-100 rounded-xl shadow-2xl">
-      <h1 className="text-3xl font-bold text-center mb-6 text-blue-700">Proctoring Live</h1>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left Column: Camera and Violation Log */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Camera Card */}
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Live Camera Feed
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="relative bg-black rounded-lg overflow-hidden shadow-2xl">
+              <video ref={videoRef} className="w-full aspect-video object-cover" playsInline autoPlay muted />
+              <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
 
-      <div className="relative bg-black rounded-lg overflow-hidden mb-6">
-        <video ref={videoRef} className="w-full" playsInline autoPlay muted />
-        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
+              {isRecording && (
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full animate-pulse shadow-lg">
+                  <span className="w-3 h-3 bg-white rounded-full animate-ping"></span>
+                  <span className="font-semibold">RECORDING</span>
+                </div>
+              )}
 
-        {isRecording && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full animate-pulse">
-            <span className="w-3 h-3 bg-white rounded-full animate-ping"></span>
-            REC
-          </div>
-        )}
+              {interviewStopped && (
+                <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 bg-opacity-95 flex items-center justify-center text-white text-center p-6">
+                  <div className="space-y-4">
+                    <h2 className="text-3xl font-bold">Interview Terminated</h2>
+                    <p className="text-lg">Violation: {events[events.length - 1]}</p>
+                    {violationCount < 2 && (
+                      <Button onClick={startCam} variant="secondary" size="lg">
+                        Retry (1 left)
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
 
-        {interviewStopped && (
-          <div className="absolute inset-0 bg-red-600 bg-opacity-95 flex items-center justify-center text-white text-center p-6">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Interview Terminated</h2>
-              <p className="text-lg mb-4">Violation: {events[events.length - 1]}</p>
-              {violationCount < 2 && (
-                <button onClick={startCam} className="px-6 py-2 bg-white text-red-600 rounded-full font-bold">
-                  Retry (1 left)
-                </button>
+              {error && !interviewStopped && (
+                <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 bg-opacity-90 flex items-center justify-center text-white text-center p-4">
+                  <div className="space-y-4">
+                    <p className="text-2xl font-bold">Error</p>
+                    <p>{error}</p>
+                    <Button onClick={startCam} variant="secondary" className="mt-4">
+                      Retry
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-        )}
 
-        {error && !interviewStopped && (
-          <div className="absolute inset-0 bg-red-600 bg-opacity-90 flex items-center justify-center text-white text-center p-4">
-            <div>
-              <p className="text-2xl font-bold">Error</p>
-              <p>{error}</p>
-              <button onClick={startCam} className="mt-4 px-6 py-2 bg-white text-red-600 rounded-full font-bold">
-                Retry
-              </button>
+            {/* Control Buttons */}
+            <div className="flex justify-center gap-4 mt-6">
+              <Button
+                onClick={async () => {
+                  if (camReady && !interviewStopped) {
+                    await endInterview();
+                    stopCam();
+                  } else {
+                    startCam();
+                    if (!currentSession) {
+                      await startInterview("freelancer-1", ["React", "TypeScript"]);
+                    }
+                  }
+                }}
+                disabled={interviewStopped && violationCount >= 2}
+                variant={camReady ? "destructive" : "default"}
+                size="lg"
+                className="min-w-[150px] font-semibold"
+              >
+                {interviewStopped && violationCount >= 2 
+                  ? "No Retries Left" 
+                  : camReady 
+                    ? "End Interview" 
+                    : "Start Interview"}
+              </Button>
+
+              <Button
+                onClick={toggleMic}
+                disabled={!camReady || interviewStopped || isSending}
+                variant={isRecording ? "destructive" : "default"}
+                size="lg"
+                className="gap-2 min-w-[120px] font-semibold"
+              >
+                {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                {isSending ? "Processing..." : isRecording ? "Stop" : "Speak"}
+              </Button>
+
+              <Button
+                onClick={() => navigate("/interview-results")}
+                disabled={!currentSession || currentSession.status !== 'completed'}
+                variant="outline"
+                size="lg"
+                className="min-w-[150px] font-semibold"
+              >
+                View Results
+              </Button>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+
+        {/* Violation Log */}
+        <Card className="border-destructive/20 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-destructive/5 to-destructive/10">
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <span className="text-xl">⚠️</span>
+              Violation Log
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="max-h-32 overflow-y-auto space-y-2">
+              {events.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No violations detected</p>
+              ) : (
+                <ul className="space-y-2">
+                  {events.map((e, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <span className="text-destructive mt-0.5">•</span>
+                      <span className="text-destructive font-medium flex-1">{e}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="flex justify-center gap-6 mb-6">
-        <button
-          onClick={camReady && !interviewStopped ? stopCam : startCam}
-          disabled={interviewStopped && violationCount >= 2}
-          className={`px-8 py-3 rounded-full font-bold transition ${
-            interviewStopped && violationCount >= 2
-              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-              : camReady
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
-          }`}
-        >
-          {interviewStopped && violationCount >= 2 ? "No Retries Left" : camReady ? "Stop Camera" : "Start Interview"}
-        </button>
-
-        <button
-          onClick={toggleMic}
-          disabled={!camReady || interviewStopped || isSending}
-          className={`px-8 py-3 rounded-full font-bold flex items-center gap-2 transition ${
-            !camReady || interviewStopped || isSending
-              ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-              : isRecording
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-green-600 hover:bg-green-700 text-white"
-          }`}
-        >
-          {isSending ? "Sending..." : isRecording ? "Stop Mic" : "Speak"}
-        </button>
-      </div>
-
-      <div className="bg-white p-4 rounded-lg shadow mb-6 max-h-64 overflow-y-auto">
-        <h3 className="font-bold mb-3 text-blue-700">Audio Chat</h3>
-        {chat.length === 0 ? (
-          <p className="text-gray-500 text-sm">Say something to start...</p>
-        ) : (
-          <div className="space-y-3">
-            {chat.map(msg => (
-              <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-xs p-3 rounded-lg ${msg.sender === "user" ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
-                  <audio
-                    controls
-                    src={msg.audioUrl}
-                    className="w-full h-8"
-                    preload="auto"
-                    onError={e => console.error("Play error:", e)}
-                  />
+      {/* Right Column: Transcript */}
+      <div className="lg:col-span-1">
+        <Card className="h-full shadow-lg border-primary/20">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-xl">💬</span>
+              Interview Transcript
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
+              
+              {!currentSession || (currentSession.transcript.length === 0 && chat.length === 0) ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground text-sm">Interview transcript will appear here...</p>
+                  <p className="text-xs text-muted-foreground mt-2">Click "Speak" to start conversing</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ) : (
+                <>
+                  {currentSession?.transcript.map((entry, index) => (
+                    <div
+                      key={`session-${index}`}
+                      className={`p-4 rounded-xl shadow-sm transition-all hover:shadow-md ${
+                        entry.role === 'user'
+                          ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-foreground ml-4'
+                          : 'bg-gradient-to-r from-muted to-muted/50 text-foreground mr-4'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">
+                          {entry.role === 'user' ? '👤' : '🤖'}
+                        </span>
+                        <p className="text-xs font-bold uppercase tracking-wide">
+                          {entry.role === 'user' ? 'You' : 'AI Interviewer'}
+                        </p>
+                      </div>
+                      <p className="text-sm leading-relaxed">{entry.text}</p>
+                    </div>
+                  ))}
 
-      <div className="bg-white p-4 rounded-lg shadow max-h-48 overflow-y-auto">
-        <h3 className="font-bold mb-2 text-red-600">Violation Log</h3>
-        {events.length === 0 ? (
-          <p className="text-gray-500">No violations</p>
-        ) : (
-          <ul className="space-y-1 text-sm">
-            {events.map((e, i) => (
-              <li key={i} className="text-red-600 font-medium">• {e}</li>
-            ))}
-          </ul>
-        )}
+                  {/* Show chat messages */}
+                  {chat.map(msg => (
+                    <div
+                      key={msg.id}
+                      className={`p-4 rounded-xl shadow-sm transition-all hover:shadow-md ${
+                        msg.sender === "user"
+                          ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-foreground ml-4'
+                          : 'bg-gradient-to-r from-muted to-muted/50 text-foreground mr-4'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">
+                          {msg.sender === 'user' ? '👤' : '🤖'}
+                        </span>
+                        <p className="text-xs font-bold uppercase tracking-wide">
+                          {msg.sender === 'user' ? 'You' : 'AI Interviewer'}
+                        </p>
+                        {msg.sender === 'ai' && msg.audioUrl && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              try {
+                                const audio = new Audio(msg.audioUrl);
+                                await audio.play();
+                                toast.success("Playing AI audio");
+                              } catch (err) {
+                                console.warn("Direct play failed:", err);
+                                // Fallback: try to unlock first
+                                try {
+                                  const silentAudio = new Audio();
+                                  silentAudio.muted = true;
+                                  silentAudio.volume = 0;
+                                  await silentAudio.play();
+                                  // Now try again
+                                  const audio2 = new Audio(msg.audioUrl);
+                                  await audio2.play();
+                                  toast.success("Playing AI audio");
+                                } catch (err2) {
+                                  console.warn("Fallback play failed:", err2);
+                                  toast.error("Audio blocked. Click anywhere on the page to enable audio.");
+                                }
+                              }
+                            }}
+                            className="h-6 w-6 p-0 ml-auto"
+                          >
+                            <Play className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed">{msg.text}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

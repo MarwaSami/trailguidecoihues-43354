@@ -7,7 +7,9 @@ import { useAuth } from "@/context/AuthContext";
 export const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, token,signOut } = useAuth();
+  const { user, token, signOut } = useAuth();
+  //console.log(user?.user_type);
+  const isfreelancer = user?.user_type == "freelancer";
   const isActive = (path: string) => location.pathname === path;
   const isloggedin = token != null;
   return (
@@ -31,27 +33,52 @@ export const Navbar = () => {
             >
               Home
             </Link>
-            <Link
-              to="/job-posting"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/skills") ? "text-primary" : "text-foreground"
-                }`}
-            >
-              Post Job
-            </Link>
-            <Link
-              to="/freelancer-profile"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/client-dashboard") ? "text-primary" : "text-foreground"
-                }`}
-            >
-              Add Profile
-            </Link>
-            <Link
-              to="/job-browse"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/freelancer-profile") ? "text-primary" : "text-foreground"
-                }`}
-            >
-              Job Browsing
-            </Link>
+            {isfreelancer  ? (
+              <>
+                <Link
+                  to="/freelancer-profile"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/freelancer-profile") ? "text-primary" : "text-foreground"
+                    }`}
+                >
+                   Profile
+                </Link>
+                <Link
+                  to="/add-portfolio"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/add-portfolio") ? "text-primary" : "text-foreground"
+                    }`}
+                >
+                   Portfolio
+                </Link>
+                <Link
+                  to="/job-browse"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/job-browse") ? "text-primary" : "text-foreground"
+                    }`}
+                >
+                  Job Browsing
+                </Link>
+              </>
+            ) : ((isloggedin)?
+              <>
+                <Link
+                  to="/job-posting"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/skills") ? "text-primary" : "text-foreground"
+                    }`}
+                >
+                  Post Job
+                </Link>
+                  <Link
+                  to="/job-applicants"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/skills") ? "text-primary" : "text-foreground"
+                    }`}
+                >
+                  View Applicants
+                </Link>
+              </>:<></>
+            )}
+
+
+
+
           </div>
 
           <div className="hidden md:flex items-center gap-3">

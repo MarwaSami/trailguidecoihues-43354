@@ -10,6 +10,9 @@ All colors MUST be HSL.
   :root {
     --background: 240 8% 97%;
     --foreground: 240 10% 15%;
+    
+     /* --success: 142 76% 36%; 
+      --danger: 0 84% 60%;  */
 
     --card: 0 0% 100%;
     --card-foreground: 240 10% 15%;
@@ -32,7 +35,8 @@ All colors MUST be HSL.
 
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
-
+    --green:green;
+    --green-foreground:0 0% 100%;
     --border: 240 8% 88%;
     --input: 240 8% 92%;
     --ring: 250 70% 60%;

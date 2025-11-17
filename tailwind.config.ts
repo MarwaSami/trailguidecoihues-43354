@@ -58,6 +58,16 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      
+      green: {
+        DEFAULT: "hsl(var(--green))",
+        foreground: "hsl(var(--green-foreground))",
+      },
+      danger: {
+        DEFAULT: "hsl(var(--danger))",
+        foreground: "hsl(var(--danger-foreground))",
+      },
+
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

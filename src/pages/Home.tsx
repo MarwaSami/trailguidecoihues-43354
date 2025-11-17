@@ -138,7 +138,7 @@ const Home = () => {
       </section>
       
       {/* For Freelancers & Clients */}
-      <section className="py-24">
+      <section className="py-24" id="about">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* For Freelancers */}
@@ -163,7 +163,7 @@ const Home = () => {
                   "Automated proposal generation",
                   "Interview practice with AI",
                   "Skill evaluation & feedback",
-                  "Performance analytics"
+                  //"Performance analytics"
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
@@ -175,7 +175,7 @@ const Home = () => {
               </ul>
               
               <Link to="/freelancer-profile">
-                <Button variant="secondary" size="lg" className="gap-2">
+                <Button variant="secondary" size="lg" className="gap-2 mt-4">
                   View Freelancer Features
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -200,11 +200,12 @@ const Home = () => {
               
               <ul className="space-y-4">
                 {[
-                  "Automatic CV filtering",
+                  "Automatic Proposal filtering",
                   "AI-assisted job posting",
-                  "Custom interview creation",
+                  "Validated skill assessments",
+                  // "Custom interview creation",
                   "Candidate ranking & comparison",
-                  "Detailed evaluation reports"
+                  // "Detailed evaluation reports"
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -216,7 +217,7 @@ const Home = () => {
               </ul>
               
               <Link to="/client-dashboard">
-                <Button variant="hero" size="lg" className="gap-2">
+                <Button variant="hero" size="lg" className="gap-2 mt-4">
                   View Client Features
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -268,11 +269,11 @@ const Home = () => {
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </Link>
-                <Link to="/skills">
+                <a href="#about">
                   <Button variant="glass" size="xl">
                     Learn More
                   </Button>
-                </Link>
+                </a>
               </div>
             </div>
           </Card>
@@ -285,10 +286,10 @@ const Home = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <Brain className="w-6 h-6 text-primary" />
-              <span className="font-bold text-lg">AI Freelance</span>
+              <span className="font-bold text-lg">SmartLance</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 AI Freelance Platform. Powered by cutting-edge AI technology.
+              © 2024 AI Freelance Platform. Powered by SmartLance 
             </p>
           </div>
         </div>

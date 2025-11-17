@@ -1,12 +1,15 @@
-import { useAuth } from "@/context/AuthContext";
-import { Loader2 } from "lucide-react";
+import { baseURL, useAuth } from "@/context/AuthContext";
+import { Loader2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { AddProfileinDB, uploadCvTodb, useProfileData } from "@/context/ProfileContext";
+import { AddProfileinDB, Profile, uploadCvTodb, useProfileData } from "@/context/ProfileContext";
 import { number } from "zod/v4-mini";
+import { set } from "date-fns";
+import axios from "axios";
 
 export const ProfileForm = () => {
   const { toast } = useToast();
@@ -14,10 +17,29 @@ export const ProfileForm = () => {
   const [isProcessing, setIsProcessing] = useState(false); // handles API CV processing state
   const { user, token } = useAuth();
   const { profile, setProfile } = useProfileData();
-
+  const [newSkill, setNewSkill] = useState("");
+const getprofiledatafromdb = async (user_id: number, token: string): Promise<Profile> => {
+  const response = await axios.get<Profile>(`${baseURL}jobs/freelancer-profiles/${user_id}/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
   useEffect(() => {
-    if (user) setUploading(false);
-  }, [user]);
+    if (!user) return;
+
+    setUploading(false);
+
+    const fetchProfile = async () => {
+      
+        const data: Profile = await getprofiledatafromdb(user.id, token);
+        setProfile(data);
+      
+    };
+
+     fetchProfile();
+  }, [user, token]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,18 +116,14 @@ const handleSubmit = async (e: React.FormEvent) => {
         description: response.detail || "Something went wrong.",
         variant: "destructive",
       });
-
     }
   } catch (error: any) {
     toast({
-      title: "Failed to save profile",
-      description: error.message,
-      variant: "destructive",
+      title: "Submission failed", 
     });
   }
+
 };
-
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       {/* ===== FILE UPLOAD ===== */}
@@ -130,19 +148,71 @@ const handleSubmit = async (e: React.FormEvent) => {
         )}
       </div>
 
-      {/* ===== FORM REMAINS VISIBLE ===== */}
-      <div className="space-y-2">
-        <Label htmlFor="skills">Skills</Label>
-        <Input
-          id="skills"
-          value={profile.skills?.join(",") || ""}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              skills: e.target.value.split(","),
-            })
-          }
-        />
+      {/* ===== SKILLS SECTION ===== */}
+      <div className="space-y-3">
+        <Label className="text-base font-semibold">Skills *</Label>
+        
+        {/* Current Skills as Badges */}
+        <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg min-h-[60px] border border-border/50">
+          {profile.skills && profile.skills.length > 0 ? (
+            profile.skills.map((skill, index) => (
+              <Badge key={index} variant="secondary" className="px-3 py-1.5 gap-2 text-sm bg-primary/10 hover:bg-primary/20 transition-colors">
+                {skill}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updatedSkills = profile.skills?.filter((_, i) => i !== index) || [];
+                    setProfile({ ...profile, skills: updatedSkills });
+                  }}
+                  className="hover:text-destructive transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No skills added yet. Add your skills below.</p>
+          )}
+        </div>
+
+        {/* Add New Skill */}
+        <div className="flex gap-2">
+          <Input
+            value={newSkill}
+            onChange={(e) => setNewSkill(e.target.value)}
+            placeholder="Add a skill (e.g., React, Python, Design)..."
+            className="bg-background/50 backdrop-blur-sm"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (newSkill.trim() && !profile.skills?.includes(newSkill.trim())) {
+                  setProfile({
+                    ...profile,
+                    skills: [...(profile.skills || []), newSkill.trim()]
+                  });
+                  setNewSkill("");
+                }
+              }
+            }}
+          />
+          <Button 
+            type="button" 
+            onClick={() => {
+              if (newSkill.trim() && !profile.skills?.includes(newSkill.trim())) {
+                setProfile({
+                  ...profile,
+                  skills: [...(profile.skills || []), newSkill.trim()]
+                });
+                setNewSkill("");
+              }
+            }}
+            variant="secondary"
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -250,4 +320,4 @@ const handleSubmit = async (e: React.FormEvent) => {
       </Button>
     </form>
   );
-};
+}

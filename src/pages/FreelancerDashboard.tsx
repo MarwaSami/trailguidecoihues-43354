@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Briefcase,
   TrendingUp,
@@ -13,46 +14,46 @@ import {
   MessageSquare,
   Calendar,
   Award,
-  ArrowRight
+  ArrowRight,
+  Send,
+  Bookmark,
+  Receipt,
+  Notebook,
+  Bell
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useJobs } from "@/context/JobContext";
+import { useAuth } from "@/context/AuthContext";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const FreelancerDashboard = () => {
+    const navigate = useNavigate();
+    const { jobs } = useJobs();
+    const { user } = useAuth();
+    
+    const recommendedJobs = jobs.slice(0, 4);
+    const firstJobScore = jobs.length > 0 ? jobs[0].match_score : 0;
+    const username = user?.username || 'User';
+
   const stats = [
     { label: "Active Applications", value: "8", icon: Briefcase, trend: "+2 this week", color: "primary" },
     { label: "Profile Views", value: "234", icon: Eye, trend: "+45 today", color: "secondary" },
-    { label: "Interviews", value: "3", icon: Calendar, trend: "Upcoming", color: "accent" },
-    { label: "Match Score", value: "92%", icon: Target, trend: "Top 5%", color: "primary" },
+    { label: "Recommended Jobs", value: String(jobs.length), icon: Bookmark, trend: "AI Matched", color: "accent" },
+    { label: "Match Score", value: `${Math.round(firstJobScore)}%`, icon: Target, trend: "Top Match", color: "primary" },
   ];
 
-  const recommendedJobs = [
-    {
-      title: "Senior React Developer",
-      company: "TechCorp Inc.",
-      location: "Remote",
-      salary: "$80-120/hr",
-      match: 95,
-      posted: "2 hours ago",
-      tags: ["React", "TypeScript", "Node.js"]
-    },
-    {
-      title: "Full-Stack Engineer",
-      company: "StartupHub",
-      location: "San Francisco, CA",
-      salary: "$90-130/hr",
-      match: 92,
-      posted: "5 hours ago",
-      tags: ["React", "Python", "AWS"]
-    },
-    {
-      title: "Frontend Architect",
-      company: "Digital Solutions",
-      location: "Remote",
-      salary: "$100-140/hr",
-      match: 88,
-      posted: "1 day ago",
-      tags: ["React", "Vue.js", "Architecture"]
-    },
+  const notifications = [
+    { id: 1, text: "New job match: Senior React Developer", time: "5m ago", link: "/job-browse", unread: true },
+    { id: 2, text: "Your proposal was viewed by the client", time: "1h ago", link: "/job-browse", unread: true },
+    { id: 3, text: "Interview scheduled for tomorrow at 2 PM", time: "3h ago", link: "/interview-practice", unread: false },
+    { id: 4, text: "Payment received for completed project", time: "1d ago", link: "/freelancer-dashboard", unread: false },
   ];
 
   const recentActivity = [
@@ -84,21 +85,67 @@ const FreelancerDashboard = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        {/* Header */}
+        {/* Header with Profile & Notifications */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Welcome Back, Alex</h1>
+            <h1 className="text-4xl font-bold mb-2">Welcome Back, {username}</h1>
             <p className="text-muted-foreground">Your personalized dashboard with AI-powered insights</p>
           </div>
-          <Link to="/job-browse">
-            <Button variant="hero" size="lg" className="gap-2">
-              <Target className="w-5 h-5" />
-              Browse Jobs
-            </Button>
-          </Link>
+
+          <div className="flex items-center gap-3">
+            {/* Notifications Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="relative rounded-full">
+                  <Bell className="w-5 h-5" />
+                  {notifications.filter(n => n.unread).length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+                      {notifications.filter(n => n.unread).length}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.map((notif) => (
+                  <DropdownMenuItem key={notif.id} asChild>
+                    <Link 
+                      to={notif.link} 
+                      className={`flex flex-col items-start p-3 cursor-pointer ${notif.unread ? 'bg-primary/5' : ''}`}
+                    >
+                      <div className="flex items-start justify-between w-full gap-2">
+                        <p className={`text-sm ${notif.unread ? 'font-semibold' : ''}`}>{notif.text}</p>
+                        {notif.unread && <div className="w-2 h-2 bg-primary rounded-full mt-1" />}
+                      </div>
+                      <span className="text-xs text-muted-foreground mt-1">{notif.time}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Profile Avatar */}
+            <Link to="/freelancer-profile">
+              <Button variant="outline" size="icon" className="rounded-full">
+                <Avatar className="w-9 h-9">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
+                    {user?.username?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </Link>
+
+            <Link to="/job-browse">
+              <Button variant="hero" size="lg" className="gap-2">
+                <Target className="w-5 h-5" />
+                Browse Jobs
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Counter */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, idx) => (
             <Card key={idx} className="group p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/50 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400 hover:-translate-y-1">
@@ -139,38 +186,71 @@ const FreelancerDashboard = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="text-xl font-bold mb-1">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground">{job.company} • {job.location}</p>
+                        <p className="text-sm text-muted-foreground">{job.client_name} </p>
                       </div>
                       <div className="text-right ml-4">
                         <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                          {job.match}%
+                          {Math.floor(job.match_score * 100)}%
                         </div>
                         <p className="text-xs text-muted-foreground">Match</p>
                       </div>
                     </div>
                     
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {job.tags.map((tag, tagIdx) => (
-                        <Badge key={tagIdx} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
+                          {job.required_skills?.map((skill, idx) => (
+                            <Badge key={idx} variant="secondary">
+                              {skill}
+                            </Badge>
+                          ))}
                     </div>
+                   <div className="flex flex-wrap gap-2 mb-3">
+                          {job.required_skills?.map((skill, idx) => (
+                            <Badge key={idx} variant="secondary">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
 
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="font-bold text-primary">{job.salary}</span>
-                      <span className="text-muted-foreground">Posted {job.posted}</span>
+                      <span className="font-bold text-primary">{job.budget} $</span>
+                      <span className="text-muted-foreground">Posted at  {new Date(job.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-
-                  <div className="flex flex-col gap-2">
-                    <Button variant="hero" size="sm">
-                      Apply Now
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
-                  </div>
+                   <div className="flex flex-col gap-3 lg:w-48">
+                        <Button 
+                          variant="hero" 
+                          className="gap-2"
+                          onClick={() => navigate("/job-proposal", { state: { job } })}
+                        >
+                          <Send className="w-4 h-4" />
+                          Apply Now
+                        </Button>
+                        <Button variant="outline">
+                          <Notebook className="w-4 h-4" />
+                          View Details
+                        </Button>
+                        {
+                          job.proposal_status === "SUBMITTED" ? (
+                           <p className="w-full text-center text-muted-foreground">
+                              Proposal Submitted
+                            </p>
+                          ) : job.proposal_status === "ACCEPTED" ? (
+                            <Badge variant="default" className="w-full text-center">
+                              Proposal Accepted
+                            </Badge>
+                          ) : job.proposal_status === "REJECTED" ? (
+                            <Badge variant="destructive" className="w-full text-center">
+                              Proposal Rejected
+                            </Badge>
+                          ) : (
+                            <p className="w-full text-center text-green">
+                              Proposal Drafted
+                            </p>
+                          )
+         
+                        }
+                        
+                      </div>
                 </div>
               </Card>
             ))}

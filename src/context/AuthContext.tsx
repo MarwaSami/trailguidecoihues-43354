@@ -14,8 +14,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-//export const baseURL = 'http://localhost:5224/api/v1/'; // Replace with your API base URL
-export const baseURL = "https://long-nonciteable-rolf.ngrok-free.dev/api/v1/";
+export const baseURL = 'http://localhost:8000/api/v1/'; // Replace with your API base URL
+//export const baseURL = "https://long-nonciteable-rolf.ngrok-free.dev/api/v1/";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
@@ -57,7 +57,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
    toast({
       title: "Signup Sucessfullydone",
       description: "user is created",
-      variant:"default"
+      variant:"success"
     });
     return { error: null };
   } catch (error: any) {
@@ -77,19 +77,19 @@ const signUp = async (email: string, password: string, username: string, user_ty
         { email, password },
         { withCredentials: true }
       );
-    console.log(response);
+   // console.log(response);
      setuserinlocalstorage(response.data.user,response.data.access,response.data.refresh)
-      toast({
-        title: "Login successful",
-        description: "You are now logged in."
-
-      });
+    toast({
+    title: "Login successful",
+    description: "You are now logged in.",
+    variant: "success"
+  });
 
       return { error: null };
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.response?.data?.message || "An error occurred.",
+        description: error.response?.data?.message || "Invalid email or password.",
         variant: "destructive"
       });
       return { error };
@@ -114,7 +114,8 @@ const signUp = async (email: string, password: string, username: string, user_ty
       localStorage.removeItem("user");
       localStorage.removeItem("token")
       toast({
-        title: "Signed out successfully"
+        title: "Signed out successfully",
+        variant:"success"
       });
     } catch (error: any) {
       toast({
