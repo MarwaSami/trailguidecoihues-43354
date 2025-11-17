@@ -33,11 +33,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const ClientDashboard = () => {
-  const { user } = useAuth();
-  const { jobs, loading } = useClientJobs();
+  const { user, loading: authLoading } = useAuth();
+  const { jobs, loading: jobsLoading } = useClientJobs();
 
-  const userData = user ? JSON.parse(user) : null;
+  // Parse user if it's a string
+  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
   const username = userData?.username || "User";
+  
+  // Show loading state while auth or jobs are loading
+  if (authLoading || jobsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const activeJobs = jobs.filter(job => job.status.toLowerCase() === "active");
   
@@ -157,7 +173,7 @@ const ClientDashboard = () => {
             <Button variant="ghost" size="sm">View All</Button>
           </div>
 
-          {loading ? (
+          {jobsLoading ? (
             <p className="text-muted-foreground text-center py-4">Loading jobs...</p>
           ) : recentJobs.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">No jobs posted yet</p>
