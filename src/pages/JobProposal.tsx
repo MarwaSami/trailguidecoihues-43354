@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,13 @@ import {
   FileText,
   Calendar,
   Link as LinkIcon,
+  User,
+  Mail,
+  Github,
+  Linkedin,
+  Globe,
+  Award,
+  Loader2,
 } from "lucide-react";
 import axios from "axios";
 import { baseURL, useAuth } from "@/context/AuthContext";
@@ -35,28 +42,113 @@ interface Job {
   applicants: number;
 }
 
+interface FreelancerProfile {
+  id: number;
+  user: number;
+  bio: string;
+  skills: string[];
+  experience_years: number;
+  hourly_rate: number;
+  portfolio_website: string;
+  linkedin_profile: string;
+  github_profile: string;
+  categories_of_expertise: string;
+}
+
+interface ExistingProposal {
+  id: number;
+  cover_letter: string;
+  proposed_budget: string;
+  duration_in_days: number;
+  experience: string;
+  status: string;
+  job: number;
+  freelancer: number;
+}
+
 const JobProposal = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const {user}=useAuth();
+  const { user } = useAuth();
   const job = location.state?.job as Job;
+
+  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
 
   const [formData, setFormData] = useState({
     cover_letter: "",
     proposed_budget: "",
-    availability: "",
+    duration_in_days: "",
+    experience: "",
     status: "pending",
     job: 0,
     freelancer: 0,
-    ai_suggestion_score: 0,
-    ai_feedback: "",
-    // experience: "",
-    // portfolioLinks: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [proposalId, setProposalId] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [freelancerProfile, setFreelancerProfile] = useState<FreelancerProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Fetch freelancer profile and check for existing proposal
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userData?.id || !job?.id) return;
+
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Fetch freelancer profile
+        const profileResponse = await axios.get(
+          `${baseURL}jobs/freelancer-profiles/?user=${userData.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        
+        if (profileResponse.data.results && profileResponse.data.results.length > 0) {
+          setFreelancerProfile(profileResponse.data.results[0]);
+        }
+
+        // Check for existing proposal
+        const proposalResponse = await axios.get(
+          `${baseURL}jobs/proposals/?job=${job.id}&freelancer=${userData.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (proposalResponse.data.results && proposalResponse.data.results.length > 0) {
+          const existingProposal = proposalResponse.data.results[0];
+          setIsEditMode(true);
+          setProposalId(existingProposal.id);
+          setFormData({
+            cover_letter: existingProposal.cover_letter,
+            proposed_budget: existingProposal.proposed_budget,
+            duration_in_days: existingProposal.duration_in_days.toString(),
+            experience: existingProposal.experience || "",
+            status: existingProposal.status,
+            job: job.id,
+            freelancer: userData.id,
+          });
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            job: job.id,
+            freelancer: userData.id,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchData();
+  }, [userData?.id, job?.id]);
 
   if (!job) {
     return (
@@ -81,11 +173,9 @@ const JobProposal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation utility function for better maintainability
     const validateProposalForm = (data: typeof formData) => {
       const errors: string[] = [];
 
-      // Required fields with trimming for whitespace handling
       if (!data.cover_letter?.trim()) {
         errors.push("Cover letter is required.");
       }
@@ -95,8 +185,13 @@ const JobProposal = () => {
         errors.push("Please provide a valid positive proposed rate.");
       }
 
-      if (!data.availability?.trim()) {
-        errors.push("Project timeline is required.");
+      const duration = parseInt(data.duration_in_days);
+      if (!data.duration_in_days?.trim() || isNaN(duration) || duration <= 0) {
+        errors.push("Please provide a valid project duration in days.");
+      }
+
+      if (!data.experience?.trim()) {
+        errors.push("Experience summary is required.");
       }
 
       return errors;
@@ -113,39 +208,58 @@ const JobProposal = () => {
     }
 
     setIsSubmitting(true);
-    setFieldErrors({}); // Clear previous errors
+    setFieldErrors({});
 
     try {
-      // Simulate API call
-      await axios.post(
-        `${baseURL}jobs/proposals/`,
-        {
-          cover_letter: formData.cover_letter,
-          proposed_budget: formData.proposed_budget,
-          availability: formData.availability,
-          status: formData.status,
-          job: job.id,
-          freelancer: JSON.parse(localStorage.getItem("user") || "{}").id,
-          ai_suggestion_score: formData.ai_suggestion_score,
-          ai_feedback: formData.ai_feedback,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        })
+      const payload = {
+        cover_letter: formData.cover_letter,
+        proposed_budget: formData.proposed_budget,
+        duration_in_days: parseInt(formData.duration_in_days),
+        experience: formData.experience,
+        status: formData.status,
+        job: job.id,
+        freelancer: userData.id,
+      };
 
-      toast({
-        title: "Proposal Submitted!",
-        description: "Your application has been sent to the client.",
-      });
+      if (isEditMode && proposalId) {
+        // Update existing proposal
+        await axios.put(
+          `${baseURL}jobs/proposals/${proposalId}/`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
-      // Navigate to My Proposals after success
+        toast({
+          title: "Proposal Updated!",
+          description: "Your proposal has been successfully updated.",
+        });
+      } else {
+        // Create new proposal
+        await axios.post(
+          `${baseURL}jobs/proposals/`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        toast({
+          title: "Proposal Submitted!",
+          description: "Your application has been sent to the client.",
+        });
+      }
+
       setTimeout(() => {
         navigate("/my-proposals");
       }, 2000);
     } catch (error: any) {
-      let errorTitle = "Submission Failed";
+      let errorTitle = isEditMode ? "Update Failed" : "Submission Failed";
       let errorMessage = "An unexpected error occurred.";
 
       if (error.response) {
@@ -229,13 +343,11 @@ const JobProposal = () => {
     }
   };
 
-  console.log("JobProposal Rendered with job:", job);
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        {/* Back Button */}
         <Button
           variant="ghost"
           onClick={() => navigate("/job-browse")}
@@ -245,67 +357,151 @@ const JobProposal = () => {
           Back to Job Browse
         </Button>
 
-        {/* Page Header */}
         <div className="text-center max-w-3xl mx-auto mb-8">
-          <h1 className="text-4xl font-bold mb-3">Submit Your Proposal</h1>
+          <h1 className="text-4xl font-bold mb-3">
+            {isEditMode ? "Edit Your Proposal" : "Submit Your Proposal"}
+          </h1>
           <p className="text-lg text-muted-foreground">
-            Showcase your skills and why you're the perfect fit for this role
+            {isEditMode 
+              ? "Update your proposal details below"
+              : "Showcase your skills and why you're the perfect fit for this role"
+            }
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Job Details - Left Side */}
+          {/* Freelancer CV Preview - Left Side */}
           <div className="lg:col-span-1">
             <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)] sticky top-24">
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <h2 className="text-2xl font-bold">{job.title}</h2>
-                  <div className="px-2 py-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold">
-                    {(job.match_score * 100).toFixed(0)}% Match
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Your Profile
+              </h2>
+
+              {loadingProfile ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : freelancerProfile ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold text-lg">{userData?.username || "Freelancer"}</h3>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                      <Mail className="w-3 h-3" />
+                      {userData?.email}
+                    </p>
+                  </div>
+
+                  {freelancerProfile.bio && (
+                    <div>
+                      <h4 className="font-medium text-sm mb-2">Bio</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {freelancerProfile.bio}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Experience</p>
+                      <p className="font-bold">{freelancerProfile.experience_years} years</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Hourly Rate</p>
+                      <p className="font-bold text-primary">${freelancerProfile.hourly_rate}/hr</p>
+                    </div>
+                  </div>
+
+                  {freelancerProfile.categories_of_expertise && (
+                    <div>
+                      <h4 className="font-medium text-sm mb-2">Expertise</h4>
+                      <Badge variant="secondary">{freelancerProfile.categories_of_expertise}</Badge>
+                    </div>
+                  )}
+
+                  {freelancerProfile.skills && freelancerProfile.skills.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-sm mb-2">Skills</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {freelancerProfile.skills.map((skill, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-t border-border pt-4 space-y-2">
+                    {freelancerProfile.portfolio_website && (
+                      <a
+                        href={freelancerProfile.portfolio_website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      >
+                        <Globe className="w-4 h-4" />
+                        Portfolio
+                      </a>
+                    )}
+                    {freelancerProfile.linkedin_profile && (
+                      <a
+                        href={freelancerProfile.linkedin_profile}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      >
+                        <Linkedin className="w-4 h-4" />
+                        LinkedIn
+                      </a>
+                    )}
+                    {freelancerProfile.github_profile && (
+                      <a
+                        href={freelancerProfile.github_profile}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-primary hover:underline"
+                      >
+                        <Github className="w-4 h-4" />
+                        GitHub
+                      </a>
+                    )}
                   </div>
                 </div>
-                <p className="text-lg text-muted-foreground mb-4">{job.company}</p>
-              </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Complete your profile to showcase your skills
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate("/freelancer-profile")}
+                  >
+                    Go to Profile
+                  </Button>
+                </div>
+              )}
 
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span>{job.location}</span>
+              <div className="border-t border-border pt-4 mt-4">
+                <h3 className="font-bold mb-2">Job Details</h3>
+                <h4 className="text-lg font-semibold mb-1">{job.title}</h4>
+                <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    {job.location}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-muted-foreground" />
+                    {job.job_type}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-bold text-primary">{job.budget}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Briefcase className="w-4 h-4 text-muted-foreground" />
-                  <span>{job.job_type}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <DollarSign className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-bold text-primary">{job.budget}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{job.created_at.split("T")[0]}</span>
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4 mb-4">
-                <h3 className="font-bold mb-2">Job Description</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {job.description}
-                </p>
-              </div>
-
-              <div className="border-t border-border pt-4">
-                <h3 className="font-bold mb-3">Required Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {(job.skills || []).map((tag, idx) => (
-                    <Badge key={idx} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4 mt-4 text-center text-sm text-muted-foreground">
-                {job.applicants} applicants so far
               </div>
             </Card>
           </div>
@@ -313,10 +509,18 @@ const JobProposal = () => {
           {/* Proposal Form - Right Side */}
           <div className="lg:col-span-2">
             <Card className="p-8 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
+              {isEditMode && (
+                <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                  <p className="text-sm flex items-center gap-2">
+                    <Award className="w-4 h-4" />
+                    You're editing an existing proposal for this job
+                  </p>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Cover Letter */}
                 <div>
-                  <label htmlFor="cover_letter" className="flex items-center gap-2 mb-2">
+                  <label htmlFor="cover_letter" className="flex items-center gap-2 mb-2 font-medium">
                     <FileText className="w-4 h-4" />
                     Cover Letter *
                   </label>
@@ -330,63 +534,83 @@ const JobProposal = () => {
                     required
                   />
                   {fieldErrors.cover_letter && (
-                    <p className="text-xs text-red-500 mt-1">{fieldErrors.cover_letter}</p>
+                    <p className="text-xs text-destructive mt-1">{fieldErrors.cover_letter}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
                     Tip: Highlight your relevant experience and how you can add value
                   </p>
                 </div>
 
-                {/* Proposed Rate */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="proposed_budget" className="flex items-center gap-2 mb-2 font-medium">
+                      <DollarSign className="w-4 h-4" />
+                      Your Proposed Rate (per hour) *
+                    </label>
+                    <Input
+                      id="proposed_budget"
+                      name="proposed_budget"
+                      type="number"
+                      placeholder="e.g., 85"
+                      value={formData.proposed_budget}
+                      onChange={handleChange}
+                      className="bg-background/50"
+                      required
+                    />
+                    {fieldErrors.proposed_budget && (
+                      <p className="text-xs text-destructive mt-1">{fieldErrors.proposed_budget}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Client's budget: {job.budget}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="duration_in_days" className="flex items-center gap-2 mb-2 font-medium">
+                      <Calendar className="w-4 h-4" />
+                      Duration (in days) *
+                    </label>
+                    <Input
+                      id="duration_in_days"
+                      name="duration_in_days"
+                      type="number"
+                      placeholder="e.g., 30"
+                      value={formData.duration_in_days}
+                      onChange={handleChange}
+                      className="bg-background/50"
+                      required
+                    />
+                    {fieldErrors.duration_in_days && (
+                      <p className="text-xs text-destructive mt-1">{fieldErrors.duration_in_days}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      How many days will this project take?
+                    </p>
+                  </div>
+                </div>
+
                 <div>
-                  <label htmlFor="proposed_budget" className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-4 h-4" />
-                    Your Proposed Rate (per hour) *
+                  <label htmlFor="experience" className="flex items-center gap-2 mb-2 font-medium">
+                    <Award className="w-4 h-4" />
+                    Relevant Experience *
                   </label>
-                  <Input
-                    id="proposed_budget"
-                    name="proposed_budget"
-                    type="number"
-                    placeholder="e.g., 85"
-                    value={formData.proposed_budget}
+                  <Textarea
+                    id="experience"
+                    name="experience"
+                    placeholder="Describe your relevant experience for this project..."
+                    value={formData.experience}
                     onChange={handleChange}
-                    className="bg-background/50"
+                    className="min-h-[120px] bg-background/50"
                     required
                   />
-                  {fieldErrors.proposed_budget && (
-                    <p className="text-xs text-red-500 mt-1">{fieldErrors.proposed_budget}</p>
+                  {fieldErrors.experience && (
+                    <p className="text-xs text-destructive mt-1">{fieldErrors.experience}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    Client's budget: {job.budget}
+                    Share specific projects or achievements related to this job
                   </p>
                 </div>
-                <div style={{ display: "none" }}>
-                  <input type="text"  name="freelancer" value={user.id} />
-                  <input type="text"  name="job" value={job.id} />
-                  <input type="text" name="status" value="pending" />
-                </div>
-                {/* Timeline */}
-                <div>
-                  <label htmlFor="availability" className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4" />
-                    Project Timeline *
-                  </label>
-                  <Input
-                    id="availability"
-                    name="availability"
-                    placeholder="e.g., I can start immediately and deliver within 4 weeks"
-                    value={formData.availability}
-                    onChange={handleChange}
-                    className="bg-background/50"
-                    required
-                  />
-                  {fieldErrors.availability && (
-                    <p className="text-xs text-red-500 mt-1">{fieldErrors.availability}</p>
-                  )}
-                </div>
 
-
-                {/* Submit Button */}
                 <div className="pt-4 border-t border-border">
                   <Button
                     type="submit"
@@ -395,8 +619,17 @@ const JobProposal = () => {
                     className="w-full gap-2"
                     disabled={isSubmitting}
                   >
-                    <Send className="w-5 h-5" />
-                    {isSubmitting ? "Submitting..." : "Submit Proposal"}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {isEditMode ? "Updating..." : "Submitting..."}
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        {isEditMode ? "Update Proposal" : "Submit Proposal"}
+                      </>
+                    )}
                   </Button>
                   <p className="text-xs text-muted-foreground text-center mt-3">
                     By submitting, you agree to our terms and conditions

@@ -8,8 +8,10 @@ export const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, token, signOut } = useAuth();
-  //console.log(user?.user_type);
-  const isfreelancer = user?.user_type == "freelancer";
+  
+  // Parse user from localStorage if it's a string
+  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
+  const isfreelancer = userData?.user_type === "freelancer";
   const isActive = (path: string) => location.pathname === path;
   const isloggedin = token != null;
   return (
