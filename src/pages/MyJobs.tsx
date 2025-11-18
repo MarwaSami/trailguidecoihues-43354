@@ -36,7 +36,8 @@ const MyJobs = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "active": return "default";
+      case "active":
+      case "draft": return "default";
       case "closed": return "secondary";
       case "reviewing": return "outline";
       default: return "secondary";
@@ -101,7 +102,7 @@ const MyJobs = () => {
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-2xl">{job.title}</CardTitle>
                           <Badge variant={getStatusColor(job.status)}>
-                            {job.status}
+                            {job.status === "draft" ? "open" : job.status}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">

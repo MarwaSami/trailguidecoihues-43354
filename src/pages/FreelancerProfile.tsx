@@ -1,23 +1,50 @@
 import { Navbar } from "@/components/Navbar";
 import { ProfileForm } from "@/components/ProfileForm";
+import { ProfileDisplay } from "@/components/ProfileDisplay";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { ProfileformProvider, useProfileData } from "@/context/ProfileContext";
+import { ProfileformProvider, useProfileData, fetchProfileById } from "@/context/ProfileContext";
 
 const FreelancerProfile = () => {
-  const { user, loading } = useAuth();
-  const { profile } = useProfileData();
+  const { user, loading, token } = useAuth();
+  const { profile, setProfile } = useProfileData();
   const navigate = useNavigate();
+  const [hasProfile, setHasProfile] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const profilestep = 1;
+
   useEffect(() => {
     // if (!loading && !user) {
     //   navigate('/auth');
     // }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    const checkProfile = async () => {
+      const profileId = localStorage.getItem('freelancer_profile_id');
+      if (profileId && token) {
+        try {
+          const data = await fetchProfileById(profileId, token);
+          setProfile(data);
+          setHasProfile(true);
+        } catch (error) {
+          console.error('Failed to fetch profile:', error);
+          setHasProfile(false);
+        }
+      } else {
+        setHasProfile(false);
+      }
+      setLoadingProfile(false);
+    };
+
+    if (!loading) {
+      checkProfile();
+    }
+  }, [loading, token, setProfile]);
+
+  if (loading || loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -105,10 +132,14 @@ const FreelancerProfile = () => {
               </div>
             </div>
 
-            {/* Right Side - Profile Form */}
+            {/* Right Side - Profile Content */}
             <div className="lg:col-span-2">
               <div className="bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)] rounded-xl p-8">
-                <ProfileForm />
+                {hasProfile && profile ? (
+                  <ProfileDisplay profile={profile} />
+                ) : (
+                  <ProfileForm />
+                )}
               </div>
             </div>
           </div>

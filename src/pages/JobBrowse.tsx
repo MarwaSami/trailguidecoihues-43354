@@ -25,7 +25,7 @@ const JobBrowse = () => {
   const navigate = useNavigate();
   const experience_level = ["begineer", "intermediate", "Mid", "Expert"];
   const categories = ["Development", "Design", "Marketing", "Writing", "Data Science"];
-  const jobTypes = ["Fulltime", "Parttime", "Contract", "Freelance"];
+  const jobTypes = ["Fulltime", "Parttime", "Contract", "Remote"];
 
   // Helper to capitalize job type
   const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -174,7 +174,7 @@ const JobBrowse = () => {
               </div>
                   {/* Experience Level */}
               <div className="mb-6">
-                <h4 className="font-medium mb-3">Job Type</h4>
+                <h4 className="font-medium mb-3">Experience Level</h4>
                 <div className="space-y-3">
                   {experience_level.map((type, idx) => (
                     <div key={idx} className="flex items-center space-x-2">
@@ -296,11 +296,11 @@ const JobBrowse = () => {
                           <div>
                             <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-xl font-bold">{job.title}</h3>
-                              <Badge variant="secondary">{job.status}</Badge>
                             </div>
                             <p className="text-muted-foreground">Client Name: {job.client_name}</p>
                           </div>
                           <div className="flex flex-col items-end gap-2">
+                            <Badge variant="secondary" className="mb-2">{job.status === "draft" ? "open" : job.status}</Badge>
                             <Button variant="ghost" size="icon">
                               <Bookmark className="w-5 h-5" />
                             </Button>

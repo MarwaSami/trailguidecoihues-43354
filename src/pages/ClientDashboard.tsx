@@ -125,10 +125,10 @@ const ClientDashboard = () => {
                         <p className="text-sm text-muted-foreground">Posted {job.posted}</p>
                       </div>
                       <Badge
-                        variant={job.status === "active" ? "default" : "secondary"}
+                        variant={(job.status === "active" || job.status === "draft") ? "default" : "secondary"}
                         className="capitalize"
                       >
-                        {job.status}
+                        {job.status === "draft" ? "open" : job.status}
                       </Badge>
                     </div>
 
@@ -173,10 +173,10 @@ const ClientDashboard = () => {
                         <p className="text-sm text-muted-foreground">Posted {job.posted}</p>
                       </div>
                       <Badge
-                        variant={job.status === "active" ? "default" : "secondary"}
+                        variant={(job.status === "active" || job.status === "draft") ? "default" : "secondary"}
                         className="capitalize"
                       >
-                        {job.status}
+                        {job.status === "draft" ? "open" : job.status}
                       </Badge>
                     </div>
 

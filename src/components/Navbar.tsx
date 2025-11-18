@@ -20,9 +20,9 @@ export const Navbar = () => {
 
   // Parse user from localStorage if it's a string
   const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
-  const isfreelancer = userData?.user_type === "freelancer";
+  const isFreelancer = userData?.user_type === "freelancer";
   const isActive = (path: string) => location.pathname === path;
-  const isloggedin = token != null;
+  const isLoggedIn = token != null;
 
   const notifications = [
     { id: 1, text: "New application for Senior Developer position", time: "5m ago", link: "/candidate-discovery", unread: true },
@@ -51,7 +51,7 @@ export const Navbar = () => {
             >
               Home
             </Link>
-            {isfreelancer  ? (
+            {isFreelancer  ? (
               <>
                 <Link
                   to="/freelancer-dashboard"
@@ -82,7 +82,7 @@ export const Navbar = () => {
                   Job Browsing
                 </Link>
               </>
-            ) : ((isloggedin)?
+            ) : ((isLoggedIn)?
               <>
                 <Link
                   to="/client-dashboard"
@@ -115,7 +115,7 @@ export const Navbar = () => {
 
           <div className="hidden md:flex items-center gap-3">
             {
-              !isloggedin &&
+              !isLoggedIn &&
               <>
 
                 <Link to="/auth">
@@ -126,7 +126,7 @@ export const Navbar = () => {
                 </Link>
               </>
             }{
-              isloggedin &&
+              isLoggedIn &&
               <>
                 {/* Notifications Dropdown */}
                 <DropdownMenu>
@@ -161,11 +161,11 @@ export const Navbar = () => {
                 </DropdownMenu>
 
                 {/* Profile Avatar */}
-                <Link to={isfreelancer ? "/freelancer-profile" : "/client-profile"}>
+                <Link to={isFreelancer ? "/freelancer-profile" : "/client-profile"}>
                   <Button variant="outline" size="icon" className="rounded-full">
                     <Avatar className="w-9 h-9">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
-                        {userData?.username?.charAt(0).toUpperCase() || (isfreelancer ? "F" : "C")}
+                        {userData?.username?.charAt(0).toUpperCase() || (isFreelancer ? "F" : "C")}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -190,11 +190,29 @@ export const Navbar = () => {
           <div className="md:hidden py-4 space-y-3 border-t border-border/50 bg-background/40 backdrop-blur-lg">
             <Link to="/" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Home</Link>
             <Link to="/skills" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Skills</Link>
-            <Link to="/client-dashboard" className="block py-2 text-sm font-medium hover:text-primary transition-colors">For Clients</Link>
-            <Link to="/freelancer-profile" className="block py-2 text-sm font-medium hover:text-primary transition-colors">For Freelancers</Link>
+            {
+              isLoggedIn && isFreelancer ? (
+                <>
+                  <Link to="/freelancer-dashboard" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Dashboard</Link>
+                  <Link to="/freelancer-profile" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Profile</Link>
+                  <Link to="/view-portfolio" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Portfolio</Link>
+                  <Link to="/job-browse" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Job Browsing</Link>
+                </>
+              ) : isLoggedIn && !isFreelancer ? (
+                <>
+                  <Link to="/client-dashboard" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Dashboard</Link>
+                  <Link to="/job-posting" className="block py-2 text-sm font-medium hover:text-primary transition-colors">Post Job</Link>
+                  <Link to="/my-jobs" className="block py-2 text-sm font-medium hover:text-primary transition-colors">My Jobs</Link>
+                </>
+              ) : (
+                <>
             <Link to="/auth" className="block">
               <Button variant="hero" className="w-full">Get Started</Button>
             </Link>
+                
+                </>
+              )
+           }
           </div>
         )}
       </div>

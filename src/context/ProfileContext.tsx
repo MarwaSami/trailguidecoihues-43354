@@ -4,15 +4,18 @@ import { baseURL } from "./AuthContext";
 
 // Define the profile structure
 export interface Profile {
+  id?: number;
   skills: string[];
   experience_years: number;
-  hourly_rate: number;
-  job_type: string;
+  hourly_rate: string;
   portfolio_website: string;
-  linkedin_profile: string;
+  preferred_location: string;
+  job_type_preferences: string;
+  linked_in_profile: string;
   github_profile: string;
-  score: number;
-  categories_of_expertise:string;
+  categories_of_expertise: string;
+  cv: string;
+  score?: number;
 }
 
 export interface CvUploadedResponse {
@@ -32,13 +35,14 @@ export const ProfileformProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>({
   skills: [],
   experience_years: 0,
-  hourly_rate: 0,
-  job_type: "",
+  hourly_rate: "",
   portfolio_website: "",
-  linkedin_profile: "",
+  preferred_location: "",
+  job_type_preferences: "",
+  linked_in_profile: "",
   github_profile: "",
-  score: 0,
-  categories_of_expertise:""
+  categories_of_expertise: "",
+  cv: "",
   });
 
   return (
@@ -74,18 +78,21 @@ export const uploadCvTodb = async (
   return response.data as CvUploadedResponse;
 };
 
-export  interface AddProfileResponce{
-  is_success:boolean,
-  score:number,
-  detail:string
-}
-export const AddProfileinDB=async (profile:Profile,token,user_id)=>{
-  console.log(profile)
-  const response = await axios.post<AddProfileResponce>(`${baseURL}jobs/freelancer-profiles/`, profile, {
+export const AddProfileinDB = async (profile: Profile, token: string, user_id: number): Promise<{data: Profile, is_success: boolean}> => {
+  console.log(profile);
+  const response = await axios.post<{data: Profile, is_success: boolean}>(`${baseURL}jobs/freelancer-profiles/`, profile, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
-  return response.data as AddProfileResponce;
+  return response.data;
+};
 
-}
+export const fetchProfileById = async (profileId: string, token: string): Promise<Profile> => {
+  const response = await axios.get<Profile>(`${baseURL}jobs/freelancer-profiles/${profileId}/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};

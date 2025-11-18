@@ -90,48 +90,38 @@ const JobProposal = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [proposalId, setProposalId] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [freelancerProfile, setFreelancerProfile] = useState<FreelancerProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  // Fetch freelancer profile and check for existing proposal
+  // Check for freelancer profile and existing proposal
   useEffect(() => {
-    const fetchData = async () => {
+    const checkProfileAndFetchProposal = async () => {
       if (!userData?.id || !job?.id) return;
 
+      // Check if freelancer has a profile
+      const profileId = localStorage.getItem('freelancer_profile_id');
+      if (!profileId) {
+        // No profile, show toast and redirect to profile page
+        toast({
+          title: "Profile Required",
+          description: "Please complete your freelancer profile before submitting proposals.",
+          variant: "default",
+        });
+        setTimeout(() => {
+          navigate('/freelancer-profile');
+        }, 2000);
+        return;
+      }
+
+      // Has profile, proceed to check for existing proposal
       try {
         const token = localStorage.getItem("token");
-        
-        // // Fetch freelancer profile
-        // const profileResponse = await axios.get(
-        //   `${baseURL}jobs/freelancer-profiles/?user=${userData.id}`,
-        //   {
-        //     headers: { Authorization: `Bearer ${token}` },
-        //   }
-        // );
-        
-        // if (profileResponse.data.results && profileResponse.data.results.length > 0) {
-        //   setFreelancerProfile(profileResponse.data.results[0]);
-        // }
 
         // Check for existing proposal
-        console.log(job.id);
-        console.log(user.id);
-        const proposalResponse = await axios.post(
-          `${baseURL}jobs/proposals/`,
+        const proposalResponse = await axios.get(
+          `${baseURL}jobs/proposals/?job=${job.id}&freelancer=${userData.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-            body:{
-                cover_letter: "",
-                proposed_budget: "",
-                duration_in_days: "",
-                experience: "",
-                status: "pending",
-                job: job.id,
-                freelancer: user.id,
-            }
           }
         );
-        console.log(proposalResponse.data);
 
         if (proposalResponse.data.results && proposalResponse.data.results.length > 0) {
           const existingProposal = proposalResponse.data.results[0];
@@ -154,14 +144,12 @@ const JobProposal = () => {
           }));
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoadingProfile(false);
+        console.error("Error fetching proposal:", error);
       }
     };
 
-    fetchData();
-  }, [userData?.id, job?.id]);
+    checkProfileAndFetchProposal();
+  }, [userData?.id, job?.id, navigate]);
 
   if (!job) {
     return (
@@ -391,110 +379,15 @@ const JobProposal = () => {
                 Your Profile
               </h2>
 
-              {loadingProfile ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : freelancerProfile ? (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-lg">{userData?.username || "Freelancer"}</h3>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                      <Mail className="w-3 h-3" />
-                      {userData?.email}
-                    </p>
-                  </div>
-
-                  {freelancerProfile.bio && (
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Bio</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {freelancerProfile.bio}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Experience</p>
-                      <p className="font-bold">{freelancerProfile.experience_years} years</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Hourly Rate</p>
-                      <p className="font-bold text-primary">${freelancerProfile.hourly_rate}/hr</p>
-                    </div>
-                  </div>
-
-                  {freelancerProfile.categories_of_expertise && (
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Expertise</h4>
-                      <Badge variant="secondary">{freelancerProfile.categories_of_expertise}</Badge>
-                    </div>
-                  )}
-
-                  {freelancerProfile.skills && freelancerProfile.skills.length > 0 && (
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Skills</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {freelancerProfile.skills.map((skill, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="border-t border-border pt-4 space-y-2">
-                    {freelancerProfile.portfolio_website && (
-                      <a
-                        href={freelancerProfile.portfolio_website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-primary hover:underline"
-                      >
-                        <Globe className="w-4 h-4" />
-                        Portfolio
-                      </a>
-                    )}
-                    {freelancerProfile.linkedin_profile && (
-                      <a
-                        href={freelancerProfile.linkedin_profile}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-primary hover:underline"
-                      >
-                        <Linkedin className="w-4 h-4" />
-                        LinkedIn
-                      </a>
-                    )}
-                    {freelancerProfile.github_profile && (
-                      <a
-                        href={freelancerProfile.github_profile}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-primary hover:underline"
-                      >
-                        <Github className="w-4 h-4" />
-                        GitHub
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Complete your profile to showcase your skills
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-bold text-lg">{userData?.username || "Freelancer"}</h3>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                    <Mail className="w-3 h-3" />
+                    {userData?.email}
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate("/freelancer-profile")}
-                  >
-                    Go to Profile
-                  </Button>
                 </div>
-              )}
+              </div>
 
               <div className="border-t border-border pt-4 mt-4">
                 <h3 className="font-bold mb-2">Job Details</h3>

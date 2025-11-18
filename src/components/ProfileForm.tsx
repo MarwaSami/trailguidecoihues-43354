@@ -10,6 +10,7 @@ import { AddProfileinDB, Profile, uploadCvTodb, useProfileData } from "@/context
 import { number } from "zod/v4-mini";
 import { set } from "date-fns";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export const ProfileForm = () => {
   const { toast } = useToast();
@@ -18,28 +19,7 @@ export const ProfileForm = () => {
   const { user, token } = useAuth();
   const { profile, setProfile } = useProfileData();
   const [newSkill, setNewSkill] = useState("");
-const getprofiledatafromdb = async (user_id: number, token: string): Promise<Profile> => {
-  const response = await axios.get<Profile>(`${baseURL}jobs/freelancer-profiles/${user_id}/`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data;
-};
-  useEffect(() => {
-    if (!user) return;
-
-    setUploading(false);
-
-    const fetchProfile = async () => {
-      
-        const data: Profile = await getprofiledatafromdb(user.id, token);
-        setProfile(data);
-      
-    };
-
-     fetchProfile();
-  }, [user, token]);
+  const navigate = useNavigate();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,14 +86,16 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     // Send data to backend
     const response = await AddProfileinDB(profile, token, user.id);
-    console.log(response)
-    if (response.is_success) {
-      toast({ title: `Profile saved successfully! with score ${response.score}` });
-  
+    console.log(response);
+    if (response.is_success && response.data.id) {
+      toast({ title: `Profile saved successfully!` });
+      localStorage.setItem('freelancer_profile_id', response.data.id.toString());
+      setProfile(response.data); // update with returned profile
+      navigate('/freelancer-dashboard'); // redirect to view portfolio page
     } else {
       toast({
         title: "Error",
-        description: response.detail || "Something went wrong.",
+        description: "Something went wrong.",
         variant: "destructive",
       });
     }
@@ -142,12 +124,36 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
         {isProcessing && (
           <div className="flex flex-col items-center justify-center p-4 text-gray-600">
-            <Loader2 className="w-6 h-6 animate-spin mb-2" />
             <p>Processing CV, please wait...</p>
           </div>
         )}
       </div>
-
+     <div className="space-y-2">
+        <Label htmlFor="categories_of_expertise">Job Title</Label>
+        <Input
+          id="profiecategories_of_expertiseleViews"
+          value={profile.categories_of_expertise || ""}
+          onChange={(e) =>
+            setProfile({
+              ...profile,
+              categories_of_expertise:  e.target.value,
+            })
+          }
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="preferred_location">Preferred Location</Label>
+        <Input
+          id="preferred_location"
+          value={profile.preferred_location || ""}
+          onChange={(e) =>
+            setProfile({
+              ...profile,
+              preferred_location: e.target.value,
+            })
+          }
+        />
+      </div>
       {/* ===== SKILLS SECTION ===== */}
       <div className="space-y-3">
         <Label className="text-base font-semibold">Skills *</Label>
@@ -230,14 +236,14 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="jobtype">Job Type</Label>
+        <Label htmlFor="job_type_preferences">Job Type Preferences</Label>
         <Input
-          id="jobtype"
-          value={profile.job_type || ""}
+          id="job_type_preferences"
+          value={profile.job_type_preferences || ""}
           onChange={(e) =>
             setProfile({
               ...profile,
-              job_type: e.target.value,
+              job_type_preferences: e.target.value,
             })
           }
         />
@@ -258,14 +264,14 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="linkedin_profile">LinkedIn Profile</Label>
+        <Label htmlFor="linked_in_profile">LinkedIn Profile</Label>
         <Input
-          id="linkedin_profile"
-          value={profile.linkedin_profile || ""}
+          id="linked_in_profile"
+          value={profile.linked_in_profile || ""}
           onChange={(e) =>
             setProfile({
               ...profile,
-              linkedin_profile: e.target.value,
+              linked_in_profile: e.target.value,
             })
           }
         />
@@ -285,32 +291,19 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
  <div className="space-y-2">
-        <Label htmlFor="Hourlyrate">Hourlyrate</Label>
-        <Input
-          id="github_profile"
-          value={profile.hourly_rate || 0}
-          type="number"
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              hourly_rate:  Number(e.target.value),
-            })
-          }
-        />
-      </div>
-       {/* <div className="space-y-2">
-        <Label htmlFor="categories_of_expertise">categories_of_expertise </Label>
-        <Input
-          id="github_profile"
-          value={profile.categories_of_expertise || 0}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              categories_of_expertise:  e.target.value,
-            })
-          }
-        />
-      </div> */}
+       <Label htmlFor="hourly_rate">Hourly Rate</Label>
+       <Input
+         id="hourly_rate"
+         value={profile.hourly_rate || ""}
+         onChange={(e) =>
+           setProfile({
+             ...profile,
+             hourly_rate: e.target.value,
+           })
+         }
+       />
+     </div>
+      
       <Button type="submit" className="w-full" disabled={uploading}>
         {uploading ? (
           <Loader2 className="w-4 h-4 animate-spin mx-auto" />

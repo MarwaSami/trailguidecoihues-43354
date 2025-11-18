@@ -31,11 +31,8 @@ const CandidateDiscovery = () => {
       location: "San Francisco, CA",
       rate: "$120/hr",
       match: 95,
-      rating: 4.9,
-      reviews: 47,
-      availability: "Available",
       skills: ["React", "Node.js", "TypeScript", "AWS"],
-      experience: "8 years",
+      experience_level: "8 years",
       profileViews: 234,
       saved: false
     },
@@ -46,11 +43,8 @@ const CandidateDiscovery = () => {
       location: "Remote",
       rate: "$90/hr",
       match: 92,
-      rating: 5.0,
-      reviews: 38,
-      availability: "Available",
       skills: ["Figma", "User Research", "Prototyping", "Branding"],
-      experience: "6 years",
+      experience_level: "6 years",
       profileViews: 189,
       saved: true
     },
@@ -61,11 +55,8 @@ const CandidateDiscovery = () => {
       location: "New York, NY",
       rate: "$110/hr",
       match: 88,
-      rating: 4.8,
-      reviews: 52,
-      availability: "In 2 weeks",
       skills: ["AWS", "Docker", "Kubernetes", "CI/CD"],
-      experience: "7 years",
+      experience_level: "7 years",
       profileViews: 167,
       saved: false
     },
@@ -141,12 +132,9 @@ const CandidateDiscovery = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Briefcase className="w-4 h-4" />
-                          {candidate.experience}
+                          {candidate.experience_level}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-accent text-accent" />
-                          {candidate.rating} ({candidate.reviews})
-                        </div>
+                       
                       </div>
 
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -162,11 +150,7 @@ const CandidateDiscovery = () => {
                           <span className="text-muted-foreground">Rate: </span>
                           <span className="font-bold text-primary">{candidate.rate}</span>
                         </div>
-                        <div>
-                          <Badge variant={candidate.availability === "Available" ? "default" : "secondary"}>
-                            {candidate.availability}
-                          </Badge>
-                        </div>
+                        
                       </div>
                     </div>
                   </div>
