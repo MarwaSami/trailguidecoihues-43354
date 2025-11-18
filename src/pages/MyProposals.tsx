@@ -21,10 +21,11 @@ interface Proposal {
   id: number;
   cover_letter: string;
   proposed_budget: string;
-  availability: string;
+  duration_in_days: number;
+  experience: string | null;
+  status: string;
   created_at: string;
-  ai_suggestion_score?: number;
-  ai_feedback?: string;
+  updated_at: string;
   job: number;
   freelancer: number;
 }
@@ -32,15 +33,17 @@ interface Proposal {
 interface Job {
   id: number;
   title: string;
-  company: string;
+  description: string;
+  budget: string;
   location: string;
   job_type: string;
-  budget: string;
-  match_score: number;
+  experience_level: string;
+  status: string;
   created_at: string;
-  description: string;
-  skills: string[];
-  applicants: number;
+  updated_at: string;
+  ai_generated_criteria: string | null;
+  client: number;
+  required_skills: Array<{ id: number; name: string }>;
 }
 
 const MyProposals = () => {
@@ -49,6 +52,8 @@ const MyProposals = () => {
   const [jobs, setJobs] = useState<Map<number, Job>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobLoading, setJobLoading] = useState(false);
 
   useEffect(() => {
     fetchProposals();
@@ -57,26 +62,14 @@ const MyProposals = () => {
   const fetchProposals = async () => {
     try {
       const freelancerId = JSON.parse(localStorage.getItem("user") || "{}").id;
-      const response = await axios.get(`${baseURL}/jobs/proposals/?freelancer=${freelancerId}`, {
+      const response = await axios.get(`${baseURL}jobs/proposals/`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      setProposals(response.data);
-
-      // Fetch job details for each proposal
-      const jobIds = [...new Set(response.data.map((p: Proposal) => p.job))];
-      const jobPromises = jobIds.map(id => axios.get(`${baseURL}/jobs/${id}/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }));
-      const jobResponses = await Promise.all(jobPromises);
-      const jobMap = new Map<number, Job>();
-      jobResponses.forEach(res => {
-        jobMap.set(res.data.id, res.data);
-      });
-      setJobs(jobMap);
+      // Filter proposals to ensure they belong to the current user
+      const userProposals = response.data.filter((proposal: Proposal) => proposal.freelancer === freelancerId);
+      setProposals(userProposals);
     } catch (error: any) {
       let errorTitle = "Failed to load proposals";
       let errorMessage = "Please try again later.";
@@ -118,6 +111,26 @@ const MyProposals = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchJobDetails = async (jobId: number) => {
+    setJobLoading(true);
+    try {
+      const response = await axios.get(`${baseURL}jobs/jobs/${jobId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setSelectedJob(response.data);
+    } catch (error: any) {
+      toast({
+        title: "Failed to load job details",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setJobLoading(false);
     }
   };
 
@@ -165,11 +178,16 @@ const MyProposals = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-xl font-bold">{job?.title || `Job ${proposal.job}`}</h3>
-                      <p className="text-muted-foreground">{job?.company}</p>
+                      <p className="text-muted-foreground">Job ID: {job?.id}</p>
                     </div>
-                    <Badge variant="secondary">
-                      Submitted {new Date(proposal.created_at).toLocaleDateString()}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant={proposal.status === 'pending' ? 'default' : 'secondary'}>
+                        {proposal.status}
+                      </Badge>
+                      <Badge variant="outline">
+                        Submitted {new Date(proposal.created_at).toLocaleDateString()}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -181,17 +199,9 @@ const MyProposals = () => {
                       </div>
                       <div className="flex items-center gap-2 mb-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">Availability:</span>
-                        <span>{proposal.availability}</span>
+                        <span className="font-semibold">Duration:</span>
+                        <span>{proposal.duration_in_days} days</span>
                       </div>
-                      {proposal.ai_suggestion_score && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">AI Score:</span>
-                          <Badge variant={proposal.ai_suggestion_score > 70 ? "default" : "secondary"}>
-                            {proposal.ai_suggestion_score}/100
-                          </Badge>
-                        </div>
-                      )}
                     </div>
 
                     <div>
@@ -220,17 +230,20 @@ const MyProposals = () => {
                     </p>
                   </div>
 
-                  {proposal.ai_feedback && (
+                  {proposal.experience && (
                     <div className="border-t border-border pt-4 mt-4">
-                      <h4 className="font-semibold mb-2">AI Feedback</h4>
-                      <p className="text-sm text-muted-foreground">{proposal.ai_feedback}</p>
+                      <h4 className="font-semibold mb-2">Experience</h4>
+                      <p className="text-sm text-muted-foreground">{proposal.experience}</p>
                     </div>
                   )}
 
                   <div className="flex justify-end mt-4">
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedProposal(proposal)}
+                      onClick={() => {
+                        setSelectedProposal(proposal);
+                        fetchJobDetails(proposal.job);
+                      }}
                       className="gap-2"
                     >
                       <Eye className="w-4 h-4" />
@@ -244,54 +257,76 @@ const MyProposals = () => {
         )}
 
         {/* Job Details Modal/Dialog */}
-        {selectedProposal && jobs.get(selectedProposal.job) && (
+        {selectedProposal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-2xl font-bold">{jobs.get(selectedProposal.job)?.title}</h2>
+                  <h2 className="text-2xl font-bold">
+                    {jobLoading ? "Loading..." : selectedJob?.title || "Job Details"}
+                  </h2>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedProposal(null)}
+                    onClick={() => {
+                      setSelectedProposal(null);
+                      setSelectedJob(null);
+                    }}
                   >
                     ×
                   </Button>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Company</h3>
-                    <p>{jobs.get(selectedProposal.job)?.company}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Description</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {jobs.get(selectedProposal.job)?.description}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Skills Required</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {jobs.get(selectedProposal.job)?.skills.map((skill, idx) => (
-                        <Badge key={idx} variant="secondary">{skill}</Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                {jobLoading ? (
+                  <div className="text-center py-8">Loading job details...</div>
+                ) : selectedJob ? (
+                  <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold mb-2">Location</h3>
-                      <p>{jobs.get(selectedProposal.job)?.location}</p>
+                      <h3 className="font-semibold mb-2">Description</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedJob.description}
+                      </p>
                     </div>
+
                     <div>
-                      <h3 className="font-semibold mb-2">Job Type</h3>
-                      <p>{jobs.get(selectedProposal.job)?.job_type}</p>
+                      <h3 className="font-semibold mb-2">Required Skills</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedJob.required_skills.map((skill) => (
+                          <Badge key={skill.id} variant="secondary">{skill.name}</Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Budget</h3>
+                        <p>${selectedJob.budget}/hr</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Location</h3>
+                        <p>{selectedJob.location}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Job Type</h3>
+                        <p>{selectedJob.job_type}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Experience Level</h3>
+                        <p>{selectedJob.experience_level}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Status</h3>
+                        <p>{selectedJob.status}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2">Created At</h3>
+                        <p>{new Date(selectedJob.created_at).toLocaleDateString()}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-8">Failed to load job details</div>
+                )}
               </div>
             </Card>
           </div>

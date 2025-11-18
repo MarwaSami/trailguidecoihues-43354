@@ -61,11 +61,11 @@ export const Navbar = () => {
                    Dashboard
                 </Link>
                 <Link
-                  to="/freelancer-profile"
+                  to="/my-proposals"
                   className={`text-sm font-medium transition-colors hover:text-primary ${isActive("/freelancer-profile") ? "text-primary" : "text-foreground"
                     }`}
                 >
-                   Profile
+                   My Proposals
                 </Link>
                 <Link
                   to="/view-portfolio"

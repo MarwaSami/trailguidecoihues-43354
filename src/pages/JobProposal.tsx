@@ -87,69 +87,56 @@ const JobProposal = () => {
 
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isGeneratingProposal, setIsGeneratingProposal] = useState(false);
+  const [proposalData, setProposalData] = useState<any>(null);
   const [proposalId, setProposalId] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Check for freelancer profile and existing proposal
+  // Generate proposal on load
   useEffect(() => {
-    const checkProfileAndFetchProposal = async () => {
-      if (!userData?.id || !job?.id) return;
+    const generateProposal = async () => {
+      if (!job?.id || !userData?.id) return;
 
-      // Check if freelancer has a profile
-      const profileId = localStorage.getItem('freelancer_profile_id');
-      if (!profileId) {
-        // No profile, show toast and redirect to profile page
-        toast({
-          title: "Profile Required",
-          description: "Please complete your freelancer profile before submitting proposals.",
-          variant: "default",
-        });
-        setTimeout(() => {
-          navigate('/freelancer-profile');
-        }, 2000);
-        return;
-      }
+      setIsGeneratingProposal(true);
 
-      // Has profile, proceed to check for existing proposal
       try {
         const token = localStorage.getItem("token");
 
-        // Check for existing proposal
-        const proposalResponse = await axios.get(
-          `${baseURL}jobs/proposals/?job=${job.id}&freelancer=${userData.id}`,
+        const response = await axios.post(
+          `${baseURL}jobs/post-proposal/`,
+          { job_id: job.id },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        if (proposalResponse.data.results && proposalResponse.data.results.length > 0) {
-          const existingProposal = proposalResponse.data.results[0];
-          setIsEditMode(true);
-          setProposalId(existingProposal.id);
-          setFormData({
-            cover_letter: existingProposal.cover_letter,
-            proposed_budget: existingProposal.proposed_budget,
-            duration_in_days: existingProposal.duration_in_days.toString(),
-            experience: existingProposal.experience || "",
-            status: existingProposal.status,
-            job: job.id,
-            freelancer: userData.id,
-          });
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            job: job.id,
-            freelancer: userData.id,
-          }));
-        }
+        setProposalData(response.data.data);
+        setProposalId(response.data.data.id);
+
+        // Set form data from the generated proposal
+        setFormData({
+          cover_letter: response.data.data.cover_letter,
+          proposed_budget: response.data.data.proposed_budget,
+          duration_in_days: response.data.data.duration_in_days.toString(),
+          experience: response.data.data.experience || "",
+          status: response.data.data.status,
+          job: job.id,
+          freelancer: userData.id,
+        });
       } catch (error) {
-        console.error("Error fetching proposal:", error);
+        console.error("Error generating proposal:", error);
+        toast({
+          title: "Error",
+          description: "Failed to generate proposal",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGeneratingProposal(false);
       }
     };
 
-    checkProfileAndFetchProposal();
-  }, [userData?.id, job?.id, navigate]);
+    generateProposal();
+  }, [job?.id, userData?.id]);
 
   if (!job) {
     return (
@@ -171,9 +158,24 @@ const JobProposal = () => {
     );
   }
 
+  if (isGeneratingProposal) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 pt-24 pb-12">
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="ml-4 text-lg">Generating your proposal...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validation
     const validateProposalForm = (data: typeof formData) => {
       const errors: string[] = [];
 
@@ -209,7 +211,6 @@ const JobProposal = () => {
     }
 
     setIsSubmitting(true);
-    setFieldErrors({});
 
     try {
       const payload = {
@@ -217,115 +218,34 @@ const JobProposal = () => {
         proposed_budget: formData.proposed_budget,
         duration_in_days: parseInt(formData.duration_in_days),
         experience: formData.experience,
-        status: formData.status,
+        status: "pending",
         job: job.id,
         freelancer: userData.id,
       };
 
-      if (isEditMode && proposalId) {
-        // Update existing proposal
-        await axios.put(
-          `${baseURL}jobs/proposals/${proposalId}/`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+      await axios.put(
+        `${baseURL}jobs/proposals/${proposalId}/`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-        toast({
-          title: "Proposal Updated!",
-          description: "Your proposal has been successfully updated.",
-        });
-      } else {
-        // Create new proposal
-        await axios.post(
-          `${baseURL}jobs/proposals/`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        toast({
-          title: "Proposal Submitted!",
-          description: "Your application has been sent to the client.",
-        });
-      }
+      toast({
+        title: "Proposal Submitted!",
+        description: "Your proposal has been sent to the client.",
+      });
 
       setTimeout(() => {
         navigate("/my-proposals");
       }, 2000);
     } catch (error: any) {
-      let errorTitle = isEditMode ? "Update Failed" : "Submission Failed";
-      let errorMessage = "An unexpected error occurred.";
-
-      if (error.response) {
-        if (error.response.status === 400) {
-          // Handle validation errors
-          const data = error.response.data;
-          if (typeof data === 'object' && data !== null) {
-            const fieldErrors: Record<string, string> = {};
-            let hasNonFieldErrors = false;
-
-            for (const [field, messages] of Object.entries(data)) {
-              if (field === 'non_field_errors') {
-                // Handle non-field errors (like unique constraints)
-                if (Array.isArray(messages)) {
-                  const errorMsg = messages.join(', ');
-                  if (errorMsg.includes('must make a unique set')) {
-                    errorMessage = "You have already submitted a proposal for this job.";
-                  } else {
-                    errorMessage = errorMsg;
-                  }
-                } else if (typeof messages === 'string') {
-                  errorMessage = messages;
-                }
-                hasNonFieldErrors = true;
-              } else if (Array.isArray(messages)) {
-                fieldErrors[field] = messages.join(', ');
-              } else if (typeof messages === 'string') {
-                fieldErrors[field] = messages;
-              }
-            }
-
-            setFieldErrors(fieldErrors);
-
-            if (hasNonFieldErrors) {
-              // Show toast for non-field errors
-              toast({
-                title: "Already Submitted",
-                description: errorMessage,
-                variant: "default",
-              });
-              return;
-            } else if (Object.keys(fieldErrors).length > 0) {
-              // Don't show toast for field errors, just set them
-              return;
-            } else {
-              errorMessage = data?.message || data?.detail || "Invalid request data.";
-            }
-          } else {
-            errorMessage = data?.message || data?.detail || "Invalid request data.";
-          }
-        } else {
-          // Other backend errors
-          errorMessage = error.response.data?.message || error.response.data?.detail || `Error ${error.response.status}: ${error.response.statusText}`;
-        }
-      } else if (error.request) {
-        // Network error
-        errorMessage = "Network error. Please check your connection.";
-      } else {
-        // Other error
-        errorMessage = error.message || errorMessage;
-      }
-
+      console.error("Error submitting proposal:", error);
       toast({
-        title: errorTitle,
-        description: errorMessage,
+        title: "Submission Failed",
+        description: error.response?.data?.detail || "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -360,13 +280,10 @@ const JobProposal = () => {
 
         <div className="text-center max-w-3xl mx-auto mb-8">
           <h1 className="text-4xl font-bold mb-3">
-            {isEditMode ? "Edit Your Proposal" : "Submit Your Proposal"}
+            Review Your Generated Proposal
           </h1>
           <p className="text-lg text-muted-foreground">
-            {isEditMode 
-              ? "Update your proposal details below"
-              : "Showcase your skills and why you're the perfect fit for this role"
-            }
+            Review the AI-generated proposal below and submit when ready
           </p>
         </div>
 
@@ -415,14 +332,6 @@ const JobProposal = () => {
           {/* Proposal Form - Right Side */}
           <div className="lg:col-span-2">
             <Card className="p-8 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-              {isEditMode && (
-                <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                  <p className="text-sm flex items-center gap-2">
-                    <Award className="w-4 h-4" />
-                    You're editing an existing proposal for this job
-                  </p>
-                </div>
-              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -528,12 +437,12 @@ const JobProposal = () => {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        {isEditMode ? "Updating..." : "Submitting..."}
+                        Submitting...
                       </>
                     ) : (
                       <>
                         <Send className="w-5 h-5" />
-                        {isEditMode ? "Update Proposal" : "Submit Proposal"}
+                        Submit Proposal
                       </>
                     )}
                   </Button>

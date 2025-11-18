@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 // Base URL - Replace with your actual API base URL
 const baseURL = "http://127.0.0.1:8000/api/v1/";
@@ -53,6 +54,7 @@ export interface JobPostingResponse {
 
 export const RegularJobForm = () => {
   const {user,token} = useAuth()
+  const navigate = useNavigate();
   // Form state
   const [formData, setFormData] = useState<JobPosting>({
     title: "",
@@ -72,7 +74,7 @@ export const RegularJobForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle input changes
-  const handleInputChange = (field: keyof JobPosting, value: string) => {
+  const handleInputChange = (field: keyof JobPosting, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -201,7 +203,7 @@ export const RegularJobForm = () => {
           title: "Success!",
           description:"Job posting created successfully",
         });
-        
+        navigate("/job-browse")
         // Reset form or redirect
         // resetForm();
       } else {
@@ -338,8 +340,8 @@ export const RegularJobForm = () => {
             </Label>
             <Input
               id="budget"
-              value={formData.budget}
-              onChange={(e) => handleInputChange("budget", e.target.value)}
+              value={formData.budget.toString()}
+              onChange={(e) => handleInputChange("budget", parseInt(e.target.value) || 0)}
               placeholder="e.g., $80-120/hr"
               className="bg-background/50 backdrop-blur-sm"
               required
