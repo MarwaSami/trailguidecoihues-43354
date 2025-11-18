@@ -49,13 +49,20 @@ const ViewPortfolio = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        <div className="mb-8 space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            My Portfolio
-          </h1>
-          <p className="text-muted-foreground">
-            Showcase of my projects and achievements
-          </p>
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                My Portfolio
+              </h1>
+              <p className="text-muted-foreground">
+                Showcase of my projects and achievements
+              </p>
+            </div>
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white">
+              <a href="/add-portfolio">Add New Portfolio</a>
+            </Button>
+          </div>
         </div>
 
         {portfolios.length === 0 ? (

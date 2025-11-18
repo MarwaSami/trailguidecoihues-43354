@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
-import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star } from "lucide-react";
+import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { set } from "date-fns";
+import { JobDetailsDialog } from "@/components/JobDetailsDialog";
 
 
 const JobBrowse = () => {
@@ -359,18 +360,20 @@ const JobBrowse = () => {
                       </div>
 
                       <div className="flex flex-col gap-3 lg:w-48">
-                        <Button 
-                          variant="hero" 
+                        <Button
+                          variant="hero"
                           className="gap-2"
                           onClick={() => navigate("/job-proposal", { state: { job } })}
                         >
                           <Send className="w-4 h-4" />
                           Apply Now
                         </Button>
-                        <Button variant="outline">
-                          <Bookmark className="w-4 h-4" />
-                        </Button>
-                        
+                        <div className="flex gap-2">
+                          <JobDetailsDialog job={job} userType="freelancer" />
+                          <Button variant="outline" size="sm">
+                            <Bookmark className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>

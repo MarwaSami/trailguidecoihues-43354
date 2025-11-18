@@ -7,7 +7,9 @@ import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import ClientDashboard from "./pages/ClientDashboard";
+import ClientProfile from "./pages/ClientProfile";
 import MyJobs from "./pages/MyJobs";
+import ViewApplicants from "./pages/ViewApplicants";
 import FreelancerProfile from "./pages/FreelancerProfile";
 import FreelancerDashboard from "./pages/FreelancerDashboard";
 import Skills from "./pages/Skills";
@@ -37,50 +39,44 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-       <ProfileformProvider>
-        <JobProvider>
-          <ClientJobProvider>
-            <PortfolioProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <AuthProvider>
-                  <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/auth" element={<Auth />} />
-                
-                {/* Freelancer Routes */}
-                <Route path="/test" element={<InterviewProvider><InterviewPractice /></InterviewProvider>} />
-                <Route path="/freelancer-dashboard" element={<FreelancerDashboard />} />
-                <Route path="/freelancer-profile" element={<FreelancerProfile />} />
-                <Route path="/add-portfolio" element={<AddPortfolio />} />
-                <Route path="/view-portfolio" element={<ViewPortfolio />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/job-browse" element={<JobBrowse />} />
-                <Route path="/interview-practice" element={<InterviewProvider><InterviewPractice /></InterviewProvider>} />
-                <Route path="/interview-results" element={<InterviewProvider><InterviewResults /></InterviewProvider>} />
-                <Route path="/skill-evaluation" element={<SkillEvaluation />} />
-                <Route path="/job-proposal" element={<JobProposal />} />
-                <Route path="/my-proposals" element={<MyProposals />} />
-                {/* Client Routes */}
-                <Route path="/client-dashboard" element={<ClientDashboard />} />
-                <Route path="/my-jobs" element={<MyJobs />} />
-                <Route path="/job-posting" element={<JobPosting />} />
-                <Route path="/candidate-discovery" element={<CandidateDiscovery />} />
-                
-                {/* Shared Routes */}
-                <Route path="/skills" element={<Skills />} />
-                <Route path="/reports" element={<Reports />} />
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-                </Routes>
-              </AuthProvider>
-            </BrowserRouter>
-            </PortfolioProvider>
-          </ClientJobProvider>
-        </JobProvider>
-       </ProfileformProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+
+            {/* Freelancer Routes */}
+            <Route path="/test" element={<InterviewProvider><InterviewPractice /></InterviewProvider>} />
+            <Route path="/freelancer-dashboard" element={<JobProvider><FreelancerDashboard /></JobProvider>} />
+            <Route path="/freelancer-profile" element={<ProfileformProvider><FreelancerProfile /></ProfileformProvider>} />
+            <Route path="/add-portfolio" element={<PortfolioProvider><AddPortfolio /></PortfolioProvider>} />
+            <Route path="/view-portfolio" element={<PortfolioProvider><ViewPortfolio /></PortfolioProvider>} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/job-browse" element={<JobProvider><JobBrowse /></JobProvider>} />
+            <Route path="/interview-practice" element={<InterviewProvider><InterviewPractice /></InterviewProvider>} />
+            <Route path="/interview-results" element={<InterviewProvider><InterviewResults /></InterviewProvider>} />
+            <Route path="/skill-evaluation" element={<SkillEvaluation />} />
+            <Route path="/job-proposal" element={<JobProvider><JobProposal /></JobProvider>} />
+            <Route path="/my-proposals" element={<MyProposals />} />
+            {/* Client Routes */}
+            <Route path="/client-dashboard" element={<ClientJobProvider><ClientDashboard /></ClientJobProvider>} />
+            <Route path="/client-profile" element={<ClientProfile />} />
+            <Route path="/my-jobs" element={<ClientJobProvider><MyJobs /></ClientJobProvider>} />
+            <Route path="/view-applicants/:jobId" element={<ViewApplicants />} />
+            <Route path="/job-posting" element={<JobPosting />} />
+            <Route path="/candidate-discovery" element={<CandidateDiscovery />} />
+
+            {/* Shared Routes */}
+            <Route path="/skills" element={<Skills />} />
+            <Route path="/reports" element={<Reports />} />
+
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

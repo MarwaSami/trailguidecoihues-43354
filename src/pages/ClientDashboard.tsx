@@ -2,7 +2,6 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Briefcase,
   Users,
@@ -15,7 +14,6 @@ import {
   BarChart3,
   Search,
   Target,
-  Bell,
   User,
   DollarSign
 } from "lucide-react";
@@ -23,22 +21,17 @@ import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useClientJobs } from "@/context/ClientJobContext";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { JobDetailsDialog } from "@/components/JobDetailsDialog";
 
 const ClientDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { jobs, loading: jobsLoading } = useClientJobs();
 
   // Parse user if it's a string
-  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
-  const username = userData?.username || "User";
+  console.log("User Data:", user);
+  
+  //const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
+  const username = user.username || "User";
   
   // Show loading state while auth or jobs are loading
   if (authLoading || jobsLoading) {
@@ -55,30 +48,28 @@ const ClientDashboard = () => {
     );
   }
   
-  const activeJobs = jobs.filter(job => job.status.toLowerCase() === "active");
-  
+  const myJobs = jobs.filter(job => job.client === user?.id);
+  const activeJobs = myJobs.filter(job => job.status.toLowerCase() === "active");
+
   const stats = [
-    { label: "Active Jobs", value: activeJobs.length.toString(), icon: Briefcase, trend: `${jobs.length} total`, color: "primary" },
-    { label: "Total Jobs Posted", value: jobs.length.toString(), icon: Target, trend: "All time", color: "secondary" },
+    { label: "Active Jobs", value: activeJobs.length.toString(), icon: Briefcase, trend: `${myJobs.length} total`, color: "primary" },
+    { label: "Total Jobs Posted", value: myJobs.length.toString(), icon: Target, trend: "All time", color: "secondary" },
     { label: "Avg Response Time", value: "2.4h", icon: Clock, trend: "Last 7 days", color: "accent" },
     { label: "Success Rate", value: "94%", icon: CheckCircle, trend: "This month", color: "primary" },
   ];
 
-  const notifications = [
-    { id: 1, text: "New application for Senior Developer position", time: "5m ago", link: "/candidate-discovery", unread: true },
-    { id: 2, text: "Interview scheduled with candidate tomorrow", time: "1h ago", link: "/candidate-discovery", unread: true },
-    { id: 3, text: "Job posting approved and published", time: "3h ago", link: "/job-posting", unread: false },
-    { id: 4, text: "Freelancer submitted final deliverables", time: "1d ago", link: "/client-dashboard", unread: false },
-  ];
-
   const recentJobs = jobs.slice(0, 3).map(job => ({
-    id: job.id,
-    title: job.title,
+    ...job,
     posted: new Date(job.created_at).toLocaleDateString(),
     applicants: 0, // Will be updated when we have applicants data
-    status: job.status,
     views: 0, // Will be updated when we have views data
-    budget: job.budget,
+  }));
+
+  const allMyJobs = myJobs.map(job => ({
+    ...job,
+    posted: new Date(job.created_at).toLocaleDateString(),
+    applicants: 0, // Will be updated when we have applicants data
+    views: 0, // Will be updated when we have views data
   }));
 
 
@@ -87,64 +78,10 @@ const ClientDashboard = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        {/* Header with Profile & Notifications */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Welcome back, {username}!</h1>
-            <p className="text-muted-foreground">Manage your jobs and find the perfect talent</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Notifications Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="relative rounded-full">
-                  <Bell className="w-5 h-5" />
-                  {notifications.filter(n => n.unread).length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                      {notifications.filter(n => n.unread).length}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {notifications.map((notif) => (
-                  <DropdownMenuItem key={notif.id} asChild>
-                    <Link 
-                      to={notif.link} 
-                      className={`flex flex-col items-start p-3 cursor-pointer ${notif.unread ? 'bg-primary/5' : ''}`}
-                    >
-                      <div className="flex items-start justify-between w-full gap-2">
-                        <p className={`text-sm ${notif.unread ? 'font-semibold' : ''}`}>{notif.text}</p>
-                        {notif.unread && <div className="w-2 h-2 bg-primary rounded-full mt-1" />}
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-1">{notif.time}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Profile Avatar */}
-            <Link to="/client-dashboard">
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Avatar className="w-9 h-9">
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
-                    {user?.username?.charAt(0).toUpperCase() || "C"}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </Link>
-
-            <Link to="/job-posting">
-              <Button variant="hero" size="lg" className="gap-2">
-                <Target className="w-5 h-5" />
-                Post New Job
-              </Button>
-            </Link>
-          </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Welcome back, {username}!</h1>
+          <p className="text-muted-foreground">Manage your jobs and find the perfect talent</p>
         </div>
 
         {/* Stats Grid */}
@@ -187,14 +124,62 @@ const ClientDashboard = () => {
                         <h3 className="text-xl font-bold mb-1">{job.title}</h3>
                         <p className="text-sm text-muted-foreground">Posted {job.posted}</p>
                       </div>
-                      <Badge 
+                      <Badge
                         variant={job.status === "active" ? "default" : "secondary"}
                         className="capitalize"
                       >
                         {job.status}
                       </Badge>
                     </div>
-                    
+
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                        <span>{job.budget}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <JobDetailsDialog job={job} userType="client" />
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* My Job Postings */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">My Job Postings</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/my-jobs">View All</Link>
+            </Button>
+          </div>
+
+          {jobsLoading ? (
+            <p className="text-muted-foreground text-center py-4">Loading jobs...</p>
+          ) : allMyJobs.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">No jobs posted yet</p>
+          ) : (
+            allMyJobs.map((job) => (
+              <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
+                <div className="flex flex-col md:flex-row justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="text-xl font-bold mb-1">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground">Posted {job.posted}</p>
+                      </div>
+                      <Badge
+                        variant={job.status === "active" ? "default" : "secondary"}
+                        className="capitalize"
+                      >
+                        {job.status}
+                      </Badge>
+                    </div>
+
                     <div className="flex flex-wrap gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-muted-foreground" />

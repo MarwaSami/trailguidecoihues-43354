@@ -6,32 +6,32 @@ import { Input } from "@/components/ui/input";
 import { useClientJobs } from "@/context/ClientJobContext";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
-import { 
-  Search, 
-  MapPin, 
-  DollarSign, 
-  Briefcase, 
+import {
+  Search,
+  MapPin,
+  DollarSign,
+  Briefcase,
   Users,
   Eye,
   Calendar
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ApplicantsDialog } from "@/components/ApplicantsDialog";
+import { JobDetailsDialog } from "@/components/JobDetailsDialog";
 
 const MyJobs = () => {
   const { jobs, loading, error } = useClientJobs();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
-
-  const userData = user ? JSON.parse(user) : null;
-  const clientName = userData?.username || "";
+ console.log("Jobs Data:", jobs);
+  //const userData = user ? JSON.parse(user) : null;
+  const clientName = user?.username || "";
 
   // Filter jobs by client name and search term
   const filteredJobs = jobs.filter(job => {
+    const matchesClient = job.client === user?.id;
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+                          job.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesClient && matchesSearch;
   });
 
   const getStatusColor = (status: string) => {
@@ -139,18 +139,17 @@ const MyJobs = () => {
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-4 border-t">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setSelectedJobId(job.id)}
+                      <Button
+                        variant="outline"
+                        asChild
                         className="flex items-center gap-2"
                       >
-                        <Users className="w-4 h-4" />
-                        View Applicants
+                        <Link to={`/view-applicants/${job.id}`}>
+                          <Users className="w-4 h-4" />
+                          View Applicants
+                        </Link>
                       </Button>
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        View Details
-                      </Button>
+                      <JobDetailsDialog job={job} userType="client" />
                     </div>
                   </CardContent>
                 </Card>
@@ -159,14 +158,6 @@ const MyJobs = () => {
           </div>
         )}
 
-        {/* Applicants Dialog */}
-        {selectedJobId && (
-          <ApplicantsDialog 
-            jobId={selectedJobId} 
-            open={!!selectedJobId}
-            onOpenChange={(open) => !open && setSelectedJobId(null)}
-          />
-        )}
       </main>
     </div>
   );

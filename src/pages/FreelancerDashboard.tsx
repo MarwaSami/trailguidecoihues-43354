@@ -2,7 +2,6 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Briefcase,
   TrendingUp,
@@ -19,25 +18,18 @@ import {
   Bookmark,
   Receipt,
   Notebook,
-  Bell
+  Loader2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useJobs } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { JobDetailsDialog } from "@/components/JobDetailsDialog";
 
 const FreelancerDashboard = () => {
     const navigate = useNavigate();
-    const { jobs } = useJobs();
+    const { jobs, loading } = useJobs();
     const { user } = useAuth();
-    
+
     const recommendedJobs = jobs.slice(0, 4);
     const firstJobScore = jobs.length > 0 ? jobs[0].match_score : 0;
     const username = user?.username || 'User';
@@ -47,13 +39,6 @@ const FreelancerDashboard = () => {
     { label: "Profile Views", value: "234", icon: Eye, trend: "+45 today", color: "secondary" },
     { label: "Recommended Jobs", value: String(jobs.length), icon: Bookmark, trend: "AI Matched", color: "accent" },
     { label: "Match Score", value: `${Math.round(firstJobScore)}%`, icon: Target, trend: "Top Match", color: "primary" },
-  ];
-
-  const notifications = [
-    { id: 1, text: "New job match: Senior React Developer", time: "5m ago", link: "/job-browse", unread: true },
-    { id: 2, text: "Your proposal was viewed by the client", time: "1h ago", link: "/job-browse", unread: true },
-    { id: 3, text: "Interview scheduled for tomorrow at 2 PM", time: "3h ago", link: "/interview-practice", unread: false },
-    { id: 4, text: "Payment received for completed project", time: "1d ago", link: "/freelancer-dashboard", unread: false },
   ];
 
   const recentActivity = [
@@ -85,64 +70,10 @@ const FreelancerDashboard = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        {/* Header with Profile & Notifications */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Welcome Back, {username}</h1>
-            <p className="text-muted-foreground">Your personalized dashboard with AI-powered insights</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Notifications Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="relative rounded-full">
-                  <Bell className="w-5 h-5" />
-                  {notifications.filter(n => n.unread).length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                      {notifications.filter(n => n.unread).length}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {notifications.map((notif) => (
-                  <DropdownMenuItem key={notif.id} asChild>
-                    <Link 
-                      to={notif.link} 
-                      className={`flex flex-col items-start p-3 cursor-pointer ${notif.unread ? 'bg-primary/5' : ''}`}
-                    >
-                      <div className="flex items-start justify-between w-full gap-2">
-                        <p className={`text-sm ${notif.unread ? 'font-semibold' : ''}`}>{notif.text}</p>
-                        {notif.unread && <div className="w-2 h-2 bg-primary rounded-full mt-1" />}
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-1">{notif.time}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Profile Avatar */}
-            <Link to="/freelancer-profile">
-              <Button variant="outline" size="icon" className="rounded-full">
-                <Avatar className="w-9 h-9">
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
-                    {user?.username?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </Link>
-
-            <Link to="/job-browse">
-              <Button variant="hero" size="lg" className="gap-2">
-                <Target className="w-5 h-5" />
-                Browse Jobs
-              </Button>
-            </Link>
-          </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Welcome Back, {username}</h1>
+          <p className="text-muted-foreground">Your personalized dashboard with AI-powered insights</p>
         </div>
 
         {/* Counter */}
@@ -179,81 +110,60 @@ const FreelancerDashboard = () => {
               </Link>
             </div>
 
-            {recommendedJobs.map((job, idx) => (
-              <Card key={idx} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
-                <div className="flex flex-col md:flex-row justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground">{job.client_name} </p>
-                      </div>
-                      <div className="text-right ml-4">
-                        <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                          {Math.floor(job.match_score * 100)}%
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              recommendedJobs.map((job, idx) => (
+                <Card key={idx} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="text-xl font-bold mb-1">{job.title}</h3>
+                          <p className="text-sm text-muted-foreground">{job.client_name} </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">Match</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 mb-3">
-                          {job.required_skills?.map((skill, idx) => (
-                            <Badge key={idx} variant="secondary">
-                              {skill}
-                            </Badge>
-                          ))}
-                    </div>
-                   <div className="flex flex-wrap gap-2 mb-3">
-                          {job.required_skills?.map((skill, idx) => (
-                            <Badge key={idx} variant="secondary">
-                              {skill}
-                            </Badge>
-                          ))}
+                        <div className="text-right ml-4">
+                          <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                            {Math.floor(job.match_score * 100)}%
+                          </div>
+                          <p className="text-xs text-muted-foreground">Match</p>
                         </div>
+                      </div>
 
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="font-bold text-primary">{job.budget} $</span>
-                      <span className="text-muted-foreground">Posted at  {new Date(job.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                   <div className="flex flex-col gap-3 lg:w-48">
-                        <Button 
-                          variant="hero" 
-                          className="gap-2"
-                          onClick={() => navigate("/job-proposal", { state: { job } })}
-                        >
-                          <Send className="w-4 h-4" />
-                          Apply Now
-                        </Button>
-                        <Button variant="outline">
-                          <Notebook className="w-4 h-4" />
-                          View Details
-                        </Button>
-                        {
-                          job.proposal_status === "SUBMITTED" ? (
-                           <p className="w-full text-center text-muted-foreground">
-                              Proposal Submitted
-                            </p>
-                          ) : job.proposal_status === "ACCEPTED" ? (
-                            <Badge variant="default" className="w-full text-center">
-                              Proposal Accepted
-                            </Badge>
-                          ) : job.proposal_status === "REJECTED" ? (
-                            <Badge variant="destructive" className="w-full text-center">
-                              Proposal Rejected
-                            </Badge>
-                          ) : (
-                            <p className="w-full text-center text-green">
-                              Proposal Drafted
-                            </p>
-                          )
-         
-                        }
-                        
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {job.required_skills?.map((skill, idx) => (
+                          <Badge key={idx} variant="secondary">
+                            {skill}
+                          </Badge>
+                        ))}
                       </div>
-                </div>
-              </Card>
-            ))}
+
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="font-bold text-primary">{job.budget} $</span>
+                        <span className="text-muted-foreground">Posted at  {new Date(job.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                     <div className="flex flex-col gap-3 lg:w-48">
+                          <Button
+                            variant="hero"
+                            className="gap-2"
+                            onClick={() => navigate("/job-proposal", { state: { job } })}
+                          >
+                            <Send className="w-4 h-4" />
+                            Apply Now
+                          </Button>
+                          <JobDetailsDialog job={job} userType="freelancer" />
+                          <p className="w-full text-center text-muted-foreground">
+                            Proposal Status
+                          </p>
+
+                        </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
 
           {/* Recent Activity */}
