@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -13,6 +13,7 @@ import {
   Calendar,
   ArrowLeft,
   Eye,
+  Users,
 } from "lucide-react";
 import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
@@ -159,97 +160,134 @@ const MyProposals = () => {
         </div>
 
         {proposals.length === 0 ? (
-          <Card className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">No Proposals Yet</h2>
-            <p className="text-muted-foreground mb-6">
-              You haven't submitted any proposals yet. Start browsing jobs to apply!
-            </p>
-            <Button onClick={() => window.history.back()}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Jobs
-            </Button>
+          <Card className="border-dashed border-2 border-border/50 bg-[var(--gradient-card)] backdrop-blur-[var(--blur-glass)]">
+            <CardContent className="pt-12 pb-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">No Proposals Yet</h2>
+              <p className="text-muted-foreground mb-6">
+                You haven't submitted any proposals yet. Start browsing jobs to apply!
+              </p>
+              <Button onClick={() => window.history.back()} size="lg" className="shadow-[var(--shadow-glow)]">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Jobs
+              </Button>
+            </CardContent>
           </Card>
         ) : (
           <div className="grid gap-6">
-            {proposals.map((proposal) => {
+            {proposals.map((proposal, idx) => {
               const job = jobs.get(proposal.job);
+              const statusColor = proposal.status === 'pending' ? 'bg-primary/10 text-primary border-primary/30' : 
+                                 proposal.status === 'accepted' ? 'bg-green-500/10 text-green-600 border-green-500/30' : 
+                                 'bg-muted text-muted-foreground border-border';
+              
               return (
-                <Card key={proposal.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold">{job?.title || `Job ${proposal.job}`}</h3>
-                      <p className="text-muted-foreground">Job ID: {job?.id}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant={proposal.status === 'pending' ? 'default' : 'secondary'}>
-                        {proposal.status}
-                      </Badge>
-                      <Badge variant="outline">
-                        Submitted {new Date(proposal.created_at).toLocaleDateString()}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">Proposed Budget:</span>
-                        <span>${proposal.proposed_budget}/hr</span>
+                <Card 
+                  key={proposal.id} 
+                  className="group relative overflow-hidden border-border/50 bg-card/95 backdrop-blur-[var(--blur-glass)] shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-300 animate-fade-up"
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                >
+                  <div className="absolute inset-0 bg-[var(--gradient-card)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <CardContent className="p-6 relative z-10">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+                          {job?.title || `Job ${proposal.job}`}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">Job ID: {job?.id}</p>
                       </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">Duration:</span>
-                        <span>{proposal.duration_in_days} days</span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <Badge className={`${statusColor} capitalize shadow-sm`}>
+                          {proposal.status}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {new Date(proposal.created_at).toLocaleDateString()}
+                        </Badge>
                       </div>
                     </div>
 
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span>{job?.location}</span>
+                    <div className="grid md:grid-cols-2 gap-6 mb-6 p-4 rounded-lg bg-muted/30 border border-border/50">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <DollarSign className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Proposed Budget</p>
+                            <p className="font-semibold text-lg">${proposal.proposed_budget}/hr</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-accent" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Duration</p>
+                            <p className="font-semibold">{proposal.duration_in_days} days</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Briefcase className="w-4 h-4 text-muted-foreground" />
-                        <span>{job?.job_type}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span>Posted {job ? new Date(job.created_at).toLocaleDateString() : 'N/A'}</span>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="w-4 h-4 text-primary/70" />
+                          <span className="text-muted-foreground">{job?.location || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Briefcase className="w-4 h-4 text-primary/70" />
+                          <span className="text-muted-foreground">{job?.job_type || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="w-4 h-4 text-primary/70" />
+                          <span className="text-muted-foreground">
+                            Posted {job ? new Date(job.created_at).toLocaleDateString() : 'N/A'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="border-t border-border pt-4">
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      Cover Letter
-                    </h4>
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {proposal.cover_letter}
-                    </p>
-                  </div>
-
-                  {proposal.experience && (
-                    <div className="border-t border-border pt-4 mt-4">
-                      <h4 className="font-semibold mb-2">Experience</h4>
-                      <p className="text-sm text-muted-foreground">{proposal.experience}</p>
+                    <div className="border-t border-border/50 pt-4 mb-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
+                        <FileText className="w-4 h-4 text-primary" />
+                        Cover Letter
+                      </h4>
+                      <div className="p-4 rounded-lg bg-muted/20 border border-border/30">
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                          {proposal.cover_letter}
+                        </p>
+                      </div>
                     </div>
-                  )}
 
-                  <div className="flex justify-end mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedProposal(proposal);
-                        fetchJobDetails(proposal.job);
-                      }}
-                      className="gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View Job Details
-                    </Button>
-                  </div>
+                    {proposal.experience && (
+                      <div className="border-t border-border/50 pt-4 mb-4">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-primary" />
+                          Experience
+                        </h4>
+                        <div className="p-4 rounded-lg bg-muted/20 border border-border/30">
+                          <p className="text-sm text-muted-foreground leading-relaxed">{proposal.experience}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end pt-4 border-t border-border/50">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedProposal(proposal);
+                          fetchJobDetails(proposal.job);
+                        }}
+                        className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Job Details
+                      </Button>
+                    </div>
+                  </CardContent>
                 </Card>
               );
             })}
@@ -258,74 +296,147 @@ const MyProposals = () => {
 
         {/* Job Details Modal/Dialog */}
         {selectedProposal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+            <Card className="max-w-3xl w-full max-h-[85vh] overflow-y-auto bg-card/98 backdrop-blur-[var(--blur-glass)] border-border/50 shadow-[var(--shadow-glow)] animate-scale-in">
               <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-2xl font-bold">
+                <div className="flex justify-between items-start mb-6 border-b border-border/50 pb-4">
+                  <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground/80 bg-clip-text">
                     {jobLoading ? "Loading..." : selectedJob?.title || "Job Details"}
                   </h2>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={() => {
                       setSelectedProposal(null);
                       setSelectedJob(null);
                     }}
+                    className="hover:bg-destructive/10 hover:text-destructive rounded-full"
                   >
-                    ×
+                    <span className="text-2xl">×</span>
                   </Button>
                 </div>
 
                 {jobLoading ? (
-                  <div className="text-center py-8">Loading job details...</div>
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading job details...</p>
+                  </div>
                 ) : selectedJob ? (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold mb-2">Description</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedJob.description}
-                      </p>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-semibold">Description</h3>
+                      </div>
+                      <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
+                        <p className="text-muted-foreground leading-relaxed">
+                          {selectedJob.description}
+                        </p>
+                      </div>
                     </div>
 
-                    <div>
-                      <h3 className="font-semibold mb-2">Required Skills</h3>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Briefcase className="w-4 h-4 text-primary" />
+                        </div>
+                        <h3 className="text-lg font-semibold">Required Skills</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2 p-4 rounded-lg bg-muted/30 border border-border/50">
                         {selectedJob.required_skills.map((skill) => (
-                          <Badge key={skill.id} variant="secondary">{skill.name}</Badge>
+                          <Badge 
+                            key={skill.id} 
+                            className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors shadow-sm"
+                          >
+                            {skill.name}
+                          </Badge>
                         ))}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="font-semibold mb-2">Budget</h3>
-                        <p>${selectedJob.budget}/hr</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
+                        <div className="flex flex-col gap-2">
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Budget</p>
+                            <p className="text-lg font-bold text-primary">${selectedJob.budget}/hr</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Location</h3>
-                        <p>{selectedJob.location}</p>
+                      
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20">
+                        <div className="flex flex-col gap-2">
+                          <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                            <MapPin className="w-5 h-5 text-accent" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Location</p>
+                            <p className="font-semibold">{selectedJob.location}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Job Type</h3>
-                        <p>{selectedJob.job_type}</p>
+                      
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-secondary/5 to-secondary/10 border border-secondary/20">
+                        <div className="flex flex-col gap-2">
+                          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                            <Briefcase className="w-5 h-5 text-secondary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Job Type</p>
+                            <p className="font-semibold">{selectedJob.job_type}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Experience Level</h3>
-                        <p>{selectedJob.experience_level}</p>
+                      
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
+                        <div className="flex flex-col gap-2">
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Experience</p>
+                            <p className="font-semibold">{selectedJob.experience_level}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Status</h3>
-                        <p>{selectedJob.status}</p>
+                      
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20">
+                        <div className="flex flex-col gap-2">
+                          <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                            <Badge className="w-5 h-5 rounded-full bg-accent/30" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Status</p>
+                            <p className="font-semibold capitalize">{selectedJob.status}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold mb-2">Created At</h3>
-                        <p>{new Date(selectedJob.created_at).toLocaleDateString()}</p>
+                      
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-secondary/5 to-secondary/10 border border-secondary/20">
+                        <div className="flex flex-col gap-2">
+                          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-secondary" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Posted</p>
+                            <p className="font-semibold text-sm">{new Date(selectedJob.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8">Failed to load job details</div>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-destructive text-2xl">!</span>
+                    </div>
+                    <p className="text-destructive font-semibold">Failed to load job details</p>
+                  </div>
                 )}
               </div>
             </Card>

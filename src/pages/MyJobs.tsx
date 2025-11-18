@@ -83,67 +83,86 @@ const MyJobs = () => {
 
         {/* Jobs List */}
         {!loading && !error && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredJobs.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-muted-foreground">No jobs found. Create your first job posting!</p>
-                  <Button asChild className="mt-4">
-                    <Link to="/job-posting">Post a Job</Link>
+              <Card className="border-dashed border-2 border-border/50 bg-[var(--gradient-card)] backdrop-blur-[var(--blur-glass)]">
+                <CardContent className="pt-12 pb-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Briefcase className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
+                  <p className="text-muted-foreground mb-6">Create your first job posting and start receiving applications!</p>
+                  <Button asChild size="lg" className="shadow-[var(--shadow-glow)]">
+                    <Link to="/job-posting">
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      Post a Job
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              filteredJobs.map((job) => (
-                <Card key={job.id} className="shadow-card hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-2xl">{job.title}</CardTitle>
-                          <Badge variant={getStatusColor(job.status)}>
-                            {job.status === "draft" ? "open" : job.status}
+              filteredJobs.map((job, idx) => (
+                <Card 
+                  key={job.id} 
+                  className="group relative overflow-hidden border-border/50 bg-card/95 backdrop-blur-[var(--blur-glass)] shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-300 animate-fade-up"
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                >
+                  <div className="absolute inset-0 bg-[var(--gradient-card)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <CardHeader className="relative z-10">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="space-y-3 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{job.title}</CardTitle>
+                          <Badge 
+                            variant={getStatusColor(job.status)}
+                            className="shrink-0 shadow-sm"
+                          >
+                            {job.status === "draft" ? "Open" : job.status}
                           </Badge>
                         </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
+                        <div className="flex flex-wrap gap-4 text-sm">
+                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                            <MapPin className="w-4 h-4 text-primary/70" />
                             {job.location}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
+                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                            <Briefcase className="w-4 h-4 text-primary/70" />
                             {job.job_type}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4" />
+                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors font-semibold">
+                            <DollarSign className="w-4 h-4 text-primary/70" />
                             {job.budget}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                            <Calendar className="w-4 h-4 text-primary/70" />
                             {new Date(job.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground line-clamp-2">{job.description}</p>
+                  <CardContent className="space-y-4 relative z-10">
+                    <p className="text-muted-foreground line-clamp-2 leading-relaxed">{job.description}</p>
                     
                     {/* Skills */}
                     <div className="flex flex-wrap gap-2">
                       {job.required_skills.map((skill) => (
-                        <Badge key={skill.id} variant="outline">
+                        <Badge 
+                          key={skill.id} 
+                          variant="outline"
+                          className="bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 transition-colors"
+                        >
                           {skill.name}
                         </Badge>
                       ))}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 pt-4 border-t">
+                    <div className="flex gap-3 pt-4 border-t border-border/50">
                       <Button
                         variant="outline"
                         asChild
-                        className="flex items-center gap-2"
+                        className="flex-1 items-center gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all"
                       >
                         <Link to={`/view-applicants/${job.id}`}>
                           <Users className="w-4 h-4" />
