@@ -8,6 +8,8 @@
 
 
 import { baseURL } from '../context/AuthContext'
+
+export { baseURL };
 export interface ProfileEvaluationResponse {
   success: boolean;
   score: number;
