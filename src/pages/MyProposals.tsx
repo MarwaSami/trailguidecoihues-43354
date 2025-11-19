@@ -300,14 +300,21 @@ const MyProposals = () => {
 
                     <div className="flex justify-end gap-2 pt-4 border-t border-border/50">
                       <ProposalDetailsDialog proposalId={proposal.id} />
-                      <Button
-                        variant="outline"
-                        onClick={() => startInterview(proposal)}
-                        className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
-                      >
-                        <Play className="w-4 h-4" />
-                        Start Interview
-                      </Button>
+                      
+                      {/* Only show Start Interview if job has interview_availability and proposal is pending */}
+                      {job?.interview_availability && 
+                       proposal.status !== 'accepted' && 
+                       proposal.status !== 'rejected' && (
+                        <Button
+                          variant="outline"
+                          onClick={() => startInterview(proposal)}
+                          className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
+                        >
+                          <Play className="w-4 h-4" />
+                          Start Interview
+                        </Button>
+                      )}
+                      
                       <Button
                         variant="outline"
                         onClick={() => {
