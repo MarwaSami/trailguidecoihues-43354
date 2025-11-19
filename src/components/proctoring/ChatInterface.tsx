@@ -27,11 +27,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage }) => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const chatTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (chatTopRef.current) {
+      chatTopRef.current.scrollTop = 0;
     }
   }, [messages]);
 
@@ -82,9 +82,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage }) => {
         </h3>
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-4 max-h-[90vh]" ref={chatTopRef}>
         <div className="space-y-4">
-          {messages.map((message) => (
+          {messages.slice().reverse().map((message) => (
             <div
               key={message.id}
               className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -95,7 +95,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage }) => {
                 </div>
               )}
               <div
-                className={`max-w-[80%] p-3 rounded-lg ${
+                className={`max-w-[80%] p-3 rounded-lg overflow-y-auto max-h-40 ${
                   message.role === 'user'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground'

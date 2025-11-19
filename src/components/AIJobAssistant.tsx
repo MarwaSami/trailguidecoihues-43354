@@ -4,6 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { baseURL } from "../context/AuthContext";
 import {
   Select,
   SelectContent,
@@ -31,12 +35,8 @@ import {
   Zap,
   FileQuestion,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Define API base URL - replace with your actual backend URL
-const baseURL = "https://long-nonciteable-rolf.ngrok-free.dev/api/v1/";
 
 
 export interface JobPosting {
@@ -107,7 +107,7 @@ export const AIJobAssistant = () => {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatTopRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const startRecording = async () => {
@@ -302,14 +302,9 @@ export const AIJobAssistant = () => {
     });
 
     const response = await axios.post<AIAssistResponse>(
-      `http://localhost:5136/Job/POST`,
+      `https://localhost:7153/Job/POST`,
       formData,
-      // {
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`,
-      //   },
-      // }
+
     );
     
 
@@ -321,7 +316,7 @@ export const AIJobAssistant = () => {
       });
     }
     else {
-
+      console.log('AI Assist Response:', response.data);
       setChatMessages(prev => response.data.data.history);
       console.log(response.data);
       
@@ -343,8 +338,8 @@ export const AIJobAssistant = () => {
 
 
 
-    // Scroll to bottom
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    // Scroll to top
+    setTimeout(() => chatTopRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
 
 
 
@@ -376,7 +371,8 @@ export const AIJobAssistant = () => {
         status:"published",
         experience_level: formData.experienceLevel,
         job_type:formData.jobType,
-        title:formData.jobTitle
+        title:formData.jobTitle,
+        interview_availability:formData.interview_availability
       },
       {
         headers: {
@@ -670,8 +666,7 @@ export const AIJobAssistant = () => {
         </div>
 
         {/* Chat Messages */}
-        <ScrollArea className="flex-1 pr-4 mb-4 h-[500px]">
-          <div className="space-y-4">
+        <div className="flex-1 pr-4 mb-4 space-y-4">
             {/* Suggested Prompts - Only show when no messages */}
             {chatMessages.length === 0 && (
               <div className="space-y-4">
@@ -745,13 +740,13 @@ export const AIJobAssistant = () => {
             )}
 
             {/* Chat Messages */}
-            {chatMessages.map((message, index) => (
+            {chatMessages.slice().reverse().map((message, index) => (
               <div
-                key={index}
+                key={`${message.role}-${index}`}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${message.role === "user"
+                  className={`max-w-[80%] rounded-lg p-3 overflow-y-auto max-h-40 ${message.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted"
                     }`}
@@ -776,9 +771,8 @@ export const AIJobAssistant = () => {
               </div>
             )}
 
-            <div ref={chatEndRef} />
-          </div>
-        </ScrollArea>
+            <div ref={chatTopRef} />
+        </div>
 
         {/* Chat Input */}
         {inputMethod === "text" ? (
