@@ -383,7 +383,7 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
     try {
       const conv = conversationId || localStorage.getItem('conversation_id');
       if (!conv) throw new Error('Missing conversation id');
-      const response = await axios.post(`${baseURL}stop/`, {
+      const response = await axios.post(`${baseURL}jobs/stop/`, {
         conversation_id: conv,
       }, {
         headers: {
