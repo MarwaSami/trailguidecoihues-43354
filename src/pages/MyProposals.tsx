@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Proposal {
   id: number;
@@ -170,7 +172,7 @@ const MyProposals = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 pt-24 pb-12">
-          <div className="text-center">Loading proposals...</div>
+          <LoadingSpinner size="lg" message="Loading your proposals..." />
         </main>
       </div>
     );
@@ -190,21 +192,13 @@ const MyProposals = () => {
         </div>
 
         {proposals.length === 0 ? (
-          <Card className="border-dashed border-2 border-border/50 bg-[var(--gradient-card)] backdrop-blur-[var(--blur-glass)]">
-            <CardContent className="pt-12 pb-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">No Proposals Yet</h2>
-              <p className="text-muted-foreground mb-6">
-                You haven't submitted any proposals yet. Start browsing jobs to apply!
-              </p>
-              <Button onClick={() => window.history.back()} size="lg" className="shadow-[var(--shadow-glow)]">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Jobs
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyState 
+            icon={FileText}
+            title="No Proposals Yet"
+            description="You haven't submitted any proposals yet. Start browsing jobs to apply!"
+            actionLabel="Browse Jobs"
+            onAction={() => window.location.href = '/job-browse'}
+          />
         ) : (
           <div className="grid gap-6">
             {proposals.map((proposal, idx) => {

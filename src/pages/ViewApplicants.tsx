@@ -16,12 +16,15 @@ import {
   Download,
   Heart,
   CheckCircle,
-  Clock
+  Clock,
+  Users
 } from "lucide-react";
 import { useApplicants } from "@/context/ApplicantContext";
 import { ProposalDetailsDialog } from "@/components/ProposalDetailsDialog";
 import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 
 const ViewApplicants = () => {
@@ -109,7 +112,16 @@ const ViewApplicants = () => {
             </p>
           </div>
 
-          {candidates.map((candidate) => {
+          {loading ? (
+            <LoadingSpinner size="lg" message="Loading candidates..." />
+          ) : candidates.length === 0 ? (
+            <EmptyState 
+              icon={Users}
+              title="No Applicants Yet"
+              description="No candidates have applied to this job yet. Share your job posting to attract more applicants!"
+            />
+          ) : (
+            candidates.map((candidate) => {
             const mappedCandidate = {
               id: candidate.freelancer_id,
               name: candidate.freelancer_name,
@@ -239,14 +251,16 @@ const ViewApplicants = () => {
                 </div>
               </Card>
             );
-          })}
+          }))}
 
           {/* Load More */}
-          <div className="text-center pt-8">
-            <Button variant="glass" size="lg">
-              Load More Candidates
-            </Button>
-          </div>
+          {!loading && candidates.length > 0 && (
+            <div className="text-center pt-8">
+              <Button variant="glass" size="lg">
+                Load More Candidates
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>

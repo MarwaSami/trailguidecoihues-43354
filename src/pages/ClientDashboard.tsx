@@ -22,6 +22,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useClientJobs } from "@/context/ClientJobContext";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const ClientDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -39,10 +41,7 @@ const ClientDashboard = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
-          </div>
+          <LoadingSpinner size="lg" message="Loading dashboard..." />
         </div>
       </div>
     );
@@ -111,9 +110,13 @@ const ClientDashboard = () => {
           </div>
 
           {jobsLoading ? (
-            <p className="text-muted-foreground text-center py-4">Loading jobs...</p>
+            <LoadingSpinner message="Loading jobs..." />
           ) : recentJobs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No jobs posted yet</p>
+            <EmptyState 
+              icon={Briefcase}
+              title="No Recent Jobs"
+              description="You haven't posted any jobs yet. Create your first job posting now!"
+            />
           ) : (
             recentJobs.map((job) => (
               <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
@@ -159,9 +162,13 @@ const ClientDashboard = () => {
           </div>
 
           {jobsLoading ? (
-            <p className="text-muted-foreground text-center py-4">Loading jobs...</p>
+            <LoadingSpinner message="Loading jobs..." />
           ) : allMyJobs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No jobs posted yet</p>
+            <EmptyState 
+              icon={Briefcase}
+              title="No Jobs Posted"
+              description="Start posting jobs to find the perfect candidates for your projects!"
+            />
           ) : (
             allMyJobs.map((job) => (
               <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">

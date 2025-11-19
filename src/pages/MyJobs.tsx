@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const MyJobs = () => {
   const { jobs, loading, error } = useClientJobs();
@@ -66,40 +68,28 @@ const MyJobs = () => {
         </div>
 
         {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading your jobs...</p>
-          </div>
-        )}
+        {loading && <LoadingSpinner size="lg" message="Loading your jobs..." />}
 
         {/* Error State */}
         {error && (
-          <Card className="border-destructive">
-            <CardContent className="pt-6">
-              <p className="text-destructive">{error}</p>
-            </CardContent>
-          </Card>
+          <EmptyState 
+            icon={Briefcase}
+            title="Error Loading Jobs"
+            description={error || "There was an error loading your jobs. Please try again."}
+          />
         )}
 
         {/* Jobs List */}
         {!loading && !error && (
           <div className="space-y-6">
             {filteredJobs.length === 0 ? (
-              <Card className="border-dashed border-2 border-border/50 bg-[var(--gradient-card)] backdrop-blur-[var(--blur-glass)]">
-                <CardContent className="pt-12 pb-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Briefcase className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
-                  <p className="text-muted-foreground mb-6">Create your first job posting and start receiving applications!</p>
-                  <Button asChild size="lg" className="shadow-[var(--shadow-glow)]">
-                    <Link to="/job-posting">
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      Post a Job
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              <EmptyState 
+                icon={Briefcase}
+                title="No Jobs Found"
+                description="Create your first job posting and start receiving applications!"
+                actionLabel="Post a Job"
+                onAction={() => window.location.href = '/job-posting'}
+              />
             ) : (
               filteredJobs.map((job, idx) => (
                 <Card 

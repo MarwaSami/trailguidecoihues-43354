@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
-import { Loader2, Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star, Eye } from "lucide-react";
+import { Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { set } from "date-fns";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 
 const JobBrowse = () => {
@@ -255,21 +257,21 @@ const JobBrowse = () => {
           {/* Jobs List */}
           <div className="lg:col-span-3 space-y-6">
             {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
+              <LoadingSpinner size="lg" message="Finding perfect jobs for you..." />
             ) : error ? (
-              <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
-                <p className="text-destructive mb-2">{error}</p>
-                <p className="text-sm text-muted-foreground">Please make sure your Python backend is running.</p>
-              </Card>
+              <EmptyState 
+                icon={Briefcase}
+                title="Connection Error"
+                description={error || "Please make sure your backend is running and try again."}
+              />
             ) : filteredJobs.length === 0 ? (
-              <Card className="p-8 text-center bg-background/40 backdrop-blur-xl border border-border/50">
-                <p className="text-muted-foreground">No jobs found matching your filters</p>
-                <Button variant="outline" size="sm" className="mt-4" onClick={clearAllFilters}>
-                  Clear Filters
-                </Button>
-              </Card>
+              <EmptyState 
+                icon={Search}
+                title="No Jobs Found"
+                description="We couldn't find any jobs matching your filters. Try adjusting your search criteria."
+                actionLabel="Clear Filters"
+                onAction={clearAllFilters}
+              />
             ) : (
               <>
                 <div className="flex items-center justify-between mb-4">
