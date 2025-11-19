@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
   ArrowLeft,
   Eye,
   Users,
+  Play,
 } from "lucide-react";
 import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
@@ -49,6 +51,7 @@ interface Job {
 
 const MyProposals = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [jobs, setJobs] = useState<Map<number, Job>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -133,6 +136,12 @@ const MyProposals = () => {
     } finally {
       setJobLoading(false);
     }
+  };
+
+  const startInterview = (proposal: Proposal) => {
+    localStorage.setItem('interview_freelancer_id', proposal.freelancer.toString());
+    localStorage.setItem('interview_job_id', proposal.job.toString());
+    navigate('/interview-practice');
   };
 
   if (loading) {
@@ -274,7 +283,15 @@ const MyProposals = () => {
                       </div>
                     )}
 
-                    <div className="flex justify-end pt-4 border-t border-border/50">
+                    <div className="flex justify-end gap-2 pt-4 border-t border-border/50">
+                      <Button
+                        variant="outline"
+                        onClick={() => startInterview(proposal)}
+                        className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
+                      >
+                        <Play className="w-4 h-4" />
+                        Start Interview
+                      </Button>
                       <Button
                         variant="outline"
                         onClick={() => {

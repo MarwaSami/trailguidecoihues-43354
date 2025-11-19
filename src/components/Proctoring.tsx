@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { useInterview } from "@/context/InterviewContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Eye, Play } from "lucide-react";
+import { Mic, MicOff, Eye } from "lucide-react";
 
 type Models = {
   face: Awaited<ReturnType<typeof blazeface.load>> | null;
@@ -17,18 +17,11 @@ type Models = {
   object: Awaited<ReturnType<typeof cocoSsd.load>> | null;
 };
 
-type ChatMessage = {
-  id: string;
-  sender: "user" | "ai";
-  audioUrl: string;
-  text: string; // Transcribed text (shows in chat)
-};
 
 export default function OldProctoring() {
   const navigate = useNavigate();
   const { currentSession, startInterview, submitAudioAnswer, sendTextMessage, endInterview } = useInterview();
   const backendEndpoint = "https://localhost:7153/api/proctor";
-  const chatEndpoint = "https://localhost:7153/api/chat";
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,42 +36,9 @@ export default function OldProctoring() {
   const [models, setModels] = useState<Models>({ face: null, hand: null, object: null });
   const [interviewStopped, setInterviewStopped] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
-  const [chat, setChat] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
-  const unlockAudio = async () => {
-    if (audioUnlocked) return;
-
-    try {
-      // Create a silent audio to unlock
-      const silentAudio = new Audio();
-      silentAudio.muted = true;
-      silentAudio.volume = 0;
-      await silentAudio.play();
-      setAudioUnlocked(true);
-      toast.success("Audio enabled");
-    } catch (err) {
-      console.warn("Audio unlock failed:", err);
-    }
-  };
-
-  const playAudio = async (audioUrl: string) => {
-    try {
-      // Unlock audio if not already done
-      if (!audioUnlocked) {
-        await unlockAudio();
-      }
-
-      const audio = new Audio(audioUrl);
-      audio.volume = 1; // Ensure volume is up
-      await audio.play();
-      toast.success("Playing AI audio");
-    } catch (err) {
-      console.warn("Audio play failed:", err);
-      toast.error("Audio still blocked. Try clicking anywhere on the page first, then the play button.");
-    }
-  };
 
 
   /* ------------------- TensorFlow models ------------------- */
@@ -165,51 +125,11 @@ export default function OldProctoring() {
     rec.onstop = async () => {
       const userBlob = new Blob(chunksRef.current, { type: mime });
 
-
       setIsSending(true);
       try {
-        const formData = new FormData();
-        formData.append('audio', userBlob, 'audio.webm');
-
-        const res = await fetch(chatEndpoint, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        // Parse backend response: { File, SenderScript, ReceviedScript }
-        const data = await res.json();
-        
-        // Get audio file from response
-        const audioBlob = await (await fetch(data.File)).blob();
-        const aiAudioUrl = URL.createObjectURL(audioBlob);
-
-        // AI audio URL is set, will be played via UI button
-
-        // Add to context
-        if (currentSession) {
-          await sendTextMessage(data.SenderScript);
-        }
-
-        // Add messages to chat - text only
-        setChat(c => [...c,
-          {
-            id: Date.now().toString(),
-            sender: "user",
-            audioUrl: "",
-            text: data.SenderScript
-          },
-          {
-            id: (Date.now() + 1).toString(),
-            sender: "ai",
-            audioUrl: aiAudioUrl,
-            text: data.ReceviedScript
-          }
-        ]);
-
+        await submitAudioAnswer(userBlob);
       } catch (err: any) {
-        console.error("Chat error:", err);
+        console.error("Audio submit error:", err);
         toast.error("Failed to process audio: " + err.message);
       } finally {
         setIsSending(false);
@@ -376,7 +296,8 @@ export default function OldProctoring() {
                   } else {
                     startCam();
                     if (!currentSession) {
-                      await startInterview("freelancer-1", ["React", "TypeScript"]);
+                      const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
+                      await startInterview(freelancerId, ["React", "TypeScript"]);
                     }
                   }
                 }}
@@ -454,8 +375,8 @@ export default function OldProctoring() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
-              
-              {!currentSession || (currentSession.transcript.length === 0 && chat.length === 0) ? (
+
+              {!currentSession || currentSession.transcript.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground text-sm">Interview transcript will appear here...</p>
                   <p className="text-xs text-muted-foreground mt-2">Click "Speak" to start conversing</p>
@@ -480,60 +401,6 @@ export default function OldProctoring() {
                         </p>
                       </div>
                       <p className="text-sm leading-relaxed">{entry.text}</p>
-                    </div>
-                  ))}
-
-                  {/* Show chat messages */}
-                  {chat.map(msg => (
-                    <div
-                      key={msg.id}
-                      className={`p-4 rounded-xl shadow-sm transition-all hover:shadow-md ${
-                        msg.sender === "user"
-                          ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-foreground ml-4'
-                          : 'bg-gradient-to-r from-muted to-muted/50 text-foreground mr-4'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-lg">
-                          {msg.sender === 'user' ? '👤' : '🤖'}
-                        </span>
-                        <p className="text-xs font-bold uppercase tracking-wide">
-                          {msg.sender === 'user' ? 'You' : 'AI Interviewer'}
-                        </p>
-                        {msg.sender === 'ai' && msg.audioUrl && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              try {
-                                const audio = new Audio(msg.audioUrl);
-                                await audio.play();
-                                toast.success("Playing AI audio");
-                              } catch (err) {
-                                console.warn("Direct play failed:", err);
-                                // Fallback: try to unlock first
-                                try {
-                                  const silentAudio = new Audio();
-                                  silentAudio.muted = true;
-                                  silentAudio.volume = 0;
-                                  await silentAudio.play();
-                                  // Now try again
-                                  const audio2 = new Audio(msg.audioUrl);
-                                  await audio2.play();
-                                  toast.success("Playing AI audio");
-                                } catch (err2) {
-                                  console.warn("Fallback play failed:", err2);
-                                  toast.error("Audio blocked. Click anywhere on the page to enable audio.");
-                                }
-                              }
-                            }}
-                            className="h-6 w-6 p-0 ml-auto"
-                          >
-                            <Play className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-sm leading-relaxed">{msg.text}</p>
                     </div>
                   ))}
                 </>

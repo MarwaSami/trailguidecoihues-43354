@@ -101,10 +101,10 @@ const JobProposal = () => {
 
       try {
         const token = localStorage.getItem("token");
-
+            ///add match_score to the payload if needed
         const response = await axios.post(
           `${baseURL}jobs/post-proposal/`,
-          { job_id: job.id },
+          { job_id: job.id,match_score:job.match_score },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
