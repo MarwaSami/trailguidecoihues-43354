@@ -19,6 +19,7 @@ interface ApplicantContextType {
   freelancer_id: number;
   interview_score: number;
   proposal_status?: string;
+  report: string;
 }
 
 /**

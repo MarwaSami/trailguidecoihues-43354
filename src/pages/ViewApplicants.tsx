@@ -22,6 +22,14 @@ import { useApplicants } from "@/context/ApplicantContext";
 import { ProposalDetailsDialog } from "@/components/ProposalDetailsDialog";
 import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 
 const ViewApplicants = () => {
@@ -34,6 +42,8 @@ const ViewApplicants = () => {
     passingScore: number;
   }>>({});
   const [interviewAvailability, setInterviewAvailability] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   useEffect(() => {
     if (jobId) {
@@ -260,7 +270,14 @@ const ViewApplicants = () => {
                       freelancerLocation={candidate.freelancer_location}
                     />
                     {interviewAvailability && (
-                      <Button variant="outline" className="gap-2">
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          setSelectedReport(candidate.report);
+                          setReportDialogOpen(true);
+                        }}
+                      >
                         View Interview Report
                       </Button>
                     )}
@@ -281,6 +298,23 @@ const ViewApplicants = () => {
           </div>
         </div>
       </main>
+
+      {/* Report Dialog */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Interview Report</DialogTitle>
+            <DialogDescription>
+              Detailed report of the candidate's interview performance.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg">
+              {selectedReport}
+            </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

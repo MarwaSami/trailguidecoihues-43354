@@ -18,20 +18,42 @@ import {
   DollarSign
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useClientJobs } from "@/context/ClientJobContext";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
+import { useEffect } from "react";
 
 const ClientDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { jobs, loading: jobsLoading } = useClientJobs();
+  const navigate = useNavigate();
 
   // Parse user if it's a string
-  console.log("User Data:", user);
-  
-  //const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
-  const username = user?.username || "User";
+  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
+  const username = userData?.username || "User";
+
+  // Log user data once
+  useEffect(() => {
+    if (userData) {
+      console.log("User Data:", userData);
+    }
+  }, []);
+
+  // Check if user is client
+  if (userData && userData.user_type !== 'client') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Access denied. This page is for clients only.</p>
+            <Button onClick={() => navigate('/freelancer-dashboard')}>Go to Freelancer Dashboard</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   // Show loading state while auth or jobs are loading
   if (authLoading || jobsLoading) {

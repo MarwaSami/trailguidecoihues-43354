@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { baseURL } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -109,7 +110,7 @@ export const AIJobAssistant = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const chatTopRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
+ const navigate = useNavigate();
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -389,6 +390,7 @@ export const AIJobAssistant = () => {
           title: "Success!",
           description: response.data.detail || "Job posting created successfully",
         });
+        navigate("/my-jobs");
       } else {
         toast({
           title: "Info",

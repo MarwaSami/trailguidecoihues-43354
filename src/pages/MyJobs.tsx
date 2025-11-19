@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useClientJobs } from "@/context/ClientJobContext";
 import { useAuth } from "@/context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   MapPin,
@@ -15,16 +15,39 @@ import {
   Eye,
   Calendar
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
 
 const MyJobs = () => {
   const { jobs, loading, error } = useClientJobs();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
- console.log("Jobs Data:", jobs);
-  //const userData = user ? JSON.parse(user) : null;
-  const clientName = user?.username || "";
+  const navigate = useNavigate();
+
+  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
+  const clientName = userData?.username || "";
+
+  // Log jobs data once
+  useEffect(() => {
+    if (jobs.length > 0) {
+      console.log("Jobs Data:", jobs);
+    }
+  }, []);
+
+  // Check if user is client
+  if (userData && userData.user_type !== 'client') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Access denied. This page is for clients only.</p>
+            <Button onClick={() => navigate('/freelancer-dashboard')}>Go to Freelancer Dashboard</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Filter jobs by client name and search term
   const filteredJobs = jobs.filter(job => {
