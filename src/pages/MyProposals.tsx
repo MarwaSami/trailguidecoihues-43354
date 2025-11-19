@@ -49,6 +49,7 @@ interface Job {
   updated_at: string;
   ai_generated_criteria: string | null;
   client: number;
+  interview_availability?: boolean;
   required_skills: Array<{ id: number; name: string }>;
 }
 
