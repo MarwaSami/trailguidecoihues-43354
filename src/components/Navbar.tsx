@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Brain, LogOut, Menu, Bell, Briefcase, Users, Calendar, Clock, CheckCircle, Target, Award } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -18,6 +20,7 @@ export const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, token, signOut } = useAuth();
+  const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
 
   // Parse user from localStorage if it's a string
   const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
@@ -25,8 +28,72 @@ export const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
   const isLoggedIn = token != null;
 
-  // Dynamic notifications based on user type
-  const notifications = isFreelancer ? [
+  // Get Supabase user ID
+  useEffect(() => {
+    const getSupabaseUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setSupabaseUserId(user?.id || null);
+    };
+    if (isLoggedIn) {
+      getSupabaseUser();
+    }
+  }, [isLoggedIn]);
+
+  // Use real-time notifications hook
+  const { notifications: realtimeNotifications, loading: notificationsLoading, markAsRead } = useRealtimeNotifications(supabaseUserId);
+
+  // Map real-time notifications to UI format
+  const getIconByType = (type: string) => {
+    switch (type) {
+      case 'proposal_accepted': return 'checkCircle';
+      case 'proposal_status': return 'clock';
+      case 'new_job': return 'briefcase';
+      case 'new_proposal': return 'users';
+      case 'interview': return 'calendar';
+      case 'interview_completed': return 'award';
+      case 'job_match': return 'target';
+      default: return 'bell';
+    }
+  };
+
+  const getColorByType = (type: string) => {
+    switch (type) {
+      case 'proposal_accepted': return 'green';
+      case 'new_job': return 'purple';
+      case 'new_proposal': return 'primary';
+      case 'interview': return 'blue';
+      case 'interview_completed': return 'green';
+      case 'job_match': return 'purple';
+      default: return 'default';
+    }
+  };
+
+  const getRelativeTime = (timestamp: string) => {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now.getTime() - past.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  const formattedNotifications = realtimeNotifications.map(notif => ({
+    id: notif.id,
+    type: notif.type,
+    text: notif.message,
+    time: getRelativeTime(notif.created_at),
+    link: notif.link || "/",
+    unread: !notif.read,
+    icon: getIconByType(notif.type),
+    color: getColorByType(notif.type)
+  }));
+
+  // Fallback to mock notifications if no real-time data
+  const notifications = formattedNotifications.length > 0 ? formattedNotifications : (isFreelancer ? [
     { 
       id: 1, 
       type: 'proposal_status',
@@ -108,7 +175,8 @@ export const Navbar = () => {
       icon: 'checkCircle',
       color: 'default'
     },
-  ];
+  ]);
+  
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/50 shadow-[var(--shadow-glass)]">
       <div className="container mx-auto px-4">
@@ -259,6 +327,11 @@ export const Navbar = () => {
                           <DropdownMenuItem key={notif.id} asChild>
                             <Link
                               to={notif.link}
+                              onClick={() => {
+                                if (typeof notif.id === 'string' && notif.unread) {
+                                  markAsRead(notif.id);
+                                }
+                              }}
                               className={`flex items-start gap-3 p-4 cursor-pointer transition-all hover:bg-primary/5 ${
                                 notif.unread ? 'bg-gradient-to-r from-primary/10 to-accent/5 border-l-2 border-primary' : ''
                               }`}

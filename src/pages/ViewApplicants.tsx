@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,6 +32,7 @@ import {
 
 const ViewApplicants = () => {
   const { jobId } = useParams<{ jobId: string }>();
+  const navigate = useNavigate();
   const { candidates, fetchCandidates, loading } = useApplicants();
   const { toast } = useToast();
   const [interviewAvailability, setInterviewAvailability] = useState(false);
@@ -167,9 +168,9 @@ const ViewApplicants = () => {
                           </Badge>
                         ))}
                       </div>
-                      <div className="px-4 py-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20 inline-block">
-                        <span className="text-muted-foreground font-medium">Rate: </span>
-                        <span className="font-bold text-primary text-lg">${mappedCandidate.rate}/hr</span>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="text-sm">Hourly Rate:</span>
+                        <span className="font-bold text-primary text-xl">${mappedCandidate.rate}/hr</span>
                       </div>
                     </div>
                   </div>
@@ -223,7 +224,11 @@ const ViewApplicants = () => {
                         </Button>
                       )}
                       {candidate.proposal_status === 'accepted' && (
-                        <Button variant="default" className="gap-2 h-11">
+                        <Button 
+                          variant="default" 
+                          className="gap-2 h-11"
+                          onClick={() => navigate('/chat')}
+                        >
                           <Mail className="w-5 h-5" />
                           Contact Candidate
                         </Button>
