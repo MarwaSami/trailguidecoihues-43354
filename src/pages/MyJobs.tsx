@@ -74,21 +74,31 @@ const MyJobs = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            My Job Postings
-          </h1>
-          <p className="text-muted-foreground text-lg">Manage all your job postings and view applicants</p>
+        {/* Enhanced Header with Background Effect */}
+        <div className="mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl blur-3xl -z-10" />
+          <div className="space-y-3 relative">
+            <div className="flex items-center gap-2 text-primary/70">
+              <Briefcase className="w-5 h-5" />
+              <span className="text-sm font-medium">Client Dashboard</span>
+            </div>
+            <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-fade-in">
+              My Job Postings
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              Manage your job listings, track applications, and find the perfect talent for your projects
+            </p>
+          </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        {/* Enhanced Search Bar */}
+        <div className="mb-8 relative group">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
-            placeholder="Search your jobs..."
+            placeholder="Search by title, description, or skills..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-12 h-14 bg-card/50 backdrop-blur-xl border-border/50 focus:border-primary/50 focus:bg-card shadow-sm hover:shadow-md transition-all"
           />
         </div>
 
@@ -119,65 +129,70 @@ const MyJobs = () => {
               filteredJobs.map((job, idx) => (
                 <Card 
                   key={job.id} 
-                  className="group relative overflow-hidden border-border/50 bg-card/95 backdrop-blur-[var(--blur-glass)] shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-300 animate-fade-up"
+                  className="group relative overflow-hidden border-border/30 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl shadow-lg hover:shadow-2xl hover:border-primary/30 transition-all duration-500 animate-fade-up"
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
-                  <div className="absolute inset-0 bg-[var(--gradient-card)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <CardHeader className="relative z-10">
+                  {/* Animated Background Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-50 transition-opacity duration-700" />
+                  
+                  <CardHeader className="relative z-10 pb-4">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="space-y-3 flex-1">
+                      <div className="space-y-4 flex-1">
                         <div className="flex items-start justify-between gap-3">
-                          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{job.title}</CardTitle>
+                          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:via-accent group-hover:to-primary transition-all duration-300">
+                            {job.title}
+                          </CardTitle>
                           <Badge 
                             variant={getStatusColor(job.status)}
-                            className="shrink-0 shadow-sm"
+                            className="shrink-0 shadow-md backdrop-blur-sm"
                           >
                             {job.status === "draft" ? "Open" : job.status}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-4 text-sm">
-                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                            <MapPin className="w-4 h-4 text-primary/70" />
-                            {job.location}
+                          <span className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group/item">
+                            <MapPin className="w-4 h-4 text-primary/60 group-hover/item:text-primary" />
+                            <span className="font-medium">{job.location}</span>
                           </span>
-                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                            <Briefcase className="w-4 h-4 text-primary/70" />
-                            {job.job_type}
+                          <span className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group/item">
+                            <Briefcase className="w-4 h-4 text-primary/60 group-hover/item:text-primary" />
+                            <span className="font-medium">{job.job_type}</span>
                           </span>
-                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors font-semibold">
-                            <DollarSign className="w-4 h-4 text-primary/70" />
-                            {job.budget}
+                          <span className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group/item">
+                            <DollarSign className="w-4 h-4 text-primary/60 group-hover/item:text-primary" />
+                            <span className="font-bold text-primary">{job.budget}</span>
                           </span>
-                          <span className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                            <Calendar className="w-4 h-4 text-primary/70" />
-                            {new Date(job.created_at).toLocaleDateString()}
+                          <span className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group/item">
+                            <Calendar className="w-4 h-4 text-primary/60 group-hover/item:text-primary" />
+                            <span className="font-medium">{new Date(job.created_at).toLocaleDateString()}</span>
                           </span>
                         </div>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4 relative z-10">
-                    <p className="text-muted-foreground line-clamp-2 leading-relaxed">{job.description}</p>
+                  <CardContent className="space-y-5 relative z-10">
+                    <p className="text-muted-foreground line-clamp-2 leading-relaxed text-base">{job.description}</p>
                     
-                    {/* Skills */}
+                    {/* Enhanced Skills */}
                     <div className="flex flex-wrap gap-2">
                       {job.required_skills.map((skill) => (
                         <Badge 
                           key={skill.id} 
                           variant="outline"
-                          className="bg-primary/5 border-primary/20 text-primary hover:bg-primary/10 transition-colors"
+                          className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 transition-all shadow-sm backdrop-blur-sm font-medium"
                         >
                           {skill.name}
                         </Badge>
                       ))}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-4 border-t border-border/50">
+                    {/* Enhanced Actions */}
+                    <div className="flex gap-3 pt-5 border-t border-border/30">
                       <Button
                         variant="outline"
                         asChild
-                        className="flex-1 items-center gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all"
+                        className="flex-1 items-center gap-2 h-11 bg-gradient-to-r from-primary/5 to-accent/5 hover:from-primary/10 hover:to-accent/10 border-primary/30 hover:border-primary/50 text-foreground hover:text-primary transition-all shadow-sm hover:shadow-md font-semibold"
                       >
                         <Link to={`/view-applicants/${job.id}`}>
                           <Users className="w-4 h-4" />
