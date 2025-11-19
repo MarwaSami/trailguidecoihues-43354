@@ -4,8 +4,8 @@ import { ProfileDisplay } from "@/components/ProfileDisplay";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { ProfileformProvider, useProfileData, fetchProfileById } from "@/context/ProfileContext";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const FreelancerProfile = () => {
   const { user, loading, token } = useAuth();
@@ -46,8 +46,8 @@ const FreelancerProfile = () => {
 
   if (loading || loadingProfile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="lg" message="Loading profile..." />
       </div>
     );
   }

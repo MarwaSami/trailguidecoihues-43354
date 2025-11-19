@@ -18,12 +18,14 @@ import {
   Bookmark,
   Receipt,
   Notebook,
-  Loader2
+  User
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useJobs } from "@/context/JobContext";
 import { useAuth } from "@/context/AuthContext";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const FreelancerDashboard = () => {
     const navigate = useNavigate();
@@ -71,9 +73,17 @@ const FreelancerDashboard = () => {
       
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome Back, {username}</h1>
-          <p className="text-muted-foreground">Your personalized dashboard with AI-powered insights</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Welcome Back, {username}</h1>
+            <p className="text-muted-foreground">Your personalized dashboard with AI-powered insights</p>
+          </div>
+          <Link to="/freelancer-profile">
+            <Button variant="outline" className="gap-2">
+              <User className="w-4 h-4" />
+              View Profile
+            </Button>
+          </Link>
         </div>
 
         {/* Counter */}
@@ -111,9 +121,15 @@ const FreelancerDashboard = () => {
             </div>
 
             {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
+              <LoadingSpinner size="lg" message="Loading recommended jobs..." />
+            ) : recommendedJobs.length === 0 ? (
+              <EmptyState 
+                icon={Briefcase}
+                title="No Jobs Available"
+                description="We couldn't find any job matches for you right now. Complete your profile to get better recommendations!"
+                actionLabel="Complete Profile"
+                onAction={() => navigate('/freelancer-profile')}
+              />
             ) : (
               recommendedJobs.map((job, idx) => (
                 <Card key={idx} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">

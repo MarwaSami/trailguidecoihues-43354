@@ -16,12 +16,15 @@ import {
   Download,
   Heart,
   CheckCircle,
-  Clock
+  Clock,
+  Users
 } from "lucide-react";
 import { useApplicants } from "@/context/ApplicantContext";
 import { ProposalDetailsDialog } from "@/components/ProposalDetailsDialog";
 import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -35,12 +38,7 @@ import {
 const ViewApplicants = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const { candidates, fetchCandidates, loading } = useApplicants();
-  const [allPrepared, setAllPrepared] = useState(false);
   const { toast } = useToast();
-  const [candidatesData, setCandidatesData] = useState<Record<number, {
-    interviewed: boolean;
-    passingScore: number;
-  }>>({});
   const [interviewAvailability, setInterviewAvailability] = useState(false);
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -69,17 +67,6 @@ const ViewApplicants = () => {
       fetchInterviewAvailability();
     }
   }, [jobId, fetchCandidates]);
-  const handlePrepareAllCandidates = () => {
-    const newData: Record<number, { interviewed: boolean; passingScore: number }> = {};
-    candidates.forEach(candidate => {
-      newData[candidate.freelancer_id] = {
-        interviewed: Math.random() > 0.5,
-        passingScore: Math.floor(Math.random() * 30) + 70
-      };
-    });
-    setCandidatesData(newData);
-    setAllPrepared(true);
-  };
 
   const handleProposalUpdate = async (proposalId: number, status: 'accept' | 'reject') => {
     try {
@@ -124,12 +111,6 @@ const ViewApplicants = () => {
               <Download className="w-4 h-4" />
               Export Results
             </Button>
-            {!allPrepared && (
-              <Button variant="hero" className="gap-2" onClick={handlePrepareAllCandidates}>
-                <Target className="w-4 h-4" />
-                Make Candidates Prepare for Interview
-              </Button>
-            )}
           </div>
         </div>
 
@@ -138,11 +119,19 @@ const ViewApplicants = () => {
           <div className="flex items-center justify-between mb-4">
             <p className="text-muted-foreground">
               <span className="font-bold text-foreground">{candidates.length} candidates</span> found
-              {allPrepared && <span className="ml-2 text-primary">• All prepared for interview</span>}
             </p>
           </div>
 
-          {candidates.map((candidate) => {
+          {loading ? (
+            <LoadingSpinner size="lg" message="Loading candidates..." />
+          ) : candidates.length === 0 ? (
+            <EmptyState 
+              icon={Users}
+              title="No Applicants Yet"
+              description="No candidates have applied to this job yet. Share your job posting to attract more applicants!"
+            />
+          ) : (
+            candidates.map((candidate) => {
             const mappedCandidate = {
               id: candidate.freelancer_id,
               name: candidate.freelancer_name,
@@ -158,7 +147,6 @@ const ViewApplicants = () => {
               proposal_status: candidate.proposal_status,
               saved: false // Default
             };
-            const prepData = candidatesData[mappedCandidate.id];
         //      console.log('Candidate Interview Data:', candidate.interview_score);
             return (
               <Card key={mappedCandidate.id} className="relative p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
@@ -207,11 +195,22 @@ const ViewApplicants = () => {
 
                   {/* Interview Data & Actions */}
                   <div className="flex flex-col gap-3 lg:w-64">
-                    {allPrepared && prepData ? (
-                      <>
-                        <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
+                    <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
+                      {/* AI Match Score */}
+                      {mappedCandidate.match >= 0 ? (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">AI Match: </span>
+                          <span className="font-bold text-accent">{Math.floor(mappedCandidate.match * 100)}%</span>
+                        </div>
+                      ) : (
+                        <span className="text-red-500 font-medium">Not AI Match</span>
+                      )}
+
+                      {/* Interview Data - Only show if interview availability is true */}
+                      {interviewAvailability && (
+                        <>
                           <div className="flex items-center gap-2 text-sm">
-                            {prepData.interviewed ? (
+                            {candidate.interview_score >= 0 ? (
                               <>
                                 <CheckCircle className="w-4 h-4 text-green-500" />
                                 <span className="font-medium">Interviewed</span>
@@ -224,34 +223,15 @@ const ViewApplicants = () => {
                             )}
                           </div>
                           
-                          {mappedCandidate.match >= 0 ? (
+                          {candidate.interview_score >= 0 && (
                             <div className="text-sm">
-                              <span className="text-muted-foreground">AI Match: </span>
-                              <span className="font-bold text-accent">{Math.floor(mappedCandidate.match * 100)}%</span>
-                            </div>
-                          ) : (
-                            <span className="text-red-500 font-medium">Not AI Match</span>
-                          )}
-                          {interviewAvailability && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Interview Score: </span>
+                              <span className="text-muted-foreground">Passing Score: </span>
                               <span className="font-bold text-primary">{candidate.interview_score}%</span>
                             </div>
                           )}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center p-4">
-                        {mappedCandidate.match >= 0 ? (
-                          <div className="text-2xl font-bold text-accent">
-                            {Math.floor(mappedCandidate.match * 100)}%
-                            <p className="text-xs text-muted-foreground">AI Match</p>
-                          </div>
-                        ) : (
-                          <div className="text-red-500 font-medium">Not AI Match</div>
-                        )}
-                      </div>
-                    )}
+                        </>
+                      )}
+                    </div>
                     {interviewAvailability && (
                       <div className="flex gap-2">
                         <Button variant="default" onClick={() => handleProposalUpdate(candidate.proposal_id, 'accept')}>
@@ -288,14 +268,16 @@ const ViewApplicants = () => {
                 </div>
               </Card>
             );
-          })}
+          }))}
 
           {/* Load More */}
-          <div className="text-center pt-8">
-            <Button variant="glass" size="lg">
-              Load More Candidates
-            </Button>
-          </div>
+          {!loading && candidates.length > 0 && (
+            <div className="text-center pt-8">
+              <Button variant="glass" size="lg">
+                Load More Candidates
+              </Button>
+            </div>
+          )}
         </div>
       </main>
 
