@@ -17,7 +17,8 @@ import {
   Heart,
   CheckCircle,
   Clock,
-  Users
+  Users,
+  FileText
 } from "lucide-react";
 import { useApplicants } from "@/context/ApplicantContext";
 import { ProposalDetailsDialog } from "@/components/ProposalDetailsDialog";
@@ -100,21 +101,29 @@ const ViewApplicants = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              Discover Candidates
+        {/* Enhanced Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl blur-3xl -z-10" />
+          <div className="space-y-3 relative">
+            <div className="flex items-center gap-2 text-primary/70">
+              <Users className="w-5 h-5" />
+              <span className="text-sm font-medium">Candidate Discovery</span>
+            </div>
+            <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-fade-in">
+              Discover Top Talent
             </h1>
-            <p className="text-muted-foreground text-lg">AI-matched talent for your job postings</p>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              AI-powered candidate matching with intelligent scoring and detailed profiles
+            </p>
           </div>
         </div>
 
         {/* Candidates List */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-muted-foreground">
-              <span className="font-bold text-foreground">{candidates.length} candidates</span> found
+        <div className="space-y-8">
+          <div className="flex items-center justify-between mb-6 p-4 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-xl border border-border/30 backdrop-blur-sm">
+            <p className="text-muted-foreground text-lg">
+              <span className="font-bold text-foreground text-2xl">{candidates.length}</span> 
+              <span className="ml-2">talented candidates discovered</span>
             </p>
           </div>
 
@@ -148,135 +157,138 @@ const ViewApplicants = () => {
             };
         //      console.log('Candidate Interview Data:', candidate.interview_score);
             return (
-              <Card key={mappedCandidate.id} className="group relative p-6 bg-card/95 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400 animate-fade-in">
-                <div className="absolute inset-0 bg-[var(--gradient-card)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Card key={mappedCandidate.id} className="group relative p-7 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl border border-border/30 hover:border-primary/40 shadow-xl hover:shadow-2xl transition-all duration-500 animate-fade-in overflow-hidden">
+                {/* Animated Background Effects */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-700 -z-0" />
+                
                 <Badge 
                   variant={candidate.proposal_status === 'pending' ? 'default' : candidate.proposal_status === 'accepted' ? 'outline' : 'secondary'} 
-                  className="absolute top-4 right-4 z-10 capitalize shadow-sm"
+                  className="absolute top-5 right-5 z-10 capitalize shadow-lg backdrop-blur-sm px-4 py-1 text-sm font-semibold"
                 >
                   {candidate.proposal_status === 'pending' ? 'Under Review' : candidate.proposal_status}
                 </Badge>
-                <div className="flex flex-col lg:flex-row gap-6 relative z-10">
+                <div className="flex flex-col lg:flex-row gap-8 relative z-10">
                   {/* Avatar & Basic Info */}
-                  <div className="flex gap-4 flex-1">
-                    <Avatar className="w-20 h-20">
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-bold">
+                  <div className="flex gap-5 flex-1">
+                    <Avatar className="w-24 h-24 ring-4 ring-primary/20 shadow-lg">
+                      <AvatarFallback className="bg-gradient-to-br from-primary via-accent to-primary text-primary-foreground text-2xl font-bold">
                         {mappedCandidate.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-1">{mappedCandidate.name}</h3>
-                      <p className="text-muted-foreground mb-3">{mappedCandidate.title}</p>
+                      <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{mappedCandidate.name}</h3>
+                      <p className="text-muted-foreground mb-4 text-lg font-medium">{mappedCandidate.title}</p>
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {mappedCandidate.duration}
+                      <div className="flex items-center gap-5 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-2 group/item">
+                          <MapPin className="w-4 h-4 text-primary/60 group-hover/item:text-primary transition-colors" />
+                          <span className="font-medium">{mappedCandidate.duration}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Briefcase className="w-4 h-4" />
-                          {mappedCandidate.experience_level}
+                        <div className="flex items-center gap-2 group/item">
+                          <Briefcase className="w-4 h-4 text-primary/60 group-hover/item:text-primary transition-colors" />
+                          <span className="font-medium">{mappedCandidate.experience_level}</span>
                         </div>
-
                       </div>
 
-                      <div className="flex flex-wrap gap-2 mb-3">
+                      <div className="flex flex-wrap gap-2 mb-4">
                         {mappedCandidate.skills.map((skill, idx) => (
-                          <Badge key={idx} variant="secondary">
+                          <Badge key={idx} variant="outline" className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50 transition-all shadow-sm backdrop-blur-sm font-medium">
                             {skill}
                           </Badge>
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-6 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Rate: </span>
-                          <span className="font-bold text-primary">${mappedCandidate.rate}/hr</span>
+                      <div className="flex items-center gap-6 text-base">
+                        <div className="px-4 py-2 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                          <span className="text-muted-foreground font-medium">Rate: </span>
+                          <span className="font-bold text-primary text-lg">${mappedCandidate.rate}/hr</span>
                         </div>
-
                       </div>
                     </div>
                   </div>
 
                   {/* Interview Data & Actions */}
-                  <div className="flex flex-col gap-3 lg:w-64">
-                    <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
+                  <div className="flex flex-col gap-4 lg:w-72">
+                    <div className="space-y-3 p-5 bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-xl border border-primary/20 backdrop-blur-sm shadow-lg">
                       {/* AI Match Score */}
                       {mappedCandidate.match >= 0 ? (
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">AI Match: </span>
-                          <span className="font-bold text-accent">{Math.floor(mappedCandidate.match * 100)}%</span>
+                        <div className="text-base flex items-center justify-between">
+                          <span className="text-muted-foreground font-medium">AI Match Score</span>
+                          <span className="font-bold text-accent text-xl">{Math.floor(mappedCandidate.match * 100)}%</span>
                         </div>
                       ) : (
-                        <span className="text-red-500 font-medium">Not AI Match</span>
+                        <span className="text-red-500 font-medium text-sm">No AI Match Available</span>
                       )}
 
                       {/* Interview Data - Only show if interview availability is true */}
                       {interviewAvailability && (
                         <>
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-3 text-base">
                             {candidate.interview_score >= 0 ? (
                               <>
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="font-medium">Interviewed</span>
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                <span className="font-semibold text-green-600">Interviewed</span>
                               </>
                             ) : (
                               <>
-                                <Clock className="w-4 h-4 text-orange-500" />
-                                <span className="font-medium">Not Interviewed</span>
+                                <Clock className="w-5 h-5 text-orange-500" />
+                                <span className="font-semibold text-orange-600">Pending Interview</span>
                               </>
                             )}
                           </div>
                           
                           {candidate.interview_score >= 0 && (
-                            <div className="text-sm">
-                              <span className="text-muted-foreground">Passing Score: </span>
-                              <span className="font-bold text-primary">{candidate.interview_score}%</span>
+                            <div className="text-base flex items-center justify-between pt-2 border-t border-border/30">
+                              <span className="text-muted-foreground font-medium">Interview Score</span>
+                              <span className="font-bold text-primary text-xl">{candidate.interview_score}%</span>
                             </div>
                           )}
                         </>
                       )}
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-3">
                       {candidate.proposal_status === 'pending' && (
                         <Button 
                           variant="default" 
                           onClick={() => handleProposalUpdate(candidate.proposal_id, 'accept')}
-                          className="gap-2"
+                          className="gap-2 h-11 shadow-md hover:shadow-lg transition-all font-semibold"
                         >
-                          <CheckCircle className="w-4 h-4" />
-                          Accept
+                          <CheckCircle className="w-5 h-5" />
+                          Accept Proposal
                         </Button>
                       )}
                       
                       {candidate.proposal_status === 'accepted' && (
-                        <Button variant="hero" className="gap-2">
-                          <Mail className="w-4 h-4" />
-                          Contact
+                        <Button variant="default" className="gap-2 h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg transition-all font-semibold">
+                          <Mail className="w-5 h-5" />
+                          Contact Candidate
                         </Button>
                       )}
-                    </div>
-                    <ProposalDetailsDialog
-                      proposalId={candidate.proposal_id}
-                      freelancerName={candidate.freelancer_name}
-                      freelancerLocation={candidate.freelancer_location}
-                    />
-                    {interviewAvailability && (
-                      <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => {
-                          setSelectedReport(candidate.report);
-                          setReportDialogOpen(true);
-                        }}
-                      >
-                        View Interview Report
+                    
+                      <ProposalDetailsDialog
+                        proposalId={candidate.proposal_id}
+                        freelancerName={candidate.freelancer_name}
+                        freelancerLocation={candidate.freelancer_location}
+                      />
+                      {interviewAvailability && (
+                        <Button
+                          variant="outline"
+                          className="gap-2 h-11 border-primary/30 hover:border-primary/50 hover:bg-primary/10 transition-all font-semibold"
+                          onClick={() => {
+                            setSelectedReport(candidate.report);
+                            setReportDialogOpen(true);
+                          }}
+                        >
+                          <FileText className="w-4 h-4" />
+                          View Interview Report
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="self-end hover:bg-primary/10 transition-colors">
+                        <Heart className={`w-5 h-5 ${mappedCandidate.saved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
                       </Button>
-                    )}
-                    <Button variant="ghost" size="icon" className="self-end">
-                      <Heart className={`w-5 h-5 ${mappedCandidate.saved ? 'fill-primary text-primary' : ''}`} />
-                    </Button>
+                    </div>
                   </div>
                 </div>
               </Card>

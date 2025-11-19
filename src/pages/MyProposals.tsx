@@ -184,12 +184,21 @@ const MyProposals = () => {
       <Navbar />
 
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-8">
-          <h1 className="text-4xl font-bold mb-3">My Proposals</h1>
-          <p className="text-lg text-muted-foreground">
-            View all your submitted proposals and track their status
-          </p>
+        {/* Enhanced Header with Background Effect */}
+        <div className="mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl blur-3xl -z-10" />
+          <div className="space-y-3 relative text-center max-w-3xl mx-auto">
+            <div className="flex items-center justify-center gap-2 text-primary/70">
+              <FileText className="w-5 h-5" />
+              <span className="text-sm font-medium">Freelancer Dashboard</span>
+            </div>
+            <h1 className="text-5xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-fade-in">
+              My Proposals
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Monitor your job applications, track proposal status, and manage interview schedules
+            </p>
+          </div>
         </div>
 
         {proposals.length === 0 ? (
@@ -211,76 +220,77 @@ const MyProposals = () => {
               return (
                 <Card 
                   key={proposal.id} 
-                  className="group relative overflow-hidden border-border/50 bg-card/95 backdrop-blur-[var(--blur-glass)] shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-300 animate-fade-up"
+                  className="group relative overflow-hidden border-border/30 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl shadow-xl hover:shadow-2xl hover:border-primary/40 transition-all duration-500 animate-fade-up"
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
-                  <div className="absolute inset-0 bg-[var(--gradient-card)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Animated Background Effects */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-700" />
                   
-                  <CardContent className="p-6 relative z-10">
+                  <CardContent className="p-7 relative z-10">
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex-1">
-                        <h3 className="text-2xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+                        <h3 className="text-2xl font-bold mb-1 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent group-hover:from-primary group-hover:via-accent group-hover:to-primary transition-all duration-300">
                           {job?.title || 'Job Title Unavailable'}
                         </h3>
-                        {/* <p className="text-sm text-muted-foreground">{proposal.proposed_budget}</p> */}
                       </div>
                       <div className="flex flex-col gap-2 items-end">
-                        <Badge className={`${statusColor} capitalize shadow-sm`}>
+                        <Badge className={`${statusColor} capitalize shadow-lg backdrop-blur-sm px-4 py-1 text-sm font-semibold`}>
                           {proposal.status== 'pending' ? 'Under Review' : proposal.status}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs backdrop-blur-sm">
                           <Calendar className="w-3 h-3 mr-1" />
                           {new Date(proposal.created_at).toLocaleDateString()}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6 mb-6 p-4 rounded-lg bg-muted/30 border border-border/50">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <DollarSign className="w-4 h-4 text-primary" />
+                    <div className="grid md:grid-cols-2 gap-6 mb-6 p-5 rounded-xl bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 border border-primary/20 backdrop-blur-sm">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+                            <DollarSign className="w-5 h-5 text-primary-foreground" />
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Proposed Budget</p>
-                            <p className="font-semibold text-lg">${proposal.proposed_budget}/hr</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Proposed Budget</p>
+                            <p className="font-bold text-lg text-primary">${proposal.proposed_budget}/hr</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
-                            <Clock className="w-4 h-4 text-accent" />
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center shadow-md">
+                            <Clock className="w-5 h-5 text-primary-foreground" />
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Duration</p>
-                            <p className="font-semibold">{proposal.duration_in_days} days</p>
+                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Duration</p>
+                            <p className="font-semibold text-lg">{proposal.duration_in_days} days</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-primary/70" />
-                          <span className="text-muted-foreground">{job?.location || 'N/A'}</span>
+                        <div className="flex items-center gap-2 text-sm group/item">
+                          <MapPin className="w-4 h-4 text-primary/60 group-hover/item:text-primary transition-colors" />
+                          <span className="text-muted-foreground font-medium">{job?.location || 'N/A'}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Briefcase className="w-4 h-4 text-primary/70" />
-                          <span className="text-muted-foreground">{job?.job_type || 'N/A'}</span>
+                        <div className="flex items-center gap-2 text-sm group/item">
+                          <Briefcase className="w-4 h-4 text-primary/60 group-hover/item:text-primary transition-colors" />
+                          <span className="text-muted-foreground font-medium">{job?.job_type || 'N/A'}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-primary/70" />
-                          <span className="text-muted-foreground">
+                        <div className="flex items-center gap-2 text-sm group/item">
+                          <Calendar className="w-4 h-4 text-primary/60 group-hover/item:text-primary transition-colors" />
+                          <span className="text-muted-foreground font-medium">
                             Posted {job ? new Date(job.created_at).toLocaleDateString() : 'N/A'}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="border-t border-border/50 pt-4 mb-4">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
-                        <FileText className="w-4 h-4 text-primary" />
+                    <div className="border-t border-border/30 pt-5 mb-5">
+                      <h4 className="font-bold mb-3 flex items-center gap-2 text-foreground text-lg">
+                        <FileText className="w-5 h-5 text-primary" />
                         Cover Letter
                       </h4>
-                      <div className="p-4 rounded-lg bg-muted/20 border border-border/30">
+                      <div className="p-5 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 backdrop-blur-sm shadow-sm">
                         <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
                           {proposal.cover_letter}
                         </p>
@@ -288,18 +298,18 @@ const MyProposals = () => {
                     </div>
 
                     {proposal.experience && (
-                      <div className="border-t border-border/50 pt-4 mb-4">
-                        <h4 className="font-semibold mb-3 flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-primary" />
+                      <div className="border-t border-border/30 pt-5 mb-5">
+                        <h4 className="font-bold mb-3 flex items-center gap-2 text-lg">
+                          <Briefcase className="w-5 h-5 text-primary" />
                           Experience
                         </h4>
-                        <div className="p-4 rounded-lg bg-muted/20 border border-border/30">
+                        <div className="p-5 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 backdrop-blur-sm shadow-sm">
                           <p className="text-sm text-muted-foreground leading-relaxed">{proposal.experience}</p>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-4 border-t border-border/50">
+                    <div className="flex justify-end gap-3 pt-5 border-t border-border/30">
                       <ProposalDetailsDialog proposalId={proposal.id} />
                       
                       {/* Only show Start Interview if job has interview_availability and proposal is pending */}
@@ -307,11 +317,11 @@ const MyProposals = () => {
                        proposal.status !== 'accepted' && 
                        proposal.status !== 'rejected' && (
                         <Button
-                          variant="outline"
+                          variant="default"
                           onClick={() => startInterview(proposal)}
-                          className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
+                          className="gap-2 h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg transition-all font-semibold"
                         >
-                          <Play className="w-4 h-4" />
+                          <Play className="w-5 h-5" />
                           Start Interview
                         </Button>
                       )}
@@ -322,9 +332,9 @@ const MyProposals = () => {
                           setSelectedProposal(proposal);
                           setSelectedJob(jobs.get(proposal.job) || null);
                         }}
-                        className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
+                        className="gap-2 h-11 border-primary/30 hover:border-primary/50 hover:bg-primary/10 transition-all font-semibold"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-5 h-5" />
                         View Job Details
                       </Button>
                     </div>
