@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, LogOut, Menu, Bell } from "lucide-react";
+import { Brain, LogOut, Menu, Bell, Briefcase, Users, Calendar, Clock, CheckCircle, Target, Award } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 export const Navbar = () => {
   const location = useLocation();
@@ -24,11 +25,89 @@ export const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
   const isLoggedIn = token != null;
 
-  const notifications = [
-    { id: 1, text: "New application for Senior Developer position", time: "5m ago", link: "/candidate-discovery", unread: true },
-    { id: 2, text: "Interview scheduled with candidate tomorrow", time: "1h ago", link: "/candidate-discovery", unread: true },
-    { id: 3, text: "Job posting approved and published", time: "3h ago", link: "/job-posting", unread: false },
-    { id: 4, text: "Freelancer submitted final deliverables", time: "1d ago", link: "/client-dashboard", unread: false },
+  // Dynamic notifications based on user type
+  const notifications = isFreelancer ? [
+    { 
+      id: 1, 
+      type: 'proposal_status',
+      text: "Your proposal for 'Senior React Developer' was accepted", 
+      time: "5m ago", 
+      link: "/my-proposals", 
+      unread: true,
+      icon: 'checkCircle',
+      color: 'green'
+    },
+    { 
+      id: 2, 
+      type: 'new_job',
+      text: "New job matching your skills: 'Full Stack Engineer'", 
+      time: "1h ago", 
+      link: "/job-browse", 
+      unread: true,
+      icon: 'briefcase',
+      color: 'purple'
+    },
+    { 
+      id: 3, 
+      type: 'interview',
+      text: "Interview scheduled for tomorrow at 10 AM", 
+      time: "2h ago", 
+      link: "/interview-practice", 
+      unread: true,
+      icon: 'calendar',
+      color: 'blue'
+    },
+    { 
+      id: 4, 
+      type: 'proposal_status',
+      text: "Your proposal for 'UI Designer' is under review", 
+      time: "1d ago", 
+      link: "/my-proposals", 
+      unread: false,
+      icon: 'clock',
+      color: 'default'
+    },
+  ] : [
+    { 
+      id: 1, 
+      type: 'new_proposal',
+      text: "3 new candidates applied for 'Senior Developer'", 
+      time: "5m ago", 
+      link: "/my-jobs", 
+      unread: true,
+      icon: 'users',
+      color: 'primary'
+    },
+    { 
+      id: 2, 
+      type: 'job_match',
+      text: "AI found 5 matching candidates for your job", 
+      time: "1h ago", 
+      link: "/candidate-discovery", 
+      unread: true,
+      icon: 'target',
+      color: 'purple'
+    },
+    { 
+      id: 3, 
+      type: 'interview_completed',
+      text: "Candidate completed interview with 85% score", 
+      time: "3h ago", 
+      link: "/view-applicants/1", 
+      unread: false,
+      icon: 'award',
+      color: 'green'
+    },
+    { 
+      id: 4, 
+      type: 'job_published',
+      text: "Your job 'Backend Engineer' was published", 
+      time: "1d ago", 
+      link: "/my-jobs", 
+      unread: false,
+      icon: 'checkCircle',
+      color: 'default'
+    },
   ];
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/50 shadow-[var(--shadow-glass)]">
@@ -128,35 +207,87 @@ export const Navbar = () => {
             }{
               isLoggedIn &&
               <>
-                {/* Notifications Dropdown */}
+                {/* Enhanced Notifications Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="relative rounded-full">
+                    <Button variant="outline" size="icon" className="relative rounded-full hover:bg-primary/10 hover:border-primary/50 transition-all">
                       <Bell className="w-5 h-5" />
                       {notifications.filter(n => n.unread).length > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-lg animate-pulse">
                           {notifications.filter(n => n.unread).length}
                         </span>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80">
-                    <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                  <DropdownMenuContent align="end" className="w-96 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl border border-border/30 shadow-2xl">
+                    <DropdownMenuLabel className="text-lg font-bold flex items-center gap-2 pb-3">
+                      <Bell className="w-5 h-5 text-primary" />
+                      Notifications
+                      {notifications.filter(n => n.unread).length > 0 && (
+                        <Badge variant="default" className="ml-auto">
+                          {notifications.filter(n => n.unread).length} new
+                        </Badge>
+                      )}
+                    </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {notifications.map((notif) => (
-                      <DropdownMenuItem key={notif.id} asChild>
-                        <Link
-                          to={notif.link}
-                          className={`flex flex-col items-start p-3 cursor-pointer ${notif.unread ? 'bg-primary/5' : ''}`}
-                        >
-                          <div className="flex items-start justify-between w-full gap-2">
-                            <p className={`text-sm ${notif.unread ? 'font-semibold' : ''}`}>{notif.text}</p>
-                            {notif.unread && <div className="w-2 h-2 bg-primary rounded-full mt-1" />}
-                          </div>
-                          <span className="text-xs text-muted-foreground mt-1">{notif.time}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.map((notif) => {
+                        const getIcon = () => {
+                          switch (notif.icon) {
+                            case 'users': return <Users className="w-4 h-4" />;
+                            case 'briefcase': return <Briefcase className="w-4 h-4" />;
+                            case 'calendar': return <Calendar className="w-4 h-4" />;
+                            case 'clock': return <Clock className="w-4 h-4" />;
+                            case 'checkCircle': return <CheckCircle className="w-4 h-4" />;
+                            case 'target': return <Target className="w-4 h-4" />;
+                            case 'award': return <Award className="w-4 h-4" />;
+                            default: return <Bell className="w-4 h-4" />;
+                          }
+                        };
+
+                        const getColorClass = () => {
+                          switch (notif.color) {
+                            case 'purple': return 'bg-purple-500/10 border-purple-500/20 text-purple-600';
+                            case 'green': return 'bg-green-500/10 border-green-500/20 text-green-600';
+                            case 'blue': return 'bg-blue-500/10 border-blue-500/20 text-blue-600';
+                            case 'primary': return 'bg-primary/10 border-primary/20 text-primary';
+                            default: return 'bg-muted/50 border-border/30 text-muted-foreground';
+                          }
+                        };
+
+                        return (
+                          <DropdownMenuItem key={notif.id} asChild>
+                            <Link
+                              to={notif.link}
+                              className={`flex items-start gap-3 p-4 cursor-pointer transition-all hover:bg-primary/5 ${
+                                notif.unread ? 'bg-gradient-to-r from-primary/10 to-accent/5 border-l-2 border-primary' : ''
+                              }`}
+                            >
+                              <div className={`w-10 h-10 rounded-full ${getColorClass()} flex items-center justify-center shrink-0 shadow-sm`}>
+                                {getIcon()}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className={`text-sm leading-relaxed ${notif.unread ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                                  {notif.text}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">{notif.time}</span>
+                                  {notif.unread && (
+                                    <Badge variant="outline" className="text-xs px-2 py-0 h-5">New</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </div>
+                    <DropdownMenuSeparator />
+                    <div className="p-2">
+                      <Button variant="ghost" className="w-full text-sm hover:bg-primary/10 hover:text-primary font-medium">
+                        View All Notifications
+                      </Button>
+                    </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
