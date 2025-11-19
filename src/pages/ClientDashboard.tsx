@@ -31,7 +31,7 @@ const ClientDashboard = () => {
   console.log("User Data:", user);
   
   //const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
-  const username = user.username || "User";
+  const username = user?.username || "User";
   
   // Show loading state while auth or jobs are loading
   if (authLoading || jobsLoading) {
