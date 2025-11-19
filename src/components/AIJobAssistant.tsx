@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sparkles,
   Mic,
@@ -51,7 +52,8 @@ export interface JobPosting {
   experienceLevel: string,
   status: string,
   requiredSkills: string,
-  qualifications: string
+  qualifications: string,
+  interview_availability: boolean;
 }
 
 export interface JobPostingResponse {
@@ -90,7 +92,8 @@ export const AIJobAssistant = () => {
     required_skills: [],
     status: "",
     requiredSkills: "",
-    qualifications: ""
+    qualifications: "",
+    interview_availability: false,
   });
 
   // Chat state
@@ -254,6 +257,15 @@ export const AIJobAssistant = () => {
       toast({
         title: "Validation Error",
         description: "Please add at least one required skill",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (formData.interview_availability === false) {
+      toast({
+        title: "Validation Error",
+        description: "Please confirm your availability for interviews",
         variant: "destructive",
       });
       return false;
@@ -596,7 +608,17 @@ export const AIJobAssistant = () => {
             </div>
           </div>
 
-
+          {/* Interview Availability */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="interview_availability"
+              checked={formData.interview_availability}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, interview_availability: checked as boolean }))}
+            />
+            <label htmlFor="interview_availability" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Available for Interview
+            </label>
+          </div>
 
           {/* Submit Button */}
           <Button

@@ -16,7 +16,7 @@ export interface allfreelancerJobs {
   client_name: string;
   required_skills: string[]; 
   match_score:number;
-  proposal_status?: string;
+  interview_availability?: boolean;
 }
 export enum proposal_status{
   DRAFTED="DRAFTED",

@@ -167,7 +167,7 @@ export default function InterviewManagement() {
               Schedule Interview
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl bg-white border border-border shadow-2xl">
             <DialogHeader>
               <DialogTitle>Schedule New Interview</DialogTitle>
               <DialogDescription>

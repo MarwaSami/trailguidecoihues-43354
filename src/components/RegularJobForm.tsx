@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sparkles,
   Plus,
@@ -44,6 +45,7 @@ export interface JobPosting {
   required_skills: string[];
   screening_questions: string;
   client: number;
+  interview_availability:boolean;
 }
 
 export interface JobPostingResponse {
@@ -68,6 +70,7 @@ export const RegularJobForm = () => {
     required_skills: ["React", "Node.js"],
     screening_questions: "",
     client: user.id || 0,
+    interview_availability:false,
   });
   
   const [newSkill, setNewSkill] = useState("");
@@ -155,6 +158,15 @@ export const RegularJobForm = () => {
       toast({
         title: "Validation Error",
         description: "Please add at least one required skill",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (formData.interview_availability === false) {
+      toast({
+        title: "Validation Error",
+        description: "Please confirm your availability for interviews",
         variant: "destructive",
       });
       return false;
@@ -475,6 +487,18 @@ export const RegularJobForm = () => {
             placeholder="Add custom questions for applicants..."
             className="min-h-[100px] bg-background/50 backdrop-blur-sm"
           />
+        </div>
+
+        {/* Interview Availability */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="interview_availability"
+            checked={formData.interview_availability}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, interview_availability: checked as boolean }))}
+          />
+          <Label htmlFor="interview_availability" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Available for Interview
+          </Label>
         </div>
 
         {/* Actions */}

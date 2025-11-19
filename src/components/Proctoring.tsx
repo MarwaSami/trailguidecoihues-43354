@@ -7,6 +7,7 @@ import * as handpose from "@tensorflow-models/handpose";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import toast from "react-hot-toast";
 import { useInterview } from "@/context/InterviewContext";
+import InterviewResultDialog from '@/components/interview/InterviewResultDialog';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Eye } from "lucide-react";
@@ -20,7 +21,7 @@ type Models = {
 
 export default function OldProctoring() {
   const navigate = useNavigate();
-  const { currentSession, startInterview, submitAudioAnswer, sendTextMessage, endInterview } = useInterview();
+  const { currentSession, startInterview, submitAudioAnswer, sendTextMessage, endInterview, stopInterview } = useInterview();
   const backendEndpoint = "https://localhost:7153/api/proctor";
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -36,6 +37,7 @@ export default function OldProctoring() {
   const [models, setModels] = useState<Models>({ face: null, hand: null, object: null });
   const [interviewStopped, setInterviewStopped] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
+  const [showResults, setShowResults] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
@@ -154,16 +156,68 @@ export default function OldProctoring() {
       { style: { background: "#333", color: "#fff" }, duration: 6000 }
     );
 
+    // increment and compute remaining tries
+    const MAX_VIOLATIONS = 2; // when reached, we will call stop
+    const newCount = violationCount + 1;
     setEvents(e => [...e, msg]);
     setInterviewStopped(true);
-    setViolationCount(c => c + 1);
+    setViolationCount(newCount);
     stopCam();
 
+    // notify backend about violation
     fetch(backendEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ events: [msg], ts: new Date().toISOString(), stopped: true }),
+      body: JSON.stringify({ events: [msg], ts: new Date().toISOString(), stopped: newCount >= MAX_VIOLATIONS }),
     }).catch(console.error);
+
+    const remaining = Math.max(0, MAX_VIOLATIONS - newCount);
+
+    if (newCount >= MAX_VIOLATIONS) {
+      // No tries left — call stop endpoint and redirect
+      (async () => {
+        try {
+          const conv = localStorage.getItem('conversation_id');
+          if (conv) {
+            await stopInterview(conv);
+          }
+        } catch (err: any) {
+          console.error('Stop interview failed', err);
+          toast.error('Failed to stop interview');
+        } finally {
+          toast.success('Interview stopped');
+          navigate('/my-proposals');
+        }
+      })();
+    } else {
+      // Allow user to resume — show a toast with remaining tries and a Resume action
+      toast(
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-semibold">Violation detected</div>
+            <div className="text-xs">{msg} — {remaining} attempt(s) remaining</div>
+          </div>
+          <div>
+            <button
+              onClick={() => {
+                setInterviewStopped(false);
+                // if there is an active session, just restart camera; otherwise start interview
+                if (!currentSession) {
+                  const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
+                  startInterview(freelancerId, ["React", "TypeScript"]).catch(() => {});
+                }
+                startCam();
+                toast.dismiss();
+              }}
+              className="px-3 py-1 rounded bg-primary text-white text-sm"
+            >
+              Resume
+            </button>
+          </div>
+        </div>,
+        { duration: 8000 }
+      );
+    }
   };
 
   /* ------------------- TF detection loop ------------------- */
@@ -236,6 +290,7 @@ export default function OldProctoring() {
 
   /* ------------------- UI ------------------- */
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column: Camera and Violation Log */}
       <div className="lg:col-span-2 space-y-6">
@@ -325,7 +380,7 @@ export default function OldProctoring() {
               </Button>
 
               <Button
-                onClick={() => navigate("/interview-results")}
+                onClick={() => setShowResults(true)}
                 disabled={!currentSession || currentSession.status !== 'completed'}
                 variant="outline"
                 size="lg"
@@ -410,5 +465,8 @@ export default function OldProctoring() {
         </Card>
       </div>
     </div>
+    {/* Result dialog */}
+    <InterviewResultDialog open={showResults} onOpenChange={(o) => setShowResults(o)} />
+    </>
   );
 }

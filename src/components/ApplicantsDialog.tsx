@@ -93,7 +93,7 @@ export const ApplicantsDialog = ({ jobId, open, onOpenChange }: ApplicantsDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-white border border-border shadow-2xl">
         <DialogHeader>
           <DialogTitle>Job Applicants</DialogTitle>
           <DialogDescription>

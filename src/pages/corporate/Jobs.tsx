@@ -109,7 +109,7 @@ export default function JobManagement() {
               Create Job Posting
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl bg-white border border-border shadow-2xl">
             <DialogHeader>
               <DialogTitle>Create New Job Posting</DialogTitle>
               <DialogDescription>

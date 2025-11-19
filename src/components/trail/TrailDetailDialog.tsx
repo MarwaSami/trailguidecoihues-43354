@@ -31,7 +31,7 @@ const TrailDetailDialog: React.FC<TrailDetailDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white border border-border shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl">{trail.name}</DialogTitle>
           <DialogDescription className="flex items-center gap-2">

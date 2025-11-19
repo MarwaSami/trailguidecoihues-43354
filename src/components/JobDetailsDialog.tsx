@@ -41,7 +41,7 @@ export const JobDetailsDialog = ({ job, userType, trigger }: JobDetailsDialogPro
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-card border border-border shadow-2xl">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto bg-white border border-border shadow-2xl">
         <DialogHeader className="border-b border-border pb-6 mb-6">
           <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             {job.title}

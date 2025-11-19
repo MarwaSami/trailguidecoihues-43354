@@ -27,6 +27,7 @@ import { JobProvider } from "./context/JobContext";
 import { ClientJobProvider } from "./context/ClientJobContext";
 import { PortfolioProvider } from "./context/PortfolioContext";
 import { InterviewProvider } from "./context/InterviewContext";
+import { ApplicantProvider } from "./context/ApplicantContext";
 import JobProposal from "./pages/JobProposal";
 import MyProposals from "./pages/MyProposals";
 import ProctoringComponent from "./components/Proctoring";
@@ -64,7 +65,7 @@ const App = () => (
             <Route path="/client-dashboard" element={<ClientJobProvider><ClientDashboard /></ClientJobProvider>} />
             <Route path="/client-profile" element={<ClientProfile />} />
             <Route path="/my-jobs" element={<ClientJobProvider><MyJobs /></ClientJobProvider>} />
-            <Route path="/view-applicants/:jobId" element={<ViewApplicants />} />
+            <Route path="/view-applicants/:jobId" element={<ApplicantProvider><ViewApplicants /></ApplicantProvider>} />
             <Route path="/job-posting" element={<JobPosting />} />
             <Route path="/candidate-discovery" element={<CandidateDiscovery />} />
 

@@ -37,7 +37,7 @@ const FiltersDialog: React.FC<FiltersDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white border border-border shadow-2xl">
         <DialogHeader>
           <DialogTitle>{t('filters')}</DialogTitle>
         </DialogHeader>

@@ -5,10 +5,9 @@
  * Configure the PYTHON_BACKEND_URL in your environment or update it here.
  */
 
-const PYTHON_BACKEND_URL = import.meta.env.VITE_PYTHON_BACKEND_URL || 'http://localhost:8000/api';
 
-export const baseUrl = PYTHON_BACKEND_URL;
 
+import { baseURL } from '../context/AuthContext'
 export interface ProfileEvaluationResponse {
   success: boolean;
   score: number;
@@ -35,12 +34,13 @@ export interface ProfileData {
   github_url: string | null;
 }
 
+
 /**
  * Authenticate user with Python backend
  * Endpoint: POST /auth/login
  */
 export async function loginToPythonBackend(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${PYTHON_BACKEND_URL}/auth/login`, {
+  const response = await fetch(`${baseURL}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export async function registerToPythonBackend(
   fullName: string,
   role: 'freelancer' | 'client'
 ): Promise<AuthResponse> {
-  const response = await fetch(`${PYTHON_BACKEND_URL}/auth/register`, {
+  const response = await fetch(`${baseURL}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export async function evaluateProfile(
   profileData: ProfileData,
   token: string
 ): Promise<ProfileEvaluationResponse> {
-  const response = await fetch(`${PYTHON_BACKEND_URL}/profile/evaluate`, {
+  const response = await fetch(`${baseURL}/profile/evaluate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export async function uploadCVToPythonBackend(
   formData.append('cv', file);
   formData.append('userId', userId);
 
-  const response = await fetch(`${PYTHON_BACKEND_URL}/profile/upload-cv`, {
+  const response = await fetch(`${baseURL}/profile/upload-cv`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -140,7 +140,7 @@ export async function updateProfileOnPythonBackend(
   profileData: ProfileData,
   token: string
 ): Promise<ProfileEvaluationResponse> {
-  const response = await fetch(`${PYTHON_BACKEND_URL}/profile/update`, {
+  const response = await fetch(`${baseURL}/profile/update`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -155,3 +155,4 @@ export async function updateProfileOnPythonBackend(
 
   return response.json();
 }
+

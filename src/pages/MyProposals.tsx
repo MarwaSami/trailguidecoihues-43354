@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { ProposalDetailsDialog } from "@/components/ProposalDetailsDialog";
 import {
   MapPin,
   Briefcase,
@@ -57,7 +58,6 @@ const MyProposals = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [jobLoading, setJobLoading] = useState(false);
 
   useEffect(() => {
     fetchProposals();
@@ -74,6 +74,14 @@ const MyProposals = () => {
       // Filter proposals to ensure they belong to the current user
       const userProposals = response.data.filter((proposal: Proposal) => proposal.freelancer === freelancerId);
       setProposals(userProposals);
+      
+      // Extract unique job IDs from proposals
+      const uniqueJobIds = [...new Set(userProposals.map((proposal: Proposal) => proposal.job))] as number[];
+      
+      // Fetch all jobs that have proposals
+      if (uniqueJobIds.length > 0) {
+        await fetchJobsForProposals(uniqueJobIds);
+      }
     } catch (error: any) {
       let errorTitle = "Failed to load proposals";
       let errorMessage = "Please try again later.";
@@ -118,25 +126,38 @@ const MyProposals = () => {
     }
   };
 
-  const fetchJobDetails = async (jobId: number) => {
-    setJobLoading(true);
+  const fetchJobsForProposals = async (jobIds: number[]) => {
     try {
-      const response = await axios.get(`${baseURL}jobs/jobs/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      // Fetch jobs in parallel for better performance
+      const jobPromises = jobIds.map(async (jobId) => {
+        const response = await axios.get(`${baseURL}jobs/jobs/${jobId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        return { id: jobId, data: response.data };
       });
-      setSelectedJob(response.data);
+
+      const jobResults = await Promise.all(jobPromises);
+      
+      // Create a map of job ID to job data
+      const jobsMap = new Map<number, Job>();
+      jobResults.forEach(({ id, data }) => {
+        jobsMap.set(id, data);
+      });
+      
+      setJobs(jobsMap);
     } catch (error: any) {
+      console.error('Failed to fetch jobs for proposals:', error);
       toast({
         title: "Failed to load job details",
-        description: "Please try again later.",
+        description: "Some job details could not be loaded. Please refresh the page.",
         variant: "destructive",
       });
-    } finally {
-      setJobLoading(false);
     }
   };
+
+
 
   const startInterview = (proposal: Proposal) => {
     localStorage.setItem('interview_freelancer_id', proposal.freelancer.toString());
@@ -204,13 +225,13 @@ const MyProposals = () => {
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex-1">
                         <h3 className="text-2xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-                          {job?.title || `Job ${proposal.job}`}
+                          {job?.title || 'Job Title Unavailable'}
                         </h3>
-                        <p className="text-sm text-muted-foreground">Job ID: {job?.id}</p>
+                        {/* <p className="text-sm text-muted-foreground">{proposal.proposed_budget}</p> */}
                       </div>
                       <div className="flex flex-col gap-2 items-end">
                         <Badge className={`${statusColor} capitalize shadow-sm`}>
-                          {proposal.status}
+                          {proposal.status== 'pending' ? 'Under Review' : proposal.status}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           <Calendar className="w-3 h-3 mr-1" />
@@ -284,6 +305,7 @@ const MyProposals = () => {
                     )}
 
                     <div className="flex justify-end gap-2 pt-4 border-t border-border/50">
+                      <ProposalDetailsDialog proposalId={proposal.id} />
                       <Button
                         variant="outline"
                         onClick={() => startInterview(proposal)}
@@ -296,7 +318,7 @@ const MyProposals = () => {
                         variant="outline"
                         onClick={() => {
                           setSelectedProposal(proposal);
-                          fetchJobDetails(proposal.job);
+                          setSelectedJob(jobs.get(proposal.job) || null);
                         }}
                         className="gap-2 hover:bg-primary/5 hover:border-primary/50 hover:text-primary transition-all shadow-sm"
                       >
@@ -314,11 +336,11 @@ const MyProposals = () => {
         {/* Job Details Modal/Dialog */}
         {selectedProposal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-            <Card className="max-w-3xl w-full max-h-[85vh] overflow-y-auto bg-card/98 backdrop-blur-[var(--blur-glass)] border-border/50 shadow-[var(--shadow-glow)] animate-scale-in">
+            <Card className="max-w-3xl w-full max-h-[85vh] overflow-y-auto bg-white border-border/50 shadow-[var(--shadow-glow)] animate-scale-in">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6 border-b border-border/50 pb-4">
                   <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground/80 bg-clip-text">
-                    {jobLoading ? "Loading..." : selectedJob?.title || "Job Details"}
+                    {selectedJob?.title || "Job Details"}
                   </h2>
                   <Button
                     variant="ghost"
@@ -333,12 +355,7 @@ const MyProposals = () => {
                   </Button>
                 </div>
 
-                {jobLoading ? (
-                  <div className="text-center py-12">
-                    <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading job details...</p>
-                  </div>
-                ) : selectedJob ? (
+                {selectedJob ? (
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 mb-2">
@@ -452,7 +469,7 @@ const MyProposals = () => {
                     <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
                       <span className="text-destructive text-2xl">!</span>
                     </div>
-                    <p className="text-destructive font-semibold">Failed to load job details</p>
+                    <p className="text-destructive font-semibold">Job details not available</p>
                   </div>
                 )}
               </div>

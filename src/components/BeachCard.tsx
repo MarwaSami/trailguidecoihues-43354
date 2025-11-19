@@ -112,7 +112,7 @@ const BeachCard: React.FC<BeachCardProps> = ({ beach }) => {
       </Card>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white border border-border shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">{beach.name}</DialogTitle>
             <DialogDescription className="flex items-center gap-2 text-base">

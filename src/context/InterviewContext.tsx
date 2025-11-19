@@ -22,6 +22,14 @@ interface InterviewSession {
   overallScore?: number;
   confidenceScore?: number;
   technicalScore?: number;
+  // raw result payload returned by the backend when ending the interview
+  result?: {
+    score?: number;
+    summary?: string;
+    strengths?: string[];
+    weaknesses?: string[];
+    [k: string]: any;
+  } | null;
   transcript: { role: 'user' | 'ai'; text: string; timestamp: Date }[];
   audioResponses: string[];
   status: 'pending' | 'in-progress' | 'completed';
@@ -34,6 +42,7 @@ interface InterviewContextType {
   submitAudioAnswer: (audioBlob: Blob) => Promise<void>;
   sendTextMessage: (text: string) => Promise<void>;
   endInterview: () => Promise<void>;
+  stopInterview: (conversationId?: string) => Promise<any>;
   loading: boolean;
   error: string | null;
 }
@@ -179,30 +188,60 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Convert Blob to base64 for backend compatibility
-      const base64Audio = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          const base64 = result.split(',')[1]; // Remove data:audio/wav;base64, prefix
-          resolve(base64);
-        };
-        reader.onerror = () => reject(new Error('Failed to read audio file'));
-        reader.readAsDataURL(audioBlob);
-      });
+      // Send the audio as multipart/form-data so the backend can read it from request.FILES
+      const formData = new FormData();
+      formData.append('conversation_id', conversationId);
 
-      const response = await axios.post(`${baseURL}jobs/message/`, {
-        conversation_id: conversationId,
-        audio_base64: base64Audio,
-      }, {
+      // Provide a filename and let FormData include the blob as a file part named 'audio_file'
+      // Use the Blob's type to guess extension if needed.
+      // Ensure MIME is clean (strip parameters like ';codecs=opus') so filename
+      // extension is valid (e.g., 'webm' not 'webm;codecs=opus'). Some browsers
+      // report types with parameters which would make the filename invalid.
+      const rawMime = (audioBlob as any).type || 'audio/webm';
+      const mime = rawMime.split(';')[0].trim();
+      const ext = (mime.split('/')[1] || 'webm').replace(/[^a-z0-9]/gi, '').toLowerCase();
+      const filename = `response.${ext}`;
+      console.log('[InterviewContext] Uploading audio with MIME:', mime, 'filename:', filename);
+      formData.append('audio_file', audioBlob, filename);
+
+      // Debug: log FormData entries (file name/type/size) in browser console
+      try {
+        for (const entry of (formData as any).entries()) {
+          const [key, value] = entry as [string, any];
+          if (value instanceof File) {
+            console.log('[InterviewContext] FormData entry:', key, {
+              name: value.name,
+              type: value.type,
+              size: value.size,
+            });
+          } else {
+            console.log('[InterviewContext] FormData entry:', key, value);
+          }
+        }
+      } catch (e) {
+        console.log('[InterviewContext] Unable to inspect FormData entries', e);
+      }
+
+      const token = localStorage.getItem('token');
+      const fetchResp = await fetch(`${baseURL}jobs/message/`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : '',
+          Accept: 'application/json',
         },
+        body: formData,
       });
 
-      const data = response.data;
+      if (!fetchResp.ok) {
+        const text = await fetchResp.text();
+        throw new Error(`Upload failed: ${fetchResp.status} ${text}`);
+      }
 
+      const response = await fetchResp.json();
+
+      // Backend may return the payload directly or wrapped in a `data` key
+      const data = response && typeof response === 'object' && 'data' in response ? response.data : response;
+         console.log('[InterviewContext] Audio submission response data:', data);
       setCurrentSession((prev) => {
         if (!prev) return null;
         return {
@@ -299,25 +338,33 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const response = await axios.post(`${baseURL}end/`, {
+      const response = await axios.post(`${baseURL}jobs/end/`, {
         conversation_id: conversationId
       }, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-
+      
       const data = response.data;
       console.log('Interview ended, scores:', data);
+      // Save full result payload into context so UI can render summary/strengths/weaknesses
       setCurrentSession((prev) => {
         if (!prev) return null;
         return {
           ...prev,
           endTime: new Date(),
           status: 'completed',
-          overallScore: data.overall_score || 85,
-          confidenceScore: data.confidence_score || 20,
-          technicalScore: data.technical_score || 80,
+          overallScore: data.overall_score ?? data.score ?? prev.overallScore,
+          confidenceScore: data.confidence_score ?? prev.confidenceScore,
+          technicalScore: data.technical_score ?? prev.technicalScore,
+          result: {
+            score: data.score ?? data.overall_score,
+            summary: data.summary ?? data.summary_text ?? '',
+            strengths: data.strengths ?? data.strengths_list ?? [],
+            weaknesses: data.weaknesses ?? data.weaknesses_list ?? [],
+            ...data,
+          },
         };
       });
     } catch (err) {
@@ -332,6 +379,27 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const stopInterview = async (conversationId?: string) => {
+    try {
+      const conv = conversationId || localStorage.getItem('conversation_id');
+      if (!conv) throw new Error('Missing conversation id');
+      const response = await axios.post(`${baseURL}stop/`, {
+        conversation_id: conv,
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      // Clear session/cached conv id after stopping
+      localStorage.removeItem('conversation_id');
+      setCurrentSession(null);
+      return response.data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to stop interview');
+      throw err;
+    }
+  };
+
   return (
     <InterviewContext.Provider
       value={{
@@ -341,6 +409,7 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
         submitAudioAnswer,
         sendTextMessage,
         endInterview,
+        stopInterview,
         loading,
         error,
       }}
