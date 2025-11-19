@@ -135,7 +135,7 @@ export default function OldProctoring() {
         const latestMessage = currentSession?.transcript[currentSession.transcript.length - 1];
         if (latestMessage?.role === 'ai' && 
             latestMessage.text.toLowerCase().includes('thank you for your time')) {
-          toast.info("Interview completed!");
+          toast.success("Interview completed!");
           await endInterview();
           stopCam();
         }
