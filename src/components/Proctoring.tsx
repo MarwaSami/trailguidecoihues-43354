@@ -130,6 +130,15 @@ export default function OldProctoring() {
       setIsSending(true);
       try {
         await submitAudioAnswer(userBlob);
+        
+        // Check if interview is ending based on AI response
+        const latestMessage = currentSession?.transcript[currentSession.transcript.length - 1];
+        if (latestMessage?.role === 'ai' && 
+            latestMessage.text.toLowerCase().includes('thank you for your time')) {
+          toast.success("Interview completed!");
+          await endInterview();
+          stopCam();
+        }
       } catch (err: any) {
         console.error("Audio submit error:", err);
         toast.error("Failed to process audio: " + err.message);
@@ -343,51 +352,61 @@ export default function OldProctoring() {
 
             {/* Control Buttons */}
             <div className="flex justify-center gap-4 mt-6">
-              <Button
-                onClick={async () => {
-                  if (camReady && !interviewStopped) {
-                    await endInterview();
-                    stopCam();
-                  } else {
-                    startCam();
-                    if (!currentSession) {
-                      const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
-                      await startInterview(freelancerId, ["React", "TypeScript"]);
+              {currentSession?.status !== 'completed' && (
+                <Button
+                  onClick={async () => {
+                    if (camReady && !interviewStopped) {
+                      await endInterview();
+                      stopCam();
+                    } else {
+                      startCam();
+                      if (!currentSession) {
+                        const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
+                        await startInterview(freelancerId, ["React", "TypeScript"]);
+                      }
                     }
-                  }
-                }}
-                disabled={interviewStopped && violationCount >= 2}
-                variant={camReady ? "destructive" : "default"}
-                size="lg"
-                className="min-w-[150px] font-semibold"
-              >
-                {interviewStopped && violationCount >= 2 
-                  ? "No Retries Left" 
-                  : camReady 
-                    ? "End Interview" 
-                    : "Start Interview"}
-              </Button>
+                  }}
+                  disabled={interviewStopped && violationCount >= 2}
+                  variant={camReady ? "destructive" : "default"}
+                  size="lg"
+                  className="min-w-[150px] font-semibold"
+                >
+                  {interviewStopped && violationCount >= 2 
+                    ? "No Retries Left" 
+                    : camReady 
+                      ? "End Interview" 
+                      : "Start Interview"}
+                </Button>
+              )}
 
-              <Button
-                onClick={toggleMic}
-                disabled={!camReady || interviewStopped || isSending}
-                variant={isRecording ? "destructive" : "default"}
-                size="lg"
-                className="gap-2 min-w-[120px] font-semibold"
-              >
-                {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                {isSending ? "Processing..." : isRecording ? "Stop" : "Speak"}
-              </Button>
+              {currentSession?.status !== 'completed' && (
+                <Button
+                  onClick={toggleMic}
+                  disabled={!camReady || interviewStopped || isSending}
+                  variant={isRecording ? "destructive" : "default"}
+                  size="lg"
+                  className="gap-2 min-w-[120px] font-semibold"
+                >
+                  {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  {isSending ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin">⏳</span>
+                      Processing
+                    </span>
+                  ) : isRecording ? "Stop" : "Speak"}
+                </Button>
+              )}
 
-              <Button
-                onClick={() => setShowResults(true)}
-                disabled={!currentSession || currentSession.status !== 'completed'}
-                variant="outline"
-                size="lg"
-                className="min-w-[150px] font-semibold"
-              >
-                View Results
-              </Button>
+              {currentSession?.status === 'completed' && (
+                <Button
+                  onClick={() => setShowResults(true)}
+                  variant="default"
+                  size="lg"
+                  className="min-w-[150px] font-semibold"
+                >
+                  View Results
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

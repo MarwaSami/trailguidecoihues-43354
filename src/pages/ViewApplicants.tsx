@@ -103,14 +103,10 @@ const ViewApplicants = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Discover Candidates</h1>
-            <p className="text-muted-foreground">AI-matched talent for your job postings</p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="gap-2">
-              <Download className="w-4 h-4" />
-              Export Results
-            </Button>
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              Discover Candidates
+            </h1>
+            <p className="text-muted-foreground text-lg">AI-matched talent for your job postings</p>
           </div>
         </div>
 
@@ -131,7 +127,10 @@ const ViewApplicants = () => {
               description="No candidates have applied to this job yet. Share your job posting to attract more applicants!"
             />
           ) : (
-            candidates.map((candidate) => {
+            // Sort candidates by AI match score (descending)
+            [...candidates]
+              .sort((a, b) => (b.ai_match_score || 0) - (a.ai_match_score || 0))
+              .map((candidate) => {
             const mappedCandidate = {
               id: candidate.freelancer_id,
               name: candidate.freelancer_name,
@@ -149,9 +148,15 @@ const ViewApplicants = () => {
             };
         //      console.log('Candidate Interview Data:', candidate.interview_score);
             return (
-              <Card key={mappedCandidate.id} className="relative p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
-                <Badge variant="default" className="absolute top-2 right-2 w-fit">{candidate.proposal_status}</Badge>
-                <div className="flex flex-col lg:flex-row gap-6">
+              <Card key={mappedCandidate.id} className="group relative p-6 bg-card/95 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400 animate-fade-in">
+                <div className="absolute inset-0 bg-[var(--gradient-card)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <Badge 
+                  variant={candidate.proposal_status === 'pending' ? 'default' : candidate.proposal_status === 'accepted' ? 'outline' : 'secondary'} 
+                  className="absolute top-4 right-4 z-10 capitalize shadow-sm"
+                >
+                  {candidate.proposal_status === 'pending' ? 'Under Review' : candidate.proposal_status}
+                </Badge>
+                <div className="flex flex-col lg:flex-row gap-6 relative z-10">
                   {/* Avatar & Basic Info */}
                   <div className="flex gap-4 flex-1">
                     <Avatar className="w-20 h-20">
@@ -232,18 +237,26 @@ const ViewApplicants = () => {
                         </>
                       )}
                     </div>
-                    {interviewAvailability && (
-                      <div className="flex gap-2">
-                        <Button variant="default" onClick={() => handleProposalUpdate(candidate.proposal_id, 'accept')}>
+                    
+                    <div className="flex gap-2">
+                      {candidate.proposal_status === 'pending' && (
+                        <Button 
+                          variant="default" 
+                          onClick={() => handleProposalUpdate(candidate.proposal_id, 'accept')}
+                          className="gap-2"
+                        >
+                          <CheckCircle className="w-4 h-4" />
                           Accept
                         </Button>
-
+                      )}
+                      
+                      {candidate.proposal_status === 'accepted' && (
                         <Button variant="hero" className="gap-2">
                           <Mail className="w-4 h-4" />
                           Contact
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                     <ProposalDetailsDialog
                       proposalId={candidate.proposal_id}
                       freelancerName={candidate.freelancer_name}
