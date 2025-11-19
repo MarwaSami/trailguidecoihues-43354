@@ -130,6 +130,15 @@ export default function OldProctoring() {
       setIsSending(true);
       try {
         await submitAudioAnswer(userBlob);
+        
+        // Check if interview is ending based on AI response
+        const latestMessage = currentSession?.transcript[currentSession.transcript.length - 1];
+        if (latestMessage?.role === 'ai' && 
+            latestMessage.text.toLowerCase().includes('thank you for your time')) {
+          toast.info("Interview completed!");
+          await endInterview();
+          stopCam();
+        }
       } catch (err: any) {
         console.error("Audio submit error:", err);
         toast.error("Failed to process audio: " + err.message);
