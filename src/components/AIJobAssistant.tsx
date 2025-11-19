@@ -746,7 +746,7 @@ export const AIJobAssistant = () => {
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 overflow-y-auto max-h-40 ${message.role === "user"
+                  className={`${message.role === "user" ? "max-w-[80%]" : "max-w-[95%]"} rounded-lg p-3 ${message.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted"
                     }`}
