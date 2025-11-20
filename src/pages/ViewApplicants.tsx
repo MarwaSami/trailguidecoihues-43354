@@ -174,15 +174,6 @@ const ViewApplicants = () => {
                   isAccepted ? 'from-green-500/10 via-green-400/10 to-green-500/10' : 'from-primary/5 via-accent/5 to-primary/5'
                 }`} />
                 
-                {isTopCandidate && !isAccepted && (
-                  <div className="absolute top-4 right-4 z-20">
-                    <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold px-4 py-1.5 shadow-lg animate-pulse">
-                      <Award className="w-4 h-4 mr-1.5" />
-                      Recommended
-                    </Badge>
-                  </div>
-                )}
-                
                 <div className="flex flex-col lg:flex-row gap-8 relative z-10">
                   <div className="flex gap-5 flex-1">
                     <Avatar className="w-24 h-24 ring-4 ring-primary/20 shadow-lg">
@@ -218,7 +209,13 @@ const ViewApplicants = () => {
                   </div>
 
                   <div className="flex flex-col gap-4 lg:w-80">
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-end gap-2 flex-wrap">
+                      {isTopCandidate && !isAccepted && (
+                        <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold px-4 py-1.5 shadow-lg animate-pulse">
+                          <Award className="w-4 h-4 mr-1.5" />
+                          Recommended
+                        </Badge>
+                      )}
                       <Badge variant={candidate.proposal_status === 'pending' ? 'default' : candidate.proposal_status === 'accepted' ? 'outline' : 'secondary'} className="capitalize shadow-lg px-4 py-1.5">
                         {candidate.proposal_status === 'pending' ? 'Under Review' : candidate.proposal_status}
                       </Badge>
