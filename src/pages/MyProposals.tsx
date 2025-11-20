@@ -272,8 +272,30 @@ const MyProposals = () => {
           />
         ) : (
           <div className="grid gap-6">
-            {proposals.map((proposal, idx) => {
+            {[...proposals]
+              .sort((a, b) => {
+                const jobA = jobs.get(a.job);
+                const jobB = jobs.get(b.job);
+                const hasInterviewA = jobA?.interview_availability ? 1 : 0;
+                const hasInterviewB = jobB?.interview_availability ? 1 : 0;
+                
+                // Priority: interview first, then status
+                if (hasInterviewA !== hasInterviewB) {
+                  return hasInterviewB - hasInterviewA; // Interviews first
+                }
+                
+                // Status priority: under_review (pending) > accepted > rejected
+                const statusPriority: Record<string, number> = {
+                  pending: 3,
+                  accepted: 2,
+                  rejected: 1
+                };
+                
+                return (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0);
+              })
+              .map((proposal, idx) => {
               const job = jobs.get(proposal.job);
+              const hasInterview = job?.interview_availability;
               const statusColor = proposal.status === 'pending' ? 'bg-primary/10 text-primary border-primary/30' : 
                                  proposal.status === 'accepted' ? 'bg-green-500/10 text-green-600 border-green-500/30' : 
                                  proposal.status === 'rejected' ? 'bg-red-500/10 text-red-600 border-red-500/30' :
@@ -285,7 +307,9 @@ const MyProposals = () => {
                 <Card
                   key={proposal.id}
                   className={`group relative overflow-hidden border shadow-xl hover:shadow-2xl transition-all duration-500 animate-fade-up ${
-                    isAccepted 
+                    hasInterview
+                      ? 'border-purple-500/50 bg-gradient-to-br from-purple-500/10 via-purple-400/5 to-purple-500/10 ring-2 ring-purple-500/20'
+                      : isAccepted 
                       ? 'border-green-500/40 bg-gradient-to-br from-green-500/5 via-green-400/5 to-green-500/5' 
                       : 'border-border/30 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl hover:border-primary/40'
                   }`}
@@ -293,9 +317,23 @@ const MyProposals = () => {
                 >
                   {showCelebration && <CelebrationAnimation show={showCelebration} />}
                   
+                  {/* Interview Badge */}
+                  {hasInterview && (
+                    <div className="absolute top-4 right-4 z-20">
+                      <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold px-4 py-1.5 shadow-lg animate-pulse">
+                        <Play className="w-4 h-4 mr-1.5" />
+                        Interview Available
+                      </Badge>
+                    </div>
+                  )}
+                  
                   {/* Animated Background Effects */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-700" />
+                  <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                    hasInterview ? 'from-purple-500/10 via-purple-400/5 to-purple-500/10' : 'from-primary/5 via-accent/5 to-primary/5'
+                  }`} />
+                  <div className={`absolute top-0 right-0 w-96 h-96 bg-gradient-to-br to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-700 ${
+                    hasInterview ? 'from-purple-500/20' : 'from-primary/10'
+                  }`} />
                   
                   <CardContent className="p-7 relative z-10">
                     <div className="flex justify-between items-start mb-6">
