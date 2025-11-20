@@ -25,6 +25,12 @@ interface Proposal {
   created_at?: string;
 }
 
+interface Job {
+  id: number;
+  title: string;
+  location: string;
+}
+
 interface ProposalDetailsDialogProps {
   proposalId: number;
   freelancerName?: string;
@@ -34,6 +40,7 @@ interface ProposalDetailsDialogProps {
 
 export const ProposalDetailsDialog = ({ proposalId, freelancerName, freelancerLocation, trigger }: ProposalDetailsDialogProps) => {
   const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -45,9 +52,20 @@ export const ProposalDetailsDialog = ({ proposalId, freelancerName, freelancerLo
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
         },
       });
-      setProposal(response.data);
+      const proposalData = response.data;
+      setProposal(proposalData);
+
+      // Fetch job data
+      if (proposalData.job) {
+        const jobResponse = await axios.get(`${baseURL}jobs/jobs/${proposalData.job}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          },
+        });
+        setJob(jobResponse.data);
+      }
     } catch (error) {
-      console.error('Error fetching proposal:', error);
+      console.error('Error fetching proposal or job:', error);
     } finally {
       setLoading(false);
     }
@@ -60,8 +78,8 @@ export const ProposalDetailsDialog = ({ proposalId, freelancerName, freelancerLo
   }, [open, proposalId]);
 
   const defaultTrigger = (
-    <Button variant="outline" size="sm" className="gap-2">
-      <Eye className="w-4 h-4" />
+    <Button variant="outline" className="gap-2 h-11 border-primary/30 hover:border-primary/50 hover:bg-primary/10 transition-all font-semibold">
+      <Eye className="w-5 h-5" />
       View Proposal
     </Button>
   );
@@ -105,6 +123,20 @@ export const ProposalDetailsDialog = ({ proposalId, freelancerName, freelancerLo
               </div>
             </div>
 
+            {proposal.experience && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border border-accent/20">
+                    <FileText className="w-5 h-5 text-accent" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">Experience</h3>
+                </div>
+                <div className="p-5 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border">
+                  <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">{proposal.experience}</p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/30 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-3">
@@ -136,8 +168,8 @@ export const ProposalDetailsDialog = ({ proposalId, freelancerName, freelancerLo
                     <Eye className="w-6 h-6 text-secondary" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Location</p>
-                    <p className="font-bold text-foreground text-lg">{freelancerLocation}</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Job Location</p>
+                    <p className="font-bold text-foreground text-lg">{job?.location || 'N/A'}</p>
                   </div>
                 </div>
               </div>

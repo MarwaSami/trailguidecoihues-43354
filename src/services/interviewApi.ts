@@ -90,4 +90,26 @@ export const interviewApi = {
 
     return response.json();
   },
+
+  getInterviewReport: async (freelancerId: number, jobId: number): Promise<{
+    freelancer_id: number;
+    job_id: number;
+    interview_report: string;
+    interview_score: number;
+  } | null> => {
+    const response = await fetch(`${baseURL}/interview?freelancer_id=${freelancerId}&job_id=${jobId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // No interview result
+      }
+      throw new Error('Failed to fetch interview report');
+    }
+
+    return response.json();
+  },
 };

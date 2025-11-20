@@ -22,6 +22,15 @@ import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { interviewApi } from "@/services/interviewApi";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface Proposal {
   id: number;
@@ -61,6 +70,9 @@ const MyProposals = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [interviewReports, setInterviewReports] = useState<Map<number, any>>(new Map());
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
 
   useEffect(() => {
     fetchProposals();
@@ -83,7 +95,7 @@ const MyProposals = () => {
       
       // Fetch all jobs that have proposals
       if (uniqueJobIds.length > 0) {
-        await fetchJobsForProposals(uniqueJobIds);
+        await fetchJobsForProposals(uniqueJobIds, userProposals);
       }
     } catch (error: any) {
       let errorTitle = "Failed to load proposals";
@@ -129,7 +141,7 @@ const MyProposals = () => {
     }
   };
 
-  const fetchJobsForProposals = async (jobIds: number[]) => {
+  const fetchJobsForProposals = async (jobIds: number[], proposals: Proposal[]) => {
     try {
       // Fetch jobs in parallel for better performance
       const jobPromises = jobIds.map(async (jobId) => {
@@ -142,14 +154,35 @@ const MyProposals = () => {
       });
 
       const jobResults = await Promise.all(jobPromises);
-      
+
       // Create a map of job ID to job data
       const jobsMap = new Map<number, Job>();
       jobResults.forEach(({ id, data }) => {
         jobsMap.set(id, data);
       });
-      
+
       setJobs(jobsMap);
+
+      // Fetch interview reports for proposals where job has interview availability
+      const freelancerId = JSON.parse(localStorage.getItem("user") || "{}").id;
+      const reportPromises = proposals
+        .filter(proposal => jobsMap.get(proposal.job)?.interview_availability)
+        .map(async (proposal) => {
+          try {
+            const report = await interviewApi.getInterviewReport(freelancerId, proposal.job);
+            return { proposalId: proposal.id, report };
+          } catch (error) {
+            console.error('Failed to fetch interview report for proposal:', proposal.id, error);
+            return { proposalId: proposal.id, report: null };
+          }
+        });
+
+      const reportResults = await Promise.all(reportPromises);
+      const reportsMap = new Map<number, any>();
+      reportResults.forEach(({ proposalId, report }) => {
+        reportsMap.set(proposalId, report);
+      });
+      setInterviewReports(reportsMap);
     } catch (error: any) {
       console.error('Failed to fetch jobs for proposals:', error);
       toast({
@@ -166,6 +199,14 @@ const MyProposals = () => {
     localStorage.setItem('interview_freelancer_id', proposal.freelancer.toString());
     localStorage.setItem('interview_job_id', proposal.job.toString());
     navigate('/interview-practice');
+  };
+
+  const viewInterviewReport = (proposal: Proposal) => {
+    const report = interviewReports.get(proposal.id);
+    if (report) {
+      setSelectedReport(report);
+      setReportDialogOpen(true);
+    }
   };
 
   if (loading) {
@@ -215,6 +256,7 @@ const MyProposals = () => {
               const job = jobs.get(proposal.job);
               const statusColor = proposal.status === 'pending' ? 'bg-primary/10 text-primary border-primary/30' : 
                                  proposal.status === 'accepted' ? 'bg-green-500/10 text-green-600 border-green-500/30' : 
+                                 proposal.status === 'rejected' ? 'bg-red-500/10 text-red-600 border-red-500/30' :
                                  'bg-muted text-muted-foreground border-border';
               
               return (
@@ -291,41 +333,40 @@ const MyProposals = () => {
                         Cover Letter
                       </h4>
                       <div className="p-5 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 backdrop-blur-sm shadow-sm">
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-1">
                           {proposal.cover_letter}
                         </p>
                       </div>
                     </div>
 
-                    {proposal.experience && (
-                      <div className="border-t border-border/30 pt-5 mb-5">
-                        <h4 className="font-bold mb-3 flex items-center gap-2 text-lg">
-                          <Briefcase className="w-5 h-5 text-primary" />
-                          Experience
-                        </h4>
-                        <div className="p-5 rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/30 backdrop-blur-sm shadow-sm">
-                          <p className="text-sm text-muted-foreground leading-relaxed">{proposal.experience}</p>
-                        </div>
-                      </div>
-                    )}
 
                     <div className="flex justify-end gap-3 pt-5 border-t border-border/30">
-                      <ProposalDetailsDialog proposalId={proposal.id} />
-                      
-                      {/* Only show Start Interview if job has interview_availability and proposal is pending */}
-                      {job?.interview_availability && 
-                       proposal.status !== 'accepted' && 
-                       proposal.status !== 'rejected' && (
-                        <Button
-                          variant="default"
-                          onClick={() => startInterview(proposal)}
-                          className="gap-2 h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg transition-all font-semibold"
-                        >
-                          <Play className="w-5 h-5" />
-                          Start Interview
-                        </Button>
+                      {/* Interview button */}
+                      {job?.interview_availability && proposal.status !== 'accepted' && proposal.status !== 'rejected' && (
+                        interviewReports.get(proposal.id) ? (
+                          <Button
+                            variant="default"
+                            onClick={() => viewInterviewReport(proposal)}
+                            className="gap-2 h-11 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg transition-all font-semibold"
+                          >
+                            <FileText className="w-5 h-5" />
+                            View Interview Report
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="default"
+                            onClick={() => startInterview(proposal)}
+                            className="gap-2 h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg transition-all font-semibold"
+                          >
+                            <Play className="w-5 h-5" />
+                            Start Interview
+                          </Button>
+                        )
                       )}
-                      
+
+                      {/* View buttons */}
+                      <ProposalDetailsDialog proposalId={proposal.id} />
+
                       <Button
                         variant="outline"
                         onClick={() => {
@@ -392,8 +433,8 @@ const MyProposals = () => {
                       </div>
                       <div className="flex flex-wrap gap-2 p-4 rounded-lg bg-muted/30 border border-border/50">
                         {selectedJob.required_skills.map((skill) => (
-                          <Badge 
-                            key={skill.id} 
+                          <Badge
+                            key={skill.id}
                             className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors shadow-sm"
                           >
                             {skill.name}
@@ -421,7 +462,7 @@ const MyProposals = () => {
                             <MapPin className="w-5 h-5 text-accent" />
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground mb-1">Location</p>
+                            <p className="text-xs text-muted-foreground mb-1">Job Location</p>
                             <p className="font-semibold">{selectedJob.location}</p>
                           </div>
                         </div>
@@ -488,6 +529,165 @@ const MyProposals = () => {
             </Card>
           </div>
         )}
+
+        {/* Interview Report Dialog */}
+        <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">Interview Report</DialogTitle>
+              <DialogDescription>
+                Your interview performance and feedback for this job application.
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedReport && (
+              <div className="space-y-6 mt-4">
+                {/* Interview Score */}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                  <span className="text-lg font-semibold">Interview Score</span>
+                  <span className="text-2xl font-bold text-primary">{selectedReport.interview_score}%</span>
+                </div>
+
+                {/* Report Content */}
+                <div className="space-y-4">
+                  {(() => {
+                    const reportData = selectedReport.interview_report;
+                    // Parse the report string if it's formatted as specified
+                    let parsedReport: {
+                      summary?: string;
+                      strengths?: string[] | string;
+                      weaknesses?: string[] | string;
+                      recommendation?: string;
+                      transcript_analysis?: string;
+                    } = {};
+                    if (typeof reportData === 'string') {
+                      // Try to parse the formatted string
+                      const lines = reportData.split('\n');
+                      let currentSection = '';
+                      parsedReport = {
+                        summary: '',
+                        strengths: [],
+                        weaknesses: [],
+                        recommendation: '',
+                        transcript_analysis: ''
+                      };
+                      lines.forEach(line => {
+                        if (line.toLowerCase().includes('summary')) {
+                          currentSection = 'summary';
+                        } else if (line.toLowerCase().includes('strengths')) {
+                          currentSection = 'strengths';
+                        } else if (line.toLowerCase().includes('weaknesses')) {
+                          currentSection = 'weaknesses';
+                        } else if (line.toLowerCase().includes('recommendation')) {
+                          currentSection = 'recommendation';
+                        } else if (line.toLowerCase().includes('transcript')) {
+                          currentSection = 'transcript_analysis';
+                        } else if (line.trim()) {
+                          if (currentSection === 'strengths' || currentSection === 'weaknesses') {
+                            if (!Array.isArray(parsedReport[currentSection])) parsedReport[currentSection] = [];
+                            (parsedReport[currentSection] as string[]).push(line.trim());
+                          } else if (currentSection) {
+                            parsedReport[currentSection] = (parsedReport[currentSection] as string || '') + (parsedReport[currentSection] ? '\n' : '') + line.trim();
+                          }
+                        }
+                      });
+                    } else if (typeof reportData === 'object' && reportData !== null) {
+                      parsedReport = reportData as typeof parsedReport;
+                    }
+
+                    return (
+                      <>
+                        {/* Summary */}
+                        {parsedReport.summary && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 text-primary">Summary</h3>
+                            <div className="p-4 bg-muted/50 rounded-lg border">
+                              <p className="text-sm leading-relaxed">{parsedReport.summary}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Strengths */}
+                        {parsedReport.strengths && (Array.isArray(parsedReport.strengths) ? parsedReport.strengths.length > 0 : parsedReport.strengths) && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 text-green-600">Strengths</h3>
+                            <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                              {Array.isArray(parsedReport.strengths) ? (
+                                <ul className="list-disc list-inside space-y-1">
+                                  {parsedReport.strengths.map((strength, idx) => (
+                                    <li key={idx} className="text-sm">{strength}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm">{parsedReport.strengths}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Weaknesses */}
+                        {parsedReport.weaknesses && (Array.isArray(parsedReport.weaknesses) ? parsedReport.weaknesses.length > 0 : parsedReport.weaknesses) && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 text-orange-600">Areas for Improvement</h3>
+                            <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                              {Array.isArray(parsedReport.weaknesses) ? (
+                                <ul className="list-disc list-inside space-y-1">
+                                  {parsedReport.weaknesses.map((weakness, idx) => (
+                                    <li key={idx} className="text-sm">{weakness}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm">{parsedReport.weaknesses}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Recommendation */}
+                        {parsedReport.recommendation && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 text-blue-600">Recommendation</h3>
+                            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <p className="text-sm leading-relaxed">{parsedReport.recommendation}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Transcript Analysis */}
+                        {parsedReport.transcript_analysis && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 text-purple-600">Transcript Analysis</h3>
+                            <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{parsedReport.transcript_analysis}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Fallback: Show raw report if parsing failed */}
+                        {!parsedReport.summary && !parsedReport.strengths && !parsedReport.weaknesses && !parsedReport.recommendation && !parsedReport.transcript_analysis && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2">Interview Report</h3>
+                            <div className="p-4 bg-muted/50 rounded-lg border">
+                              <pre className="text-sm whitespace-pre-wrap">{reportData}</pre>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Status */}
+                <Separator />
+                <div className="flex items-center justify-center">
+                  <Badge className="bg-green-500/10 text-green-600 border-green-500/30 px-4 py-2">
+                    Interview Status: Finished
+                  </Badge>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
