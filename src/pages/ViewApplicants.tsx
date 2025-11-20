@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Clock,
   Users,
-  FileText
+  FileText,
+  Award
 } from "lucide-react";
 import { useApplicants } from "@/context/ApplicantContext";
 import { ProposalDetailsDialog } from "@/components/ProposalDetailsDialog";
@@ -29,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AcceptanceDialog } from "@/components/AcceptanceDialog";
 
 const ViewApplicants = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -38,6 +40,8 @@ const ViewApplicants = () => {
   const [interviewAvailability, setInterviewAvailability] = useState(false);
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
+  const [acceptedCandidateName, setAcceptedCandidateName] = useState("");
 
   useEffect(() => {
     if (jobId) {
@@ -57,7 +61,7 @@ const ViewApplicants = () => {
     }
   }, [jobId, fetchCandidates]);
 
-  const handleProposalUpdate = async (proposalId: number, status: 'accept' | 'reject') => {
+  const handleProposalUpdate = async (proposalId: number, status: 'accept' | 'reject', candidateName?: string) => {
     try {
       await axios.post(`${baseURL}jobs/proposal-update/`, {
         status,
@@ -65,11 +69,22 @@ const ViewApplicants = () => {
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      toast({
-        title: "Done",
-        description: `Proposal ${status}ed successfully.`,
-        variant: "success",
-      });
+      
+      if (status === 'accept' && candidateName) {
+        setAcceptedCandidateName(candidateName);
+        setAcceptDialogOpen(true);
+      } else {
+        toast({
+          title: "Done",
+          description: `Proposal ${status}ed successfully.`,
+          variant: "success",
+        });
+      }
+      
+      // Refresh candidates list
+      if (jobId) {
+        fetchCandidates(parseInt(jobId));
+      }
     } catch (error) {
       console.error('Error updating proposal:', error);
       toast({
@@ -119,8 +134,14 @@ const ViewApplicants = () => {
             />
           ) : (
             [...candidates]
-              .sort((a, b) => (b.ai_match_score || 0) - (a.ai_match_score || 0))
-              .map((candidate) => {
+              .sort((a, b) => {
+                // Sort by interview_score if interview is available, otherwise by ai_match_score
+                if (interviewAvailability) {
+                  return (b.interview_score || 0) - (a.interview_score || 0);
+                }
+                return (b.ai_match_score || 0) - (a.ai_match_score || 0);
+              })
+              .map((candidate, index) => {
             const mappedCandidate = {
               id: candidate.freelancer_id,
               name: candidate.freelancer_name,
@@ -137,9 +158,30 @@ const ViewApplicants = () => {
               saved: false
             };
             
+            const isTopCandidate = index === 0;
+            const isAccepted = mappedCandidate.proposal_status === 'accepted';
+            
             return (
-              <Card key={mappedCandidate.id} className="group relative p-7 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl border border-border/30 hover:border-primary/40 shadow-xl hover:shadow-2xl transition-all duration-500">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <Card 
+                key={mappedCandidate.id} 
+                className={`group relative p-7 backdrop-blur-xl border shadow-xl hover:shadow-2xl transition-all duration-500 ${
+                  isAccepted 
+                    ? 'bg-gradient-to-br from-green-500/10 via-green-400/5 to-green-500/10 border-green-500/40 hover:border-green-500/60' 
+                    : 'bg-gradient-to-br from-card/95 via-card/90 to-card/95 border-border/30 hover:border-primary/40'
+                }`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                  isAccepted ? 'from-green-500/10 via-green-400/10 to-green-500/10' : 'from-primary/5 via-accent/5 to-primary/5'
+                }`} />
+                
+                {isTopCandidate && !isAccepted && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-semibold px-4 py-1.5 shadow-lg animate-pulse">
+                      <Award className="w-4 h-4 mr-1.5" />
+                      Recommended
+                    </Badge>
+                  </div>
+                )}
                 
                 <div className="flex flex-col lg:flex-row gap-8 relative z-10">
                   <div className="flex gap-5 flex-1">
@@ -218,7 +260,7 @@ const ViewApplicants = () => {
                     
                     <div className="flex flex-col gap-3">
                       {candidate.proposal_status === 'pending' && (
-                        <Button variant="default" onClick={() => handleProposalUpdate(candidate.proposal_id, 'accept')} className="gap-2 h-11">
+                        <Button variant="default" onClick={() => handleProposalUpdate(candidate.proposal_id, 'accept', candidate.freelancer_name)} className="gap-2 h-11">
                           <CheckCircle className="w-5 h-5" />
                           Accept Proposal
                         </Button>

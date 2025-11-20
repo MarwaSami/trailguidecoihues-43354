@@ -22,6 +22,7 @@ import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CelebrationAnimation } from "@/components/CelebrationAnimation";
 import { interviewApi } from "@/services/interviewApi";
 import {
   Dialog,
@@ -70,6 +71,8 @@ const MyProposals = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [celebrateProposalId, setCelebrateProposalId] = useState<number | null>(null);
+  const [previousStatuses, setPreviousStatuses] = useState<Map<number, string>>(new Map());
   const [interviewReports, setInterviewReports] = useState<Map<number, any>>(new Map());
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
@@ -88,6 +91,23 @@ const MyProposals = () => {
       });
       // Filter proposals to ensure they belong to the current user
       const userProposals = response.data.filter((proposal: Proposal) => proposal.freelancer === freelancerId);
+      
+      // Check for newly accepted proposals
+      userProposals.forEach((proposal: Proposal) => {
+        const prevStatus = previousStatuses.get(proposal.id);
+        if (proposal.status === 'accepted' && prevStatus && prevStatus !== 'accepted') {
+          setCelebrateProposalId(proposal.id);
+          setTimeout(() => setCelebrateProposalId(null), 3000);
+        }
+      });
+      
+      // Update previous statuses
+      const newStatuses = new Map<number, string>();
+      userProposals.forEach((proposal: Proposal) => {
+        newStatuses.set(proposal.id, proposal.status);
+      });
+      setPreviousStatuses(newStatuses);
+      
       setProposals(userProposals);
       
       // Extract unique job IDs from proposals
@@ -258,13 +278,21 @@ const MyProposals = () => {
                                  proposal.status === 'accepted' ? 'bg-green-500/10 text-green-600 border-green-500/30' : 
                                  proposal.status === 'rejected' ? 'bg-red-500/10 text-red-600 border-red-500/30' :
                                  'bg-muted text-muted-foreground border-border';
+              const isAccepted = proposal.status === 'accepted';
+              const showCelebration = celebrateProposalId === proposal.id;
               
               return (
-                <Card 
-                  key={proposal.id} 
-                  className="group relative overflow-hidden border-border/30 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl shadow-xl hover:shadow-2xl hover:border-primary/40 transition-all duration-500 animate-fade-up"
+                <Card
+                  key={proposal.id}
+                  className={`group relative overflow-hidden border shadow-xl hover:shadow-2xl transition-all duration-500 animate-fade-up ${
+                    isAccepted 
+                      ? 'border-green-500/40 bg-gradient-to-br from-green-500/5 via-green-400/5 to-green-500/5' 
+                      : 'border-border/30 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl hover:border-primary/40'
+                  }`}
                   style={{ animationDelay: `${idx * 0.1}s` }}
                 >
+                  {showCelebration && <CelebrationAnimation show={showCelebration} />}
+                  
                   {/* Animated Background Effects */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-700" />
