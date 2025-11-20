@@ -26,6 +26,7 @@ export const interviewApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify({
         freelancerId,
@@ -52,6 +53,7 @@ export const interviewApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify({
         questionId,
@@ -71,6 +73,7 @@ export const interviewApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
 
