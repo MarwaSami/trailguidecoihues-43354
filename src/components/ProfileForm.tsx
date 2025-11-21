@@ -62,12 +62,13 @@ export const ProfileForm = () => {
 
         setProfile(result.profile);
       } else {
-        throw new Error(result.detail);
+        throw new Error(result.detail || "Upload failed");
       }
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: "An error occurred during upload",
         variant: "destructive",
       });
     } finally {

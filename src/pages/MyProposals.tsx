@@ -295,7 +295,7 @@ const MyProposals = () => {
               })
               .map((proposal, idx) => {
               const job = jobs.get(proposal.job);
-              const hasInterview = job?.interview_availability;
+              const hasInterview = job?.interview_availability && proposal.status =='under_review';
               const statusColor = proposal.status === 'pending' ? 'bg-primary/10 text-primary border-primary/30' : 
                                  proposal.status === 'accepted' ? 'bg-green-500/10 text-green-600 border-green-500/30' : 
                                  proposal.status === 'rejected' ? 'bg-red-500/10 text-red-600 border-red-500/30' :
