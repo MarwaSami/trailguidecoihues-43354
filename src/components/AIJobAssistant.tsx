@@ -26,6 +26,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 export interface JobPosting {
@@ -88,6 +90,7 @@ export const AIJobAssistant = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showInterviewDialog, setShowInterviewDialog] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -203,7 +206,7 @@ export const AIJobAssistant = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitClick = () => {
     if (!formData.jobTitle || !formData.budget || formData.required_skills.length === 0) {
       toast({
         title: "Missing Information",
@@ -213,6 +216,11 @@ export const AIJobAssistant = () => {
       return;
     }
 
+    setShowInterviewDialog(true);
+  };
+
+  const handleSubmit = async (interviewAvailability: boolean) => {
+    setShowInterviewDialog(false);
     setIsSubmitting(true);
 
     try {
@@ -230,7 +238,7 @@ export const AIJobAssistant = () => {
           experience_level: formData.experienceLevel,
           job_type: formData.jobType,
           title: formData.jobTitle,
-          interview_availability: formData.interview_availability,
+          interview_availability: interviewAvailability,
         },
         {
           headers: {
@@ -391,6 +399,42 @@ export const AIJobAssistant = () => {
     </Dialog>
   );
 
+  const InterviewAvailabilityDialog = () => (
+    <Dialog open={showInterviewDialog} onOpenChange={setShowInterviewDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Enable Interview Availability?</DialogTitle>
+          <DialogDescription>
+            Would you like to enable interview availability for this job posting? Candidates will be able to request interviews if enabled.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={() => handleSubmit(false)}
+            disabled={isSubmitting}
+          >
+            No, Skip Interview
+          </Button>
+          <Button
+            onClick={() => handleSubmit(true)}
+            disabled={isSubmitting}
+            className="gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Posting...
+              </>
+            ) : (
+              "Yes, Enable Interview"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {showForm ? (
@@ -500,7 +544,7 @@ export const AIJobAssistant = () => {
               </div>
 
               <Button
-                onClick={handleSubmit}
+                onClick={handleSubmitClick}
                 disabled={isSubmitting}
                 className="w-full gap-2"
                 size="lg"
@@ -659,7 +703,7 @@ export const AIJobAssistant = () => {
                 <JobPreviewCard />
               </div>
               <Button
-                onClick={handleSubmit}
+                onClick={handleSubmitClick}
                 disabled={isSubmitting || !formData.jobTitle || !formData.budget || formData.required_skills.length === 0}
                 className="gap-2 shrink-0"
                 size="lg"
@@ -683,6 +727,7 @@ export const AIJobAssistant = () => {
       )}
       
       <JobDetailsDialog />
+      <InterviewAvailabilityDialog />
     </div>
   );
 };
