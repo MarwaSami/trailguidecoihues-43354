@@ -32,6 +32,8 @@ const toastVariants = cva(
           "border-red-500/30 bg-gradient-to-br from-red-500/95 via-red-600/90 to-red-500/95 text-white shadow-[0_0_30px_rgba(239,68,68,0.3)]",
         success:
           "border-green-500/30 bg-gradient-to-br from-green-500/95 via-green-600/90 to-green-500/95 text-white shadow-[0_0_30px_rgba(34,197,94,0.3)]",
+        secondary:
+          "border-purple-500/30 bg-gradient-to-br from-purple-500/95 via-purple-600/90 to-purple-500/95 text-white shadow-[0_0_30px_rgba(147,51,234,0.3)]",
       },
     },
     defaultVariants: {

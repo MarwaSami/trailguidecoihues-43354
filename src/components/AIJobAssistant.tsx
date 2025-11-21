@@ -111,7 +111,17 @@ export const AIJobAssistant = () => {
   const chatTopRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
  const navigate = useNavigate();
-  const startRecording = async () => {
+
+ const isJson = (str: string) => {
+   try {
+     JSON.parse(str);
+     return true;
+   } catch {
+     return false;
+   }
+ };
+
+ const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -130,6 +140,7 @@ export const AIJobAssistant = () => {
         toast({
           title: "Recording stopped",
           description: "Converting speech to text...",
+          variant: "success",
         });
 
         try {
@@ -139,10 +150,11 @@ export const AIJobAssistant = () => {
 
           // Send transcribed text as chat message
           sendChatMessage("", audioBlob);
-          toast({
-            title: "Success",
-            description: "Voice input converted to text",
-          });
+          // toast({
+          //   title: "Voice Processed",
+          //   description: "Voice input converted to text",
+          //   variant: "success",
+          // });
         } catch (error) {
           toast({
             title: "Info",
@@ -159,6 +171,7 @@ export const AIJobAssistant = () => {
       toast({
         title: "Recording started",
         description: "Speak about your job requirements",
+        variant: "success",
       });
     } catch (error) {
       toast({
@@ -263,15 +276,6 @@ export const AIJobAssistant = () => {
       return false;
     }
 
-    if (formData.interview_availability === false) {
-      toast({
-        title: "Validation Error",
-        description: "Please confirm your availability for interviews",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     return true;
   };
 
@@ -324,6 +328,7 @@ export const AIJobAssistant = () => {
 
       // Apply AI suggestions to form if available
       if (response.data.data.job) {
+        
         if (response.data.data.job.jobTitle) {
           response.data.data.job.required_skills =  response.data.data.job.requiredSkills.split(', ');
           
@@ -331,6 +336,7 @@ export const AIJobAssistant = () => {
           toast({
             title: "Form Updated",
             description: "AI suggestions applied to the form",
+            variant: "success",
           });
           
         }
@@ -351,6 +357,14 @@ export const AIJobAssistant = () => {
   // Submit job posting
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.interview_availability) {
+      toast({
+        title: "Reminder",
+        description: "You have not confirmed availability for interviews. You can still post the job.",
+        variant: "secondary",
+      });
+    }
 
     if (!validateForm()) {
       return;
@@ -389,6 +403,7 @@ export const AIJobAssistant = () => {
         toast({
           title: "Success!",
           description: response.data.detail || "Job posting created successfully",
+          variant: "success",
         });
         navigate("/my-jobs");
       } else {
@@ -742,8 +757,8 @@ export const AIJobAssistant = () => {
             )}
 
             {/* Chat Messages */}
-            {chatMessages.slice().reverse().map((message, index) => (
-              
+            {chatMessages.slice().reverse().filter(message => !(message.role === "assistant" && isJson(message.message))).map((message, index) => (
+
               <div
                 key={`${message.role}-${index}`}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}

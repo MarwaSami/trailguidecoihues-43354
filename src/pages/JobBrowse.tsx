@@ -259,11 +259,24 @@ const JobBrowse = () => {
             {loading ? (
               <LoadingSpinner size="lg" message="Finding perfect jobs for you..." />
             ) : error ? (
+              <div className="">
               <EmptyState 
                 icon={Briefcase}
-                title="Connection Error"
+                title={error.includes("profile") ? "No Jobs Available" : "Connection Error" }
                 description={error || "Please make sure your backend is running and try again."}
               />
+              {
+                error.includes("profile") && (
+                  <div className="text-center mt-2">
+                    <Button variant="hero" onClick={() => navigate("/profile")}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Create Profile to See Jobs  
+                    </Button>
+                  </div>
+                )
+              }
+              </div>
+                
             ) : filteredJobs.length === 0 ? (
               <EmptyState 
                 icon={Search}

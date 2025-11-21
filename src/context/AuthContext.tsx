@@ -111,8 +111,7 @@ const signUp = async (email: string, password: string, username: string, user_ty
     //  await axios.post(`${baseURL}/logout`, {}, { withCredentials: true });
       setUser(null);
       settoken(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("token")
+      localStorage.clear();
       toast({
         title: "Signed out successfully",
         variant:"success"

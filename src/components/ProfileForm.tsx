@@ -1,5 +1,6 @@
 import { baseURL, useAuth } from "@/context/AuthContext";
-import { Loader2, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,7 @@ export const ProfileForm = () => {
         toast({
           title: "CV Uploaded Successfully",
           description: `Score: ${result.profile.score}/100`,
+          variant: "success",
         });
 
         setProfile(result.profile);
@@ -88,8 +90,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     const response = await AddProfileinDB(profile, token, user.id);
     console.log(response);
     if (response.is_success && response.data.id) {
-      toast({ title: `Profile saved successfully!` });
-      localStorage.setItem('freelancer_profile_id', response.data.id.toString());
+      toast({ title: `Profile saved successfully!` , variant: "success" });
       setProfile(response.data); // update with returned profile
       navigate('/freelancer-dashboard'); // redirect to view portfolio page
     } else {
@@ -102,6 +103,8 @@ const handleSubmit = async (e: React.FormEvent) => {
   } catch (error: any) {
     toast({
       title: "Submission failed", 
+      description: error.message,
+      variant: "destructive",
     });
   }
 
@@ -119,14 +122,9 @@ const handleSubmit = async (e: React.FormEvent) => {
             onChange={handleFileUpload}
           />
           {uploading && (
-            <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+             <LoadingSpinner size="lg" message="Processing CV, please wait..." />
           )}
         </div>
-        {isProcessing && (
-          <div className="flex flex-col items-center justify-center p-4 text-gray-600">
-            <p>Processing CV, please wait...</p>
-          </div>
-        )}
       </div>
      <div className="space-y-2">
         <Label htmlFor="categories_of_expertise">Job Title</Label>
@@ -306,7 +304,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       
       <Button type="submit" className="w-full" disabled={uploading}>
         {uploading ? (
-          <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+             <LoadingSpinner size="lg" message="CV..." />
         ) : (
           "Save Profile"
         )}
