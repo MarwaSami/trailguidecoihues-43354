@@ -79,6 +79,7 @@ export const AIJobAssistant = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -169,7 +170,12 @@ export const AIJobAssistant = () => {
           variant: "destructive",
         });
       } else {
-        setChatMessages(response.data.data.history);
+        // Filter messages to only show clean text responses (no JSON)
+        const cleanMessages = response.data.data.history.map((msg: ChatMessage) => ({
+          ...msg,
+          message: msg.role === "assistant" ? msg.message.replace(/\{[\s\S]*?\}/g, "").trim() : msg.message
+        }));
+        setChatMessages(cleanMessages);
 
         if (response.data.data.job?.jobTitle) {
           response.data.data.job.required_skills =
@@ -300,21 +306,162 @@ export const AIJobAssistant = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Chat Container */}
-      <Card className="bg-background/40 backdrop-blur-xl border border-border/50 overflow-hidden">
-        <div className="h-[600px] flex flex-col">
-          {/* Chat Header */}
-          <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
-                <Bot className="w-5 h-5 text-primary-foreground" />
-              </div>
+      {showForm ? (
+        // Form View
+        <Card className="bg-background/40 backdrop-blur-xl border border-border/50 overflow-hidden animate-fade-in">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">Job Details</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowForm(false)}
+                className="gap-2"
+              >
+                <Bot className="w-4 h-4" />
+                Back to Chat
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
               <div>
-                <h3 className="font-bold">AI Job Assistant</h3>
-                <p className="text-xs text-muted-foreground">Powered by advanced AI</p>
+                <label className="text-sm font-medium mb-2 block">Job Title</label>
+                <Input
+                  value={formData.jobTitle}
+                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                  placeholder="e.g. Senior React Developer"
+                />
               </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Category</label>
+                <Input
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="e.g. Software Development"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Job Type</label>
+                  <Input
+                    value={formData.jobType}
+                    onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
+                    placeholder="e.g. Full-time"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Location</label>
+                  <Input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g. Remote"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Budget ($)</label>
+                  <Input
+                    type="number"
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
+                    placeholder="e.g. 5000"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Duration</label>
+                  <Input
+                    value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    placeholder="e.g. 3 months"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Experience Level</label>
+                <Input
+                  value={formData.experienceLevel}
+                  onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
+                  placeholder="e.g. Senior"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Description</label>
+                <textarea
+                  className="w-full min-h-[120px] px-3 py-2 rounded-md border border-input bg-background"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Describe the job requirements..."
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Required Skills (comma-separated)</label>
+                <Input
+                  value={formData.required_skills.join(", ")}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    required_skills: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+                  })}
+                  placeholder="e.g. React, TypeScript, Node.js"
+                />
+              </div>
+
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating Job Post...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Post Job
+                  </>
+                )}
+              </Button>
             </div>
           </div>
+        </Card>
+      ) : (
+        // Chat View
+        <Card className="bg-background/40 backdrop-blur-xl border border-border/50 overflow-hidden">
+          <div className="h-[600px] flex flex-col">
+            {/* Chat Header */}
+            <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
+                    <Bot className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">AI Job Assistant</h3>
+                    <p className="text-xs text-muted-foreground">Powered by advanced AI</p>
+                  </div>
+                </div>
+                {formData.jobTitle && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowForm(true)}
+                    className="gap-2"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    Edit Form
+                  </Button>
+                )}
+              </div>
+            </div>
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -410,37 +557,20 @@ export const AIJobAssistant = () => {
             </div>
           </div>
         </div>
-      </Card>
 
-      {/* Job Preview */}
-      {formData.jobTitle && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-primary" />
-              Job Preview
-            </h3>
+        {/* Job Preview in Chat View */}
+        {formData.jobTitle && (
+          <div className="p-4 border-t border-border/50 bg-muted/20">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                Job Preview
+              </h3>
+            </div>
+            <JobPreviewCard />
           </div>
-          <JobPreviewCard />
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="w-full gap-2"
-            size="lg"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Creating Job Post...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Post Job
-              </>
-            )}
-          </Button>
-        </div>
+        )}
+      </Card>
       )}
     </div>
   );
