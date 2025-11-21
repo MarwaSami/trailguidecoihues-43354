@@ -14,113 +14,97 @@ const JobPosting = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            {selectedMethod !== "select" && (
+        <div className="max-w-5xl mx-auto">
+          {selectedMethod === "select" ? (
+            <div className="space-y-8">
+              <div className="text-center space-y-3">
+                <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  Post a New Job
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Choose your preferred method to create a job posting
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <Card
+                  className="relative p-8 bg-background/40 backdrop-blur-xl border-2 border-border/50 hover:border-secondary/50 cursor-pointer transition-all duration-300 hover:shadow-[var(--shadow-elegant)] group overflow-hidden"
+                  onClick={() => setSelectedMethod("regular")}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative space-y-5">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-secondary/20 to-secondary/10 w-fit group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="w-8 h-8 text-secondary" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2">Traditional Form</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Complete control with a structured form
+                      </p>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                        <span>Full manual control</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                        <span>Quick and straightforward</span>
+                      </li>
+                    </ul>
+                  </div>
+                </Card>
+
+                <Card
+                  className="relative p-8 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent backdrop-blur-xl border-2 border-primary/40 hover:border-primary/70 cursor-pointer transition-all duration-300 hover:shadow-[var(--shadow-glow)] group overflow-hidden"
+                  onClick={() => setSelectedMethod("ai")}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-300" />
+                  <div className="absolute top-3 right-3">
+                    <div className="px-3 py-1 rounded-full bg-primary/20 border border-primary/40 text-xs font-bold text-primary animate-pulse">
+                      ✨ AI POWERED
+                    </div>
+                  </div>
+                  <div className="relative space-y-5">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-lg w-fit group-hover:scale-110 transition-transform duration-300">
+                      <Brain className="w-8 h-8 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2">AI Assistant</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Conversational job creation with AI guidance
+                      </p>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>Natural conversation flow</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>Smart suggestions & optimization</span>
+                      </li>
+                    </ul>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
               <Button
                 variant="ghost"
                 onClick={() => setSelectedMethod("select")}
-                className="mb-4 gap-2"
+                className="gap-2 group"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 Back to Options
               </Button>
-            )}
-            <h1 className="text-4xl font-bold mb-3">Post a New Job</h1>
-            <p className="text-muted-foreground">
-              {selectedMethod === "select"
-                ? "Choose how you'd like to create your job posting"
-                : selectedMethod === "regular"
-                ? "Fill in the details to create your job posting"
-                : "Let AI help you create the perfect job posting"}
-            </p>
-          </div>
-
-          {/* Method Selection */}
-          {selectedMethod === "select" && (
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Regular Job Posting */}
-              <Card
-                className="relative p-8 bg-background/40 backdrop-blur-xl border-2 border-border/50 hover:border-primary/50 cursor-pointer transition-all hover:shadow-[var(--shadow-elegant)] group overflow-hidden"
-                onClick={() => setSelectedMethod("regular")}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative space-y-4">
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-secondary/20 to-secondary/10 w-fit">
-                    <FileText className="w-8 h-8 text-secondary" />
-                  </div>
-                  <h3 className="text-2xl font-bold">Regular Job Offer</h3>
-                  <p className="text-muted-foreground">
-                    Create a job posting manually with full control over every detail. Perfect for when you know exactly what you need.
-                  </p>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>Complete form with all job details</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>Manual skill selection and requirements</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>Full customization options</span>
-                    </li>
-                  </ul>
-                  <Button variant="secondary" className="w-full mt-4 group-hover:bg-secondary/80">
-                    Get Started
-                  </Button>
-                </div>
-              </Card>
-
-              {/* AI Job Assistant */}
-              <Card
-                className="relative p-8 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent backdrop-blur-xl border-2 border-primary/30 hover:border-primary/60 cursor-pointer transition-all hover:shadow-[var(--shadow-glow)] group overflow-hidden"
-                onClick={() => setSelectedMethod("ai")}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute top-4 right-4">
-                  <div className="px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-xs font-bold text-primary">
-                    AI POWERED
-                  </div>
-                </div>
-                <div className="relative space-y-4">
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg w-fit">
-                    <Brain className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <h3 className="text-2xl font-bold">AI Job Assistant</h3>
-                  <p className="text-muted-foreground">
-                    Describe your needs using text or voice, and let AI generate a professional job posting for you.
-                  </p>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>Text or voice input options</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>AI-generated professional content</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>Smart skill suggestions and optimization</span>
-                    </li>
-                  </ul>
-                  <Button variant="hero" className="w-full mt-4 gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    Try AI Assistant
-                  </Button>
-                </div>
-              </Card>
+              
+              {selectedMethod === "regular" && <RegularJobForm />}
+              {selectedMethod === "ai" && <AIJobAssistant />}
             </div>
           )}
-
-          {/* Regular Form */}
-          {selectedMethod === "regular" && <RegularJobForm />}
-
-          {/* AI Assistant */}
-          {selectedMethod === "ai" && <AIJobAssistant />}
         </div>
       </main>
     </div>
