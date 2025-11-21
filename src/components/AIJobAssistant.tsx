@@ -19,7 +19,14 @@ import {
   CheckCircle2,
   Sparkles,
   Loader2,
+  FileText,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export interface JobPosting {
   category: string;
@@ -80,6 +87,7 @@ export const AIJobAssistant = () => {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -115,6 +123,7 @@ export const AIJobAssistant = () => {
       toast({
         title: "Recording started",
         description: "Speak about your job requirements",
+        variant: "secondary",
       });
     } catch (error) {
       toast({
@@ -235,6 +244,7 @@ export const AIJobAssistant = () => {
         toast({
           title: "Success!",
           description: "Job posting created successfully",
+          variant: "secondary",
         });
         navigate("/my-jobs");
       }
@@ -253,56 +263,133 @@ export const AIJobAssistant = () => {
     if (!formData.jobTitle) return null;
 
     return (
-      <Card className="p-6 bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 animate-scale-in">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-2">
+      <Card className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 animate-scale-in">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3 flex-1">
             <div className="p-2 rounded-lg bg-primary/10">
               <Briefcase className="w-5 h-5 text-primary" />
             </div>
-            <div>
-              <h3 className="font-bold text-lg">{formData.jobTitle}</h3>
-              {formData.category && (
-                <p className="text-sm text-muted-foreground capitalize">{formData.category}</p>
-              )}
+            <div className="flex-1">
+              <h3 className="font-bold text-base">{formData.jobTitle}</h3>
+              <div className="flex items-center gap-3 mt-1">
+                {formData.budget > 0 && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    {formData.budget}
+                  </span>
+                )}
+                {formData.location && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {formData.location}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          {formData.budget > 0 && (
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-primary font-semibold">
-                <DollarSign className="w-4 h-4" />
-                {formData.budget}
-              </div>
-              <p className="text-xs text-muted-foreground">Budget</p>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          {formData.location && (
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <span>{formData.location}</span>
-            </div>
-          )}
-          {formData.jobType && (
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="capitalize">{formData.jobType}</span>
-            </div>
-          )}
-          {formData.required_skills.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              {formData.required_skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="text-xs">
-                  {skill}
-                </Badge>
-              ))}
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDetailsDialog(true)}
+            className="gap-2 shrink-0"
+          >
+            <FileText className="w-4 h-4" />
+            View Details
+          </Button>
         </div>
       </Card>
     );
   };
+
+  const JobDetailsDialog = () => (
+    <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Briefcase className="w-5 h-5" />
+            Job Details
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Title</label>
+            <p className="text-base font-semibold">{formData.jobTitle}</p>
+          </div>
+
+          {formData.category && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Category</label>
+              <p className="text-base capitalize">{formData.category}</p>
+            </div>
+          )}
+
+          {formData.description && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Description</label>
+              <p className="text-base">{formData.description}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            {formData.jobType && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Job Type</label>
+                <p className="text-base capitalize">{formData.jobType}</p>
+              </div>
+            )}
+            {formData.location && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Location</label>
+                <p className="text-base">{formData.location}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {formData.budget > 0 && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Budget</label>
+                <p className="text-base font-semibold">${formData.budget}</p>
+              </div>
+            )}
+            {formData.duration && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Duration</label>
+                <p className="text-base">{formData.duration}</p>
+              </div>
+            )}
+          </div>
+
+          {formData.experienceLevel && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Experience Level</label>
+              <p className="text-base capitalize">{formData.experienceLevel}</p>
+            </div>
+          )}
+
+          {formData.required_skills.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Required Skills</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.required_skills.map((skill) => (
+                  <Badge key={skill} variant="secondary">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {formData.qualifications && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Qualifications</label>
+              <p className="text-base">{formData.qualifications}</p>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -567,11 +654,35 @@ export const AIJobAssistant = () => {
                 Job Preview
               </h3>
             </div>
-            <JobPreviewCard />
+            <div className="flex gap-3 items-start">
+              <div className="flex-1">
+                <JobPreviewCard />
+              </div>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !formData.jobTitle || !formData.budget || formData.required_skills.length === 0}
+                className="gap-2 shrink-0"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Submit Job
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </Card>
       )}
+      
+      <JobDetailsDialog />
     </div>
   );
 };
