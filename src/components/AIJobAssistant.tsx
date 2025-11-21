@@ -743,6 +743,7 @@ export const AIJobAssistant = () => {
 
             {/* Chat Messages */}
             {chatMessages.slice().reverse().map((message, index) => (
+              
               <div
                 key={`${message.role}-${index}`}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
