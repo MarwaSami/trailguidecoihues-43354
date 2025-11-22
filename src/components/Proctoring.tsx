@@ -392,13 +392,7 @@ export default function OldProctoring() {
             <div className="flex justify-center gap-4 mt-6">
               <Button
                 onClick={async () => {
-                  if (camReady && !interviewStopped) {
-                    // Check if already ending
-                    if (isEnding) {
-                      triggerViolation("Attempted to end interview multiple times", "red");
-                      return;
-                    }
-                    
+                  if (camReady && !interviewStopped && !isEnding) {
                     // End the interview
                     setIsEnding(true);
                     await endInterview();
@@ -407,7 +401,7 @@ export default function OldProctoring() {
                     setTimeout(() => {
                       navigate('/my-proposals');
                     }, 1500);
-                  } else {
+                  } else if (!camReady) {
                     startCam();
                     if (!currentSession) {
                       const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
@@ -415,7 +409,7 @@ export default function OldProctoring() {
                     }
                   }
                 }}
-                disabled={interviewStopped && violationCount >= 2}
+                disabled={(interviewStopped && violationCount >= 2) || isEnding}
                 variant={camReady ? "destructive" : "default"}
                 size="lg"
                 className="min-w-[150px] font-semibold"
