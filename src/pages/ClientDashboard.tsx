@@ -18,20 +18,44 @@ import {
   DollarSign
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useClientJobs } from "@/context/ClientJobContext";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useEffect } from "react";
 
 const ClientDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { jobs, loading: jobsLoading } = useClientJobs();
+  const navigate = useNavigate();
 
   // Parse user if it's a string
-  console.log("User Data:", user);
-  
-  //const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
-  const username = user?.username || "User";
+  const userData = user ? (typeof user === 'string' ? JSON.parse(user) : user) : null;
+  const username = userData?.username || "User";
+
+  // Log user data once
+  useEffect(() => {
+    if (userData) {
+      console.log("User Data:", userData);
+    }
+  }, []);
+
+  // Check if user is client
+  if (userData && userData.user_type !== 'client') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Access denied. This page is for clients only.</p>
+            <Button onClick={() => navigate('/freelancer-dashboard')}>Go to Freelancer Dashboard</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   // Show loading state while auth or jobs are loading
   if (authLoading || jobsLoading) {
@@ -39,10 +63,7 @@ const ClientDashboard = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
-          </div>
+          <LoadingSpinner size="lg" message="Loading dashboard..." />
         </div>
       </div>
     );
@@ -111,9 +132,13 @@ const ClientDashboard = () => {
           </div>
 
           {jobsLoading ? (
-            <p className="text-muted-foreground text-center py-4">Loading jobs...</p>
+            <LoadingSpinner message="Loading jobs..." />
           ) : recentJobs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No jobs posted yet</p>
+            <EmptyState 
+              icon={Briefcase}
+              title="No Recent Jobs"
+              description="You haven't posted any jobs yet. Create your first job posting now!"
+            />
           ) : (
             recentJobs.map((job) => (
               <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">
@@ -159,9 +184,13 @@ const ClientDashboard = () => {
           </div>
 
           {jobsLoading ? (
-            <p className="text-muted-foreground text-center py-4">Loading jobs...</p>
+            <LoadingSpinner message="Loading jobs..." />
           ) : allMyJobs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No jobs posted yet</p>
+            <EmptyState 
+              icon={Briefcase}
+              title="No Jobs Posted"
+              description="Start posting jobs to find the perfect candidates for your projects!"
+            />
           ) : (
             allMyJobs.map((job) => (
               <Card key={job.id} className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400">

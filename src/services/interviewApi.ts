@@ -1,4 +1,4 @@
-import { baseUrl } from './pythonBackendApi';
+import { baseURL } from './pythonBackendApi';
 
 interface Question {
   id: string;
@@ -22,10 +22,11 @@ interface InterviewSession {
 
 export const interviewApi = {
   startInterview: async (freelancerId: string, skillCategories: string[]): Promise<InterviewSession> => {
-    const response = await fetch(`${baseUrl}/interviews/start`, {
+    const response = await fetch(`${baseURL}/interviews/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify({
         freelancerId,
@@ -48,10 +49,11 @@ export const interviewApi = {
     feedback: string;
     score: number;
   }> => {
-    const response = await fetch(`${baseUrl}/interviews/${sessionId}/answer`, {
+    const response = await fetch(`${baseURL}/interviews/${sessionId}/answer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify({
         questionId,
@@ -67,10 +69,11 @@ export const interviewApi = {
   },
 
   endInterview: async (sessionId: string): Promise<InterviewSession> => {
-    const response = await fetch(`${baseUrl}/interviews/${sessionId}/end`, {
+    const response = await fetch(`${baseURL}/interviews/${sessionId}/end`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
     });
 
@@ -82,10 +85,32 @@ export const interviewApi = {
   },
 
   getInterviewHistory: async (freelancerId: string): Promise<InterviewSession[]> => {
-    const response = await fetch(`${baseUrl}/interviews/history/${freelancerId}`);
+    const response = await fetch(`${baseURL}/interviews/history/${freelancerId}`);
 
     if (!response.ok) {
       throw new Error('Failed to fetch interview history');
+    }
+
+    return response.json();
+  },
+
+  getInterviewReport: async (freelancerId: number, jobId: number): Promise<{
+    freelancer_id: number;
+    job_id: number;
+    interview_report: string;
+    interview_score: number;
+  } | null> => {
+    const response = await fetch(`${baseURL}/interview?freelancer_id=${freelancerId}&job_id=${jobId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // No interview result
+      }
+      throw new Error('Failed to fetch interview report');
     }
 
     return response.json();

@@ -45,7 +45,7 @@ export const JobProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem("token");
-      console.log("Using token:", token);
+   //   console.log("Using token:", token);
       if (!token) {
         console.log("error");
         

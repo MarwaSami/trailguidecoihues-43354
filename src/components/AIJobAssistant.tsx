@@ -1,85 +1,67 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
+import { baseURL } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Sparkles,
   Mic,
   MicOff,
   Send,
-  Plus,
-  X,
   Briefcase,
   DollarSign,
   MapPin,
   Clock,
-  Users,
   Bot,
-  Brain,
-  MessageSquare,
-  Target,
-  Zap,
-  FileQuestion,
+  CheckCircle2,
+  Sparkles,
+  Loader2,
+  FileText,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import axios from "axios";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
-// Define API base URL - replace with your actual backend URL
-const baseURL = "https://long-nonciteable-rolf.ngrok-free.dev/api/v1/";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export interface JobPosting {
   category: string;
   duration: string;
   required_skills: string[];
-
-  jobTitle: string,
-  description: string,
-  budget: number,
-  location: string,
-  jobType: string,
-  experienceLevel: string,
-  status: string,
-  requiredSkills: string,
-  qualifications: string,
+  jobTitle: string;
+  description: string;
+  budget: number;
+  location: string;
+  jobType: string;
+  experienceLevel: string;
+  status: string;
+  requiredSkills: string;
+  qualifications: string;
   interview_availability: boolean;
-}
-
-export interface JobPostingResponse {
-  is_success: boolean;
-  detail: string;
-  job_id?: number;
 }
 
 interface ChatMessage {
   role: "user" | "assistant";
   message: string;
+  jobData?: Partial<JobPosting>;
 }
 
 interface AIAssistResponse {
   data: {
-    history: ChatMessage[],
-    job: JobPosting
-  },
-  issuccess: Boolean,
-  errors: string[],
-
-
+    history: ChatMessage[];
+    job: JobPosting;
+  };
+  issuccess: boolean;
+  errors: string[];
 }
 
 export const AIJobAssistant = () => {
-  // Form state
   const [formData, setFormData] = useState<JobPosting>({
     jobTitle: "",
     category: "",
@@ -96,19 +78,29 @@ export const AIJobAssistant = () => {
     interview_availability: false,
   });
 
-  // Chat state
-  const [inputMethod, setInputMethod] = useState<"text" | "voice">("text");
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      message: "Hi! I'm here to help you create the perfect job posting. Let's start with the basics - what position are you hiring for?",
+    },
+  ]);
   const [isRecording, setIsRecording] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newSkill, setNewSkill] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showInterviewDialog, setShowInterviewDialog] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   const startRecording = async () => {
     try {
@@ -125,32 +117,8 @@ export const AIJobAssistant = () => {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-
-        toast({
-          title: "Recording stopped",
-          description: "Converting speech to text...",
-        });
-
-        try {
-          // const transcribedText = await convertAudioToText(audioBlob);
-
-          //formData.append('file', audioBlob, 'recording.webm');
-
-          // Send transcribed text as chat message
-          sendChatMessage("", audioBlob);
-          toast({
-            title: "Success",
-            description: "Voice input converted to text",
-          });
-        } catch (error) {
-          toast({
-            title: "Info",
-            description: "Failed to process voice input",
-            variant: "destructive",
-          });
-        }
-
-        stream.getTracks().forEach(track => track.stop());
+        sendChatMessage("", audioBlob);
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -158,11 +126,12 @@ export const AIJobAssistant = () => {
       toast({
         title: "Recording started",
         description: "Speak about your job requirements",
+        variant: "secondary",
       });
     } catch (error) {
       toast({
-        title: "Info",
-        description: "Could not access microphone",
+        title: "Microphone access denied",
+        description: "Please allow microphone access to use voice input",
         variant: "destructive",
       });
     }
@@ -175,238 +144,122 @@ export const AIJobAssistant = () => {
     }
   };
 
-  // Handle form input changes
-  const handleInputChange = (field: keyof JobPosting, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const addSkill = () => {
-    if (newSkill && !formData.required_skills.includes(newSkill)) {
-      setFormData(prev => ({
-        ...prev,
-        required_skills: [...prev.required_skills, newSkill]
-      }));
-      setNewSkill("");
-    }
-  };
-
-  const removeSkill = (skill: string) => {
-    setFormData(prev => ({
-      ...prev,
-      required_skills: prev.required_skills.filter(s => s !== skill)
-    }));
-  };
-
-  // Validation function
-  const validateForm = (): boolean => {
-    if (!formData.jobTitle || formData.jobTitle.trim().length < 3) {
-      toast({
-        title: "Validation Error",
-        description: "Job title must be at least 3 characters long",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!formData.category) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a job category",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!formData.jobType) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a job type",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!formData.budget || formData.budget <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please provide a valid budget",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!formData.experienceLevel) {
-      toast({
-        title: "Validation Error",
-        description: "Please select an experience level",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!formData.description || formData.description.trim().length < 50) {
-      toast({
-        title: "Validation Error",
-        description: "Job description must be at least 50 characters long",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (formData.required_skills.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please add at least one required skill",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (formData.interview_availability === false) {
-      toast({
-        title: "Validation Error",
-        description: "Please confirm your availability for interviews",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    return true;
-  };
-
-  // Send chat message to AI assistant
-  const sendChatMessage = async (message?: string,audioBlob?:Blob ) => {
-    let isText= message.trim().length>0;
+  const sendChatMessage = async (message?: string, audioBlob?: Blob) => {
+    const isText = message && message.trim().length > 0;
     if (!isText && !audioBlob) return;
 
-    // Add user message to chat
     const userMessage: ChatMessage = {
       role: "user",
-      message: message
+      message: message || "",
     };
-    setChatMessages(prev => [...prev, userMessage]);
+    setChatMessages((prev) => [...prev, userMessage]);
     setChatInput("");
     setIsSendingMessage(true);
 
-    let formData = new FormData();
-    formData.append('promptText', message.trim());
-    formData.append('promptType', isText? '1': '2');
-    if (!isText) {
-      formData.append('promptAudio', audioBlob, 'recording.webm');
+    const formDataToSend = new FormData();
+    formDataToSend.append("promptText", message?.trim() || "");
+    formDataToSend.append("promptType", isText ? "1" : "2");
+    if (!isText && audioBlob) {
+      formDataToSend.append("promptAudio", audioBlob, "recording.webm");
     }
 
-    formData.append('isDone', 'false');
+    formDataToSend.append("isDone", "false");
     chatMessages.forEach((m, index) => {
-      formData.append(`history[${index}][role]`, m.role);
-      formData.append(`history[${index}][message]`, m.message);
+      formDataToSend.append(`history[${index}][role]`, m.role);
+      formDataToSend.append(`history[${index}][message]`, m.message);
     });
 
-    const response = await axios.post<AIAssistResponse>(
-      `http://localhost:5136/Job/POST`,
-      formData,
-      // {
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`,
-      //   },
-      // }
-    );
-    
+    try {
+      const response = await axios.post<AIAssistResponse>(
+        `https://localhost:7153/Job/POST`,
+        formDataToSend
+      );
 
-    if (!response.data.issuccess) {
-      toast({
-        title: "Info",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-    else {
+      if (!response.data.issuccess) {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+      } else {
+        // Filter messages to only show clean text responses (no JSON)
+        const cleanMessages = response.data.data.history.map((msg: ChatMessage) => ({
+          ...msg,
+          message: msg.role === "assistant" ? msg.message.replace(/\{[\s\S]*?\}/g, "").trim() : msg.message
+        }));
+        setChatMessages(cleanMessages);
 
-      setChatMessages(prev => response.data.data.history);
-      console.log(response.data);
-      
-
-      // Apply AI suggestions to form if available
-      if (response.data.data.job) {
-        if (response.data.data.job.jobTitle) {
-          response.data.data.job.required_skills =  response.data.data.job.requiredSkills.split(', ');
-          
-          setFormData(prev => ({ ...prev, ...response.data.data.job }));
-          toast({
-            title: "Form Updated",
-            description: "AI suggestions applied to the form",
-          });
-          
+        if (response.data.data.job?.jobTitle) {
+          response.data.data.job.required_skills =
+            response.data.data.job.requiredSkills?.split(", ") || [];
+          setFormData((prev) => ({ ...prev, ...response.data.data.job }));
         }
       }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process your message",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingMessage(false);
     }
-
-
-
-    // Scroll to bottom
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-
-
-
-    setIsSendingMessage(false);
-
   };
 
-  // Submit job posting
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
+  const handleSubmitClick = () => {
+    if (!formData.jobTitle || !formData.budget || formData.required_skills.length === 0) {
+      toast({
+        title: "Missing Information",
+        description: "Please complete the conversation to fill all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
+    setShowInterviewDialog(true);
+  };
+
+  const handleSubmit = async (interviewAvailability: boolean) => {
+    setShowInterviewDialog(false);
     setIsSubmitting(true);
 
     try {
       const token = localStorage.getItem("token") || "";
-      const user = JSON.parse(localStorage.getItem("user") || "");
-      const list = formData.required_skills.map(s => ({ name: s }));
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const list = formData.required_skills.map((s) => ({ name: s }));
 
-    const response = await axios.post(
-      `${baseURL}jobs/jobs/`,
-      {
-        ...formData,
-        required_skills: list,
-        client:user.id,
-        status:"published",
-        experience_level: formData.experienceLevel,
-        job_type:formData.jobType,
-        title:formData.jobTitle
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await axios.post(
+        `${baseURL}jobs/jobs/`,
+        {
+          ...formData,
+          required_skills: list,
+          client: user.id,
+          status: "published",
+          experience_level: formData.experienceLevel,
+          job_type: formData.jobType,
+          title: formData.jobTitle,
+          interview_availability: interviewAvailability,
         },
-      }
-    );
-
-      
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response) {
         toast({
           title: "Success!",
-          description: response.data.detail || "Job posting created successfully",
+          description: "Job posting created successfully",
+          variant: "secondary",
         });
-      } else {
-        toast({
-          title: "Info",
-          description: response.data.detail || "Failed to create job posting",
-          variant: "destructive",
-        });
+        navigate("/my-jobs");
       }
     } catch (error) {
-      console.error("Error submitting job posting:", error);
       toast({
-        title: "Info",
-        description: axios.isAxiosError(error)
-          ? error.response?.data?.detail || error.message
-          : "An unexpected error occurred",
+        title: "Error",
+        description: "Failed to create job posting",
         variant: "destructive",
       });
     } finally {
@@ -414,427 +267,467 @@ export const AIJobAssistant = () => {
     }
   };
 
-  return (
-    <div className="grid lg:grid-cols-2 gap-5">
-      {/* LEFT SIDE - Job Posting Form */}
-      <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)]">
-        <div className="mb-4">
-          <h3 className="text-xl font-bold flex items-center gap-2">
+  const JobPreviewCard = () => {
+    if (!formData.jobTitle) return null;
+
+    return (
+      <Card className="p-4 bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 animate-scale-in">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Briefcase className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-base">{formData.jobTitle}</h3>
+              <div className="flex items-center gap-3 mt-1">
+                {formData.budget > 0 && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    {formData.budget}
+                  </span>
+                )}
+                {formData.location && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {formData.location}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDetailsDialog(true)}
+            className="gap-2 shrink-0"
+          >
+            <FileText className="w-4 h-4" />
+            View Details
+          </Button>
+        </div>
+      </Card>
+    );
+  };
+
+  const JobDetailsDialog = () => (
+    <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <Briefcase className="w-5 h-5" />
             Job Details
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Fill in the details or use the AI assistant to help you
-          </p>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-4">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Title</label>
+            <p className="text-base font-semibold">{formData.jobTitle}</p>
+          </div>
+
+          {formData.category && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Category</label>
+              <p className="text-base capitalize">{formData.category}</p>
+            </div>
+          )}
+
+          {formData.description && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Description</label>
+              <p className="text-base">{formData.description}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            {formData.jobType && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Job Type</label>
+                <p className="text-base capitalize">{formData.jobType}</p>
+              </div>
+            )}
+            {formData.location && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Location</label>
+                <p className="text-base">{formData.location}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {formData.budget > 0 && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Budget</label>
+                <p className="text-base font-semibold">${formData.budget}</p>
+              </div>
+            )}
+            {formData.duration && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Duration</label>
+                <p className="text-base">{formData.duration}</p>
+              </div>
+            )}
+          </div>
+
+          {formData.experienceLevel && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Experience Level</label>
+              <p className="text-base capitalize">{formData.experienceLevel}</p>
+            </div>
+          )}
+
+          {formData.required_skills.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Required Skills</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.required_skills.map((skill) => (
+                  <Badge key={skill} variant="secondary">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {formData.qualifications && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Qualifications</label>
+              <p className="text-base">{formData.qualifications}</p>
+            </div>
+          )}
         </div>
+      </DialogContent>
+    </Dialog>
+  );
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Job Title */}
-          <div className="space-y-2">
-            <label htmlFor="title" className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4" />
-              Job Title *
-            </label>
-            <Input
-              id="title"
-              value={formData.jobTitle}
-              onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              placeholder="e.g., Senior Full-Stack Developer"
-              className="bg-background/50 backdrop-blur-sm"
-              required
-            />
-          </div>
+  const InterviewAvailabilityDialog = () => (
+    <Dialog open={showInterviewDialog} onOpenChange={setShowInterviewDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Enable Interview Availability?</DialogTitle>
+          <DialogDescription>
+            Would you like to enable interview availability for this job posting? Candidates will be able to request interviews if enabled.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={() => handleSubmit(false)}
+            disabled={isSubmitting}
+          >
+            No, Skip Interview
+          </Button>
+          <Button
+            onClick={() => handleSubmit(true)}
+            disabled={isSubmitting}
+            className="gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Posting...
+              </>
+            ) : (
+              "Yes, Enable Interview"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
-          {/* Category & Job Type */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="category">Category *</label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                <SelectTrigger className="bg-background/50 backdrop-blur-sm">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="development">Development</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="writing">Writing</SelectItem>
-                  <SelectItem value="others">Others</SelectItem>
-                </SelectContent>
-              </Select>
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {showForm ? (
+        // Form View
+        <Card className="bg-background/40 backdrop-blur-xl border border-border/50 overflow-hidden animate-fade-in">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">Job Details</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowForm(false)}
+                className="gap-2"
+              >
+                <Bot className="w-4 h-4" />
+                Back to Chat
+              </Button>
             </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Job Title</label>
+                <Input
+                  value={formData.jobTitle}
+                  onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                  placeholder="e.g. Senior React Developer"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="type">Job Type *</label>
-              <Select value={formData.jobType} onValueChange={(value) => handleInputChange("jobType", value)}>
-                <SelectTrigger className="bg-background/50 backdrop-blur-sm">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Freelance">Freelancing</SelectItem>
-                  <SelectItem value="fulltime">Full-time</SelectItem>
-                  <SelectItem value="parttime">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="remote">Remote</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Category</label>
+                <Input
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="e.g. Software Development"
+                />
+              </div>
 
-          {/* Location & Budget */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="location" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Location
-              </label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                placeholder="e.g., Remote"
-                className="bg-background/50 backdrop-blur-sm"
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Job Type</label>
+                  <Input
+                    value={formData.jobType}
+                    onChange={(e) => setFormData({ ...formData, jobType: e.target.value })}
+                    placeholder="e.g. Full-time"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Location</label>
+                  <Input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g. Remote"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="budget" className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Budget *
-              </label>
-              <Input
-                id="budget"
-                type="number"
-                value={formData.budget || ""}
-                onChange={(e) => handleInputChange("budget", parseFloat(e.target.value) || 0)}
-                placeholder="e.g., 5000"
-                className="bg-background/50 backdrop-blur-sm"
-                required
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Budget ($)</label>
+                  <Input
+                    type="number"
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
+                    placeholder="e.g. 5000"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Duration</label>
+                  <Input
+                    value={formData.duration}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    placeholder="e.g. 3 months"
+                  />
+                </div>
+              </div>
 
-          {/* Experience & Duration */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="experience">Experience Level *</label>
-              <Select value={formData.experienceLevel} onValueChange={(value) => handleInputChange("experienceLevel", value)}>
-                <SelectTrigger className="bg-background/50 backdrop-blur-sm">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Junior">Entry Level</SelectItem>
-                  <SelectItem value="Mid">Intermediate</SelectItem>
-                  <SelectItem value="Senior">Senior</SelectItem>
-                  <SelectItem value="Expert">Expert</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Experience Level</label>
+                <Input
+                  value={formData.experienceLevel}
+                  onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
+                  placeholder="e.g. Senior"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="duration" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Duration
-              </label>
-              <Input
-                id="duration"
-                value={formData.duration}
-                onChange={(e) => handleInputChange("duration", e.target.value)}
-                placeholder="e.g., 3-6 months"
-                className="bg-background/50 backdrop-blur-sm"
-              />
-            </div>
-          </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Description</label>
+                <textarea
+                  className="w-full min-h-[120px] px-3 py-2 rounded-md border border-input bg-background"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Describe the job requirements..."
+                />
+              </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <label htmlFor="description">Job Description *</label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Describe the role, responsibilities, and requirements..."
-              className="min-h-[120px] bg-background/50 backdrop-blur-sm"
-              required
-            />
-          </div>
-          {/* Description */}
-          <div className="space-y-2">
-            <label htmlFor="description">Job Qualifications *</label>
-            <Textarea
-              id="description"
-              value={formData.qualifications}
-              onChange={(e) => handleInputChange("qualifications", e.target.value)}
-              placeholder="Add Qualifications..."
-              className="min-h-[120px] bg-background/50 backdrop-blur-sm"
-              required
-            />
-          </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Required Skills (comma-separated)</label>
+                <Input
+                  value={formData.required_skills.join(", ")}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    required_skills: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+                  })}
+                  placeholder="e.g. React, TypeScript, Node.js"
+                />
+              </div>
 
-          {/* Required Skills */}
-          <div className="space-y-3">
-            <label className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Required Skills *
-            </label>
-
-            {/* Current Skills */}
-            <div className="flex flex-wrap gap-2">
-              {formData.required_skills.map((skill) => (
-                <Badge key={skill} variant="secondary" className="px-3 py-1.5 gap-2">
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    className="hover:text-destructive"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-
-            {/* Add Skill */}
-            <div className="flex gap-2">
-              <Input
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add a skill..."
-                className="bg-background/50 backdrop-blur-sm"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-              />
-              <Button type="button" onClick={addSkill} variant="secondary">
-                <Plus className="w-4 h-4" />
+              <Button
+                onClick={handleSubmitClick}
+                disabled={isSubmitting}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating Job Post...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Post Job
+                  </>
+                )}
               </Button>
             </div>
           </div>
-
-          {/* Interview Availability */}
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="interview_availability"
-              checked={formData.interview_availability}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, interview_availability: checked as boolean }))}
-            />
-            <label htmlFor="interview_availability" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Available for Interview
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            variant="hero"
-            className="w-full gap-2"
-            disabled={isSubmitting}
-          >
-            <Briefcase className="w-5 h-5" />
-            {isSubmitting ? "Posting..." : "Post Job"}
-          </Button>
-        </form>
-      </Card>
-
-      {/* RIGHT SIDE - AI Chat Assistant */}
-      <Card className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-glass)] flex flex-col">
-        <div className="mb-4">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <Brain className="w-5 h-5 text-primary" />
-            AI Job Assistant
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Get AI-powered help to craft the perfect job posting
-          </p>
-        </div>
-
-        {/* Input Method Toggle */}
-        <div className="flex gap-2 mb-4">
-          <Button
-            type="button"
-            variant={inputMethod === "text" ? "default" : "outline"}
-            onClick={() => setInputMethod("text")}
-            size="sm"
-            className="flex-1 gap-2"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Text
-          </Button>
-          <Button
-            type="button"
-            variant={inputMethod === "voice" ? "default" : "outline"}
-            onClick={() => setInputMethod("voice")}
-            size="sm"
-            className="flex-1 gap-2"
-          >
-            <Mic className="w-4 h-4" />
-            Voice
-          </Button>
-        </div>
-
-        {/* Chat Messages */}
-        <ScrollArea className="flex-1 pr-4 mb-4 h-[500px]">
-          <div className="space-y-4">
-            {/* Suggested Prompts - Only show when no messages */}
-            {chatMessages.length === 0 && (
-              <div className="space-y-4">
-                <div className="text-center mb-6">
-                  <p className="text-sm text-muted-foreground">
-                    Choose a prompt below or ask your own question
-                  </p>
+        </Card>
+      ) : (
+        // Chat View
+        <Card className="bg-background/40 backdrop-blur-xl border border-border/50 overflow-hidden">
+          <div className="h-[600px] flex flex-col">
+            {/* Chat Header */}
+            <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
+                    <Bot className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">AI Job Assistant</h3>
+                    <p className="text-xs text-muted-foreground">Powered by advanced AI</p>
+                  </div>
                 </div>
-
-                {/* Suggested Prompts Grid */}
-                <div className="grid gap-3">
-                  {[
-                    {
-                      icon: <Target className="w-5 h-5" />,
-                      title: "Define Job Role",
-                      prompt: "Help me create a job posting for a senior software developer position",
-                      gradient: "from-blue-500/10 to-cyan-500/10",
-                      border: "border-blue-500/30",
-                      iconColor: "text-blue-500"
-                    },
-                    {
-                      icon: <DollarSign className="w-5 h-5" />,
-                      title: "Set Budget & Duration",
-                      prompt: "What's a competitive budget and timeline for a 3-month web development project?",
-                      gradient: "from-purple-500/10 to-pink-500/10",
-                      border: "border-purple-500/30",
-                      iconColor: "text-purple-500"
-                    },
-                    {
-                      icon: <Zap className="w-5 h-5" />,
-                      title: "Required Skills",
-                      prompt: "What skills should I require for a full-stack developer role?",
-                      gradient: "from-orange-500/10 to-red-500/10",
-                      border: "border-orange-500/30",
-                      iconColor: "text-orange-500"
-                    },
-                    {
-                      icon: <Sparkles className="w-5 h-5" />,
-                      title: "Improve Description",
-                      prompt: "Review my job description and suggest improvements to attract top talent",
-                      gradient: "from-indigo-500/10 to-violet-500/10",
-                      border: "border-indigo-500/30",
-                      iconColor: "text-indigo-500"
-                    },
-                  ].map((suggestion, idx) => (
-                    <Card
-                      key={idx}
-                      className={`p-4 cursor-pointer transition-all bg-gradient-to-br ${suggestion.gradient} border-2 ${suggestion.border} hover:scale-[1.02] group`}
-                      onClick={() => setChatInput(suggestion.prompt)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg bg-background/50 ${suggestion.iconColor}`}>
-                          {suggestion.icon}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors">
-                            {suggestion.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {suggestion.prompt}
-                          </p>
-                        </div>
-                        <Sparkles className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-
+                {formData.jobTitle && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowForm(true)}
+                    className="gap-2"
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    Edit Form
+                  </Button>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Chat Messages */}
-            {chatMessages.map((message, index) => (
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {chatMessages.map((msg, idx) => (
               <div
-                key={index}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                key={idx}
+                className={`flex gap-3 animate-fade-in ${
+                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                }`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                    }`}
+                  className={`p-2 rounded-full h-fit ${
+                    msg.role === "assistant"
+                      ? "bg-gradient-to-br from-primary/20 to-accent/20"
+                      : "bg-secondary/20"
+                  }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-
+                  {msg.role === "assistant" ? (
+                    <Bot className="w-4 h-4" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                </div>
+                <div
+                  className={`max-w-[80%] p-4 rounded-2xl ${
+                    msg.role === "assistant"
+                      ? "bg-muted/50"
+                      : "bg-primary/10 border border-primary/20"
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed">{msg.message}</p>
                 </div>
               </div>
             ))}
 
-            {/* AI Thinking Indicator */}
             {isSendingMessage && (
-              <div className="flex justify-start">
-                <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  <span className="text-xs text-muted-foreground">AI is thinking...</span>
+              <div className="flex gap-3 animate-fade-in">
+                <div className="p-2 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 h-fit">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className="bg-muted/50 p-4 rounded-2xl">
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 </div>
               </div>
             )}
 
             <div ref={chatEndRef} />
           </div>
-        </ScrollArea>
 
-        {/* Chat Input */}
-        {inputMethod === "text" ? (
-          <div className="flex gap-2">
-            <Input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Ask AI to help with your job posting..."
-              className="bg-background/50 backdrop-blur-sm"
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendChatMessage(chatInput,null);
+          {/* Input Area */}
+          <div className="p-4 border-t border-border/50 bg-muted/20">
+            <div className="flex gap-2">
+              <Input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) =>
+                  e.key === "Enter" && !e.shiftKey && sendChatMessage(chatInput)
                 }
-              }}
-              disabled={isSendingMessage}
-            />
-            <Button
-              type="button"
-              onClick={() => sendChatMessage(chatInput,null)}
-              disabled={isSendingMessage || !chatInput.trim()}
-              variant="default"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-4">
-            <div className={`p-6 rounded-full ${isRecording ? 'bg-destructive/20 animate-pulse' : 'bg-primary/20'}`}>
+                placeholder={isRecording ? "Recording..." : "Describe your job requirements..."}
+                className="bg-background/50"
+                disabled={isRecording || isSendingMessage}
+              />
               {isRecording ? (
-                <MicOff className="w-8 h-8 text-destructive" />
+                <Button
+                  onClick={stopRecording}
+                  variant="destructive"
+                  size="icon"
+                  className="shrink-0"
+                >
+                  <MicOff className="w-4 h-4" />
+                </Button>
               ) : (
-                <Mic className="w-8 h-8 text-primary" />
+                <>
+                  <Button
+                    onClick={startRecording}
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    disabled={isSendingMessage}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => sendChatMessage(chatInput)}
+                    size="icon"
+                    className="shrink-0"
+                    disabled={!chatInput.trim() || isSendingMessage}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </>
               )}
             </div>
-            <Button
-              type="button"
-              onClick={isRecording ? stopRecording : startRecording}
-              variant={isRecording ? "destructive" : "default"}
-              className="gap-2"
-            >
-              {isRecording ? (
-                <>
-                  <MicOff className="w-4 h-4" />
-                  Stop Recording
-                </>
-              ) : (
-                <>
-                  <Mic className="w-4 h-4" />
-                  Start Recording
-                </>
-              )}
-            </Button>
+          </div>
+        </div>
+
+        {/* Job Preview in Chat View */}
+        {formData.jobTitle && (
+          <div className="p-4 border-t border-border/50 bg-muted/20">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                Job Preview
+              </h3>
+            </div>
+            <div className="flex gap-3 items-start">
+              <div className="flex-1">
+                <JobPreviewCard />
+              </div>
+              <Button
+                onClick={handleSubmitClick}
+                disabled={isSubmitting || !formData.jobTitle || !formData.budget || formData.required_skills.length === 0}
+                className="gap-2 shrink-0"
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Submit Job
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </Card>
+      )}
+      
+      <JobDetailsDialog />
+      <InterviewAvailabilityDialog />
     </div>
   );
 };

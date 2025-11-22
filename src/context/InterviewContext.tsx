@@ -360,7 +360,7 @@ export function InterviewProvider({ children }: { children: ReactNode }) {
           technicalScore: data.technical_score ?? prev.technicalScore,
           result: {
             score: data.score ?? data.overall_score,
-            summary: data.summary ?? data.summary_text ?? '',
+            summary: data.recommendation ??  '',
             strengths: data.strengths ?? data.strengths_list ?? [],
             weaknesses: data.weaknesses ?? data.weaknesses_list ?? [],
             ...data,

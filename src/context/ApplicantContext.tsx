@@ -17,6 +17,9 @@ interface ApplicantContextType {
   duration: number;
   proposal_id: number;
   freelancer_id: number;
+  interview_score: number;
+  proposal_status?: string;
+  report: string;
 }
 
 /**
@@ -30,7 +33,7 @@ export async function fetchJobProposals(jobId: number): Promise<Candidate[]> {
       'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
     },
   });
-  console.log('Fetch Job Proposals Response:', response.data);
+ // console.log('Fetch Job Proposals Response:', response.data);
 
   return response.data;
 }
@@ -40,7 +43,7 @@ export const ApplicantProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchCandidates = useCallback(async (jobId: number) => {
+  const fetchCandidates =  useCallback(async (jobId: number) => {
     setLoading(true);
     try {
       const data = await fetchJobProposals(jobId);
