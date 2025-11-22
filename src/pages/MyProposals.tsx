@@ -407,27 +407,16 @@ const MyProposals = () => {
 
 
                     <div className="flex justify-end gap-3 pt-5 border-t border-border/30">
-                      {/* Interview button */}
-                      {job?.interview_availability && proposal.status !== 'accepted' && proposal.status !== 'rejected' && (
-                        interviewReports.get(proposal.id) ? (
-                          <Button
-                            variant="default"
-                            onClick={() => viewInterviewReport(proposal)}
-                            className="gap-2 h-11 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg transition-all font-semibold"
-                          >
-                            <FileText className="w-5 h-5" />
-                            View Interview Report
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="default"
-                            onClick={() => startInterview(proposal)}
-                            className="gap-2 h-11 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg transition-all font-semibold"
-                          >
-                            <Play className="w-5 h-5" />
-                            Start Interview
-                          </Button>
-                        )
+                      {/* Interview button - only show report if available */}
+                      {job?.interview_availability && proposal.status !== 'accepted' && proposal.status !== 'rejected' && interviewReports.get(proposal.id) && (
+                        <Button
+                          variant="default"
+                          onClick={() => viewInterviewReport(proposal)}
+                          className="gap-2 h-11 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg transition-all font-semibold"
+                        >
+                          <FileText className="w-5 h-5" />
+                          View Interview Report
+                        </Button>
                       )}
 
                       {/* View buttons */}
