@@ -59,7 +59,7 @@ export const ProfileForm = () => {
           description: `Score: ${result.profile.score}/100`,
           variant: "success",
         });
-
+      
         setProfile(result.profile);
       } else {
         throw new Error(result.detail || "Upload failed");
@@ -131,11 +131,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         <Label htmlFor="categories_of_expertise">Job Title</Label>
         <Input
           id="profiecategories_of_expertiseleViews"
-          value={profile.categories_of_expertise || ""}
+          value={profile.category || ""}
           onChange={(e) =>
             setProfile({
               ...profile,
-              categories_of_expertise:  e.target.value,
+              category:  e.target.value,
             })
           }
         />
@@ -238,11 +238,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         <Label htmlFor="job_type_preferences">Job Type Preferences</Label>
         <Input
           id="job_type_preferences"
-          value={profile.job_type_preferences || ""}
+          value={profile.job_type || ""}
           onChange={(e) =>
             setProfile({
               ...profile,
-              job_type_preferences: e.target.value,
+              job_type: e.target.value,
             })
           }
         />

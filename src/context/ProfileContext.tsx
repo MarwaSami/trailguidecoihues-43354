@@ -10,10 +10,10 @@ export interface Profile {
   hourly_rate: string;
   portfolio_website: string;
   preferred_location: string;
-  job_type_preferences: string;
+  job_type: string;
   linked_in_profile: string;
   github_profile: string;
-  categories_of_expertise: string;
+  category: string;
   cv: string;
   score?: number;
 }
@@ -38,10 +38,10 @@ export const ProfileformProvider = ({ children }: { children: ReactNode }) => {
   hourly_rate: "",
   portfolio_website: "",
   preferred_location: "",
-  job_type_preferences: "",
+  job_type: "",
   linked_in_profile: "",
   github_profile: "",
-  categories_of_expertise: "",
+  category: "",
   cv: "",
   });
 
@@ -74,6 +74,7 @@ export const uploadCvTodb = async (
       Authorization: `Bearer ${token}`
     },
   });
+  console.log("Uploaded profile:", response.data);
 
   return response.data as CvUploadedResponse;
 };
