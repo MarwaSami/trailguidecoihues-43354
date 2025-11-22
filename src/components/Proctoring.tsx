@@ -10,18 +10,8 @@ import { useInterview } from "@/context/InterviewContext";
 import InterviewResultDialog from '@/components/interview/InterviewResultDialog';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Eye, CheckCircle2, Sparkles, AlertTriangle } from "lucide-react";
+import { Mic, MicOff, Eye, CheckCircle2, Sparkles } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 type Models = {
   face: Awaited<ReturnType<typeof blazeface.load>> | null;
@@ -52,7 +42,7 @@ export default function OldProctoring() {
   const [isSending, setIsSending] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [interviewEnded, setInterviewEnded] = useState(false);
-  const [showEndWarning, setShowEndWarning] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
 
 
@@ -303,10 +293,11 @@ export default function OldProctoring() {
 
   // Auto-end interview when AI says "Thank you for your time"
   useEffect(() => {
-    if (currentSession && currentSession.transcript.length > 0) {
+    if (currentSession && currentSession.transcript.length > 0 && !isEnding) {
       const lastEntry = currentSession.transcript[currentSession.transcript.length - 1];
       if (lastEntry.role === 'ai' && lastEntry.text.includes("Thank you for your time")) {
         // Auto-trigger end interview
+        setIsEnding(true);
         setTimeout(async () => {
           await endInterview();
           stopCam();
@@ -315,7 +306,7 @@ export default function OldProctoring() {
         }, 2000); // Small delay to let user see the message
       }
     }
-  }, [currentSession?.transcript]);
+  }, [currentSession?.transcript, isEnding]);
 
   /* ------------------- UI ------------------- */
   return (
@@ -402,7 +393,20 @@ export default function OldProctoring() {
               <Button
                 onClick={async () => {
                   if (camReady && !interviewStopped) {
-                    setShowEndWarning(true);
+                    // Check if already ending
+                    if (isEnding) {
+                      triggerViolation("Attempted to end interview multiple times", "red");
+                      return;
+                    }
+                    
+                    // End the interview
+                    setIsEnding(true);
+                    await endInterview();
+                    stopCam();
+                    setInterviewEnded(true);
+                    setTimeout(() => {
+                      navigate('/my-proposals');
+                    }, 1500);
                   } else {
                     startCam();
                     if (!currentSession) {
@@ -538,48 +542,6 @@ export default function OldProctoring() {
     </div>
     {/* Result dialog */}
     <InterviewResultDialog open={showResults} onOpenChange={(o) => setShowResults(o)} />
-    
-    {/* End Interview Warning Dialog */}
-    <AlertDialog open={showEndWarning} onOpenChange={setShowEndWarning}>
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
-            </div>
-            <AlertDialogTitle className="text-xl">Violation Warning</AlertDialogTitle>
-          </div>
-          <AlertDialogDescription className="text-base space-y-3 pt-4">
-            <p className="font-semibold text-foreground">
-              Manually ending the interview is considered a violation.
-            </p>
-            <p>
-              This action will be logged and may affect your proposal evaluation. 
-              The interview should only end when the AI interviewer concludes the session.
-            </p>
-            <p className="text-destructive font-medium">
-              Are you sure you want to proceed?
-            </p>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="gap-2 sm:gap-2">
-          <AlertDialogCancel className="font-semibold">Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={async () => {
-              triggerViolation("Manual interview termination", "red");
-              await endInterview();
-              stopCam();
-              setTimeout(() => {
-                navigate('/my-proposals');
-              }, 1500);
-            }}
-            className="bg-destructive hover:bg-destructive/90 font-semibold"
-          >
-            End Interview Anyway
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
     </>
   );
 }
