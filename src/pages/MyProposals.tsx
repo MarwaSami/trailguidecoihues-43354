@@ -407,7 +407,16 @@ const MyProposals = () => {
 
 
                     <div className="flex justify-end gap-3 pt-5 border-t border-border/30">
-                      {/* Interview button - only show report if available */}
+                      {/* Interview buttons */}
+                      {job?.interview_availability && proposal.status !== 'accepted' && proposal.status !== 'rejected' && !interviewReports.get(proposal.id) && (
+                        <Button
+                          onClick={() => startInterview(proposal)}
+                          className="gap-2 h-11 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all font-semibold"
+                        >
+                          <Play className="w-5 h-5" />
+                          Start Interview
+                        </Button>
+                      )}
                       {job?.interview_availability && proposal.status !== 'accepted' && proposal.status !== 'rejected' && interviewReports.get(proposal.id) && (
                         <Button
                           variant="default"
