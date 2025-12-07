@@ -235,19 +235,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="job_type">Job Type Preferences</Label>
-        <Input
-          id="job_type"
-          value={profile.job_type || ""}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              job_type: e.target.value,
-            })
-          }
-        />
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="portfolio_website">Portfolio Website</Label>
