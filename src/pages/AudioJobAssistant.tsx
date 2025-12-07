@@ -1,7 +1,7 @@
 import React from 'react';
-import { AudioJobChat } from '@/components/AudioJobChat';
+import { AudioChat } from '@/components/AudioJobChat';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Briefcase } from 'lucide-react';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AudioJobAssistant: React.FC = () => {
@@ -23,11 +23,11 @@ const AudioJobAssistant: React.FC = () => {
               </Button>
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-primary" />
+                  <MessageCircle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold">Audio Job Assistant</h1>
-                  <p className="text-sm text-muted-foreground">Create job postings with voice</p>
+                  <h1 className="text-lg font-semibold">Audio Chat</h1>
+                  <p className="text-sm text-muted-foreground">Voice & text chat</p>
                 </div>
               </div>
             </div>
@@ -38,7 +38,7 @@ const AudioJobAssistant: React.FC = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto h-[calc(100vh-140px)]">
-          <AudioJobChat />
+          <AudioChat />
         </div>
       </main>
     </div>

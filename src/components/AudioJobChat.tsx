@@ -15,7 +15,7 @@ interface Message {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/job-chat`;
 
-export const AudioJobChat: React.FC = () => {
+export const AudioChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -167,9 +167,9 @@ export const AudioJobChat: React.FC = () => {
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground py-8">
                 <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Job Posting Assistant</p>
+                <p className="text-lg font-medium">AI Chat</p>
                 <p className="text-sm mt-2">
-                  Speak or type to start creating your job posting.
+                  Speak or type to start chatting.
                 </p>
               </div>
             )}

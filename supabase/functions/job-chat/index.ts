@@ -31,17 +31,7 @@ serve(async (req) => {
         messages: [
           { 
             role: "system", 
-            content: `You are a helpful AI assistant specialized in creating job postings. 
-            Help users create compelling job descriptions by asking relevant questions about:
-            - Job title and role
-            - Required skills and experience
-            - Salary range and benefits
-            - Work type (remote, hybrid, on-site)
-            - Company culture and values
-            
-            Be conversational, helpful, and guide users through creating a complete job posting.
-            When you have enough information, offer to generate the final job posting.
-            Keep responses concise and friendly.` 
+            content: "You are a helpful AI assistant. Be conversational, helpful, and keep responses concise and friendly." 
           },
           ...messages,
         ],
