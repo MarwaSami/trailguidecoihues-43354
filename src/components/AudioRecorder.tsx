@@ -2,14 +2,14 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { baseURL } from '@/context/AuthContext';
 
 interface AudioRecorderProps {
-  baseURL: string;
   onSuccess?: (response: any) => void;
   onError?: (error: Error) => void;
 }
 
-export const AudioRecorder = ({ baseURL, onSuccess, onError }: AudioRecorderProps) => {
+export const AudioRecorder = ({ onSuccess, onError }: AudioRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -59,7 +59,7 @@ export const AudioRecorder = ({ baseURL, onSuccess, onError }: AudioRecorderProp
           const formData = new FormData();
           formData.append('audio_file', audioBlob, 'recording.webm');
 
-          const response = await fetch(`${baseURL}/jobs/record`, {
+          const response = await fetch(`${baseURL}jobs/record/`, {
             method: 'POST',
             body: formData
           });
