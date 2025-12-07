@@ -34,6 +34,7 @@ import ProctoringComponent from "./components/Proctoring";
 import AddPortfolio from "./pages/AddPortfolio";
 import ViewPortfolio from "./pages/ViewPortfolio";
 import Chat from "./pages/Chat";
+import AudioJobAssistant from "./pages/AudioJobAssistant";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/my-jobs" element={<ClientJobProvider><MyJobs /></ClientJobProvider>} />
             <Route path="/view-applicants/:jobId" element={<ApplicantProvider><ViewApplicants /></ApplicantProvider>} />
             <Route path="/job-posting" element={<JobPosting />} />
+            <Route path="/audio-job-assistant" element={<AudioJobAssistant />} />
             <Route path="/candidate-discovery" element={<CandidateDiscovery />} />
 
             {/* Shared Routes */}
