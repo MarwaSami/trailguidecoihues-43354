@@ -36,6 +36,7 @@ import ViewPortfolio from "./pages/ViewPortfolio";
 import Chat from "./pages/Chat";
 import AudioJobAssistant from "./pages/AudioJobAssistant";
 import AudioRecorderPage from "./pages/AudioRecorder";
+import EducationReport from "./pages/EducationReport";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
             {/* Shared Routes */}
             <Route path="/skills" element={<Skills />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/education-report" element={<EducationReport />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
