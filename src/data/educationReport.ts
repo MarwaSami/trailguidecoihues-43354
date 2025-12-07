@@ -232,14 +232,14 @@ export const programPhases: ProgramPhase[] = [
 ];
 
 export const categoryStats = [
-  { name: "البنية التحتية", value: 1, color: "hsl(var(--chart-1))" },
-  { name: "التدريب", value: 3, color: "hsl(var(--chart-2))" },
-  { name: "التوعية", value: 2, color: "hsl(var(--chart-3))" },
-  { name: "التنسيق", value: 3, color: "hsl(var(--chart-4))" }
+  { name: "البنية التحتية", value: 1, color: "#3b82f6" },
+  { name: "التدريب", value: 3, color: "#8b5cf6" },
+  { name: "التوعية", value: 2, color: "#f59e0b" },
+  { name: "التنسيق", value: 3, color: "#10b981" }
 ];
 
 export const priorityStats = [
-  { name: "أولوية عالية", value: 4, color: "hsl(var(--destructive))" },
-  { name: "أولوية متوسطة", value: 4, color: "hsl(var(--chart-2))" },
-  { name: "أولوية منخفضة", value: 1, color: "hsl(var(--chart-3))" }
+  { name: "أولوية عالية", value: 4, color: "#ef4444" },
+  { name: "أولوية متوسطة", value: 4, color: "#f59e0b" },
+  { name: "أولوية منخفضة", value: 1, color: "#22c55e" }
 ];
