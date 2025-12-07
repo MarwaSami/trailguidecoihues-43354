@@ -145,7 +145,9 @@ const Auth = () => {
           </Link>
 
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-3">Welcome back</h1>
+            <h1 className="text-4xl font-bold mb-3">
+              {isLogin?"Welcome back" : "Let's go "}
+            </h1>
             <p className="text-muted-foreground">
               New here?{" "}
               <button

@@ -298,12 +298,12 @@ export default function OldProctoring() {
       if (lastEntry.role === 'ai' && lastEntry.text.includes("Thank you for your time")) {
         // Auto-trigger end interview
         setIsEnding(true);
-        setTimeout(async () => {
-          await endInterview();
-          stopCam();
-          setInterviewEnded(true);
-          toast.success("Interview completed successfully", { duration: 4000 });
-        }, 2000); // Small delay to let user see the message
+        // setTimeout(async () => {
+        //   await endInterview();
+        //   stopCam();
+        //   setInterviewEnded(true);
+        //   toast.success("Interview completed successfully", { duration: 4000 });
+        // }, 2000); // Small delay to let user see the message
       }
     }
   }, [currentSession?.transcript, isEnding]);
@@ -398,9 +398,9 @@ export default function OldProctoring() {
                     await endInterview();
                     stopCam();
                     setInterviewEnded(true);
-                    setTimeout(() => {
-                      navigate('/my-proposals');
-                    }, 1500);
+                    // setTimeout(() => {
+                    //   navigate('/my-proposals');
+                    // }, 1500);
                   } else if (!camReady) {
                     startCam();
                     if (!currentSession) {
