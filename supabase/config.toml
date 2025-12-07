@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.generate-404-image]
 verify_jwt = false
+
+[functions.transcribe-audio]
+verify_jwt = false
+
+[functions.job-chat]
+verify_jwt = false
