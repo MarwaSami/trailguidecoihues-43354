@@ -51,10 +51,11 @@ const getPriorityLabel = (priority: Recommendation['priority']) => {
   }
 };
 
+const phaseColors = ["#3b82f6", "#8b5cf6", "#10b981"];
 const phaseRadialData = programPhases.map((phase, index) => ({
   name: phase.title.split(":")[0],
   value: phase.items.length * 25,
-  fill: `hsl(var(--chart-${index + 1}))`
+  fill: phaseColors[index]
 }));
 
 const EducationReport = () => {
