@@ -162,18 +162,36 @@ const EducationReport = () => {
                     data={categoryStats}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={50}
+                    outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
+                    labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}
+                    label={({ name, value, cx, cy, midAngle, outerRadius }) => {
+                      const RADIAN = Math.PI / 180;
+                      const radius = outerRadius + 30;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          fill="hsl(var(--foreground))"
+                          textAnchor={x > cx ? 'start' : 'end'}
+                          dominantBaseline="central"
+                          className="text-xs font-medium"
+                        >
+                          {`${name}: ${value}`}
+                        </text>
+                      );
+                    }}
                   >
                     {categoryStats.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend />
+                  <Legend wrapperStyle={{ paddingTop: 20 }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -189,11 +207,24 @@ const EducationReport = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={priorityStats} layout="vertical">
+                <BarChart data={priorityStats} layout="vertical" margin={{ left: 20, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={100} />
-                  <Tooltip />
+                  <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={120} 
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }} 
+                  />
                   <Bar dataKey="value" radius={[0, 8, 8, 0]}>
                     {priorityStats.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />

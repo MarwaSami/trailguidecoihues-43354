@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 
 const AudioRecorderPage = () => {
   const navigate = useNavigate();
-  const baseURL = import.meta.env.VITE_API_BASE_URL || '';
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,7 +25,6 @@ const AudioRecorderPage = () => {
           </p>
 
           <AudioRecorder
-            baseURL={baseURL}
             onSuccess={(data) => console.log('Upload success:', data)}
             onError={(error) => console.error('Upload error:', error)}
           />
