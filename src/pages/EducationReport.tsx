@@ -341,23 +341,42 @@ const EducationReport = () => {
                 <CardDescription>مبني على المقترحات والتوصيات</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={300}>
                   <RadialBarChart 
                     cx="50%" 
                     cy="50%" 
-                    innerRadius="30%" 
-                    outerRadius="90%" 
+                    innerRadius="20%" 
+                    outerRadius="80%" 
                     data={phaseRadialData}
                     startAngle={180}
                     endAngle={0}
+                    barSize={20}
                   >
                     <RadialBar 
                       dataKey="value" 
-                      background 
-                      label={{ fill: 'hsl(var(--foreground))', position: 'insideStart' }}
+                      background={{ fill: 'hsl(var(--muted))' }}
+                      cornerRadius={10}
+                      label={{ 
+                        fill: '#ffffff', 
+                        position: 'insideStart',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                      }}
                     />
-                    <Legend iconSize={10} layout="horizontal" verticalAlign="bottom" />
-                    <Tooltip />
+                    <Legend 
+                      iconSize={12} 
+                      layout="horizontal" 
+                      verticalAlign="bottom"
+                      wrapperStyle={{ paddingTop: 20 }}
+                      formatter={(value) => <span style={{ color: 'hsl(var(--foreground))', fontSize: 12 }}>{value}</span>}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }} 
+                    />
                   </RadialBarChart>
                 </ResponsiveContainer>
               </CardContent>
