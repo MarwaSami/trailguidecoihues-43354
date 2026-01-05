@@ -50,6 +50,7 @@ export const ProfileForm = () => {
     setIsProcessing(true);
 
     try {
+      const user = JSON.parse(localStorage.getItem('user'));
       const user_id = user?.id || 0;
       const result = await uploadCvTodb(file, user_id, token);
 
@@ -234,19 +235,6 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="job_type_preferences">Job Type Preferences</Label>
-        <Input
-          id="job_type_preferences"
-          value={profile.job_type || ""}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              job_type: e.target.value,
-            })
-          }
-        />
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="portfolio_website">Portfolio Website</Label>

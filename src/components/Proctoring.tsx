@@ -10,7 +10,8 @@ import { useInterview } from "@/context/InterviewContext";
 import InterviewResultDialog from '@/components/interview/InterviewResultDialog';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, MicOff, Eye } from "lucide-react";
+import { Mic, MicOff, Eye, CheckCircle2, Sparkles } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 type Models = {
   face: Awaited<ReturnType<typeof blazeface.load>> | null;
@@ -40,6 +41,8 @@ export default function OldProctoring() {
   const [showResults, setShowResults] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const [interviewEnded, setInterviewEnded] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
 
 
@@ -288,6 +291,23 @@ export default function OldProctoring() {
 
   useEffect(() => () => stopCam(), []);
 
+  // Auto-end interview when AI says "Thank you for your time"
+  useEffect(() => {
+    if (currentSession && currentSession.transcript.length > 0 && !isEnding) {
+      const lastEntry = currentSession.transcript[currentSession.transcript.length - 1];
+      if (lastEntry.role === 'ai' && lastEntry.text.includes("Thank you for your time")) {
+        // Auto-trigger end interview
+        setIsEnding(true);
+        // setTimeout(async () => {
+        //   await endInterview();
+        //   stopCam();
+        //   setInterviewEnded(true);
+        //   toast.success("Interview completed successfully", { duration: 4000 });
+        // }, 2000); // Small delay to let user see the message
+      }
+    }
+  }, [currentSession?.transcript, isEnding]);
+
   /* ------------------- UI ------------------- */
   return (
     <>
@@ -314,7 +334,7 @@ export default function OldProctoring() {
                 </div>
               )}
 
-              {interviewStopped && (
+              {interviewStopped && !interviewEnded && (
                 <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 bg-opacity-95 flex items-center justify-center text-white text-center p-6">
                   <div className="space-y-4">
                     <h2 className="text-3xl font-bold">Interview Terminated</h2>
@@ -324,6 +344,33 @@ export default function OldProctoring() {
                         Retry (1 left)
                       </Button>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {interviewEnded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent flex items-center justify-center text-white text-center p-8">
+                  <div className="space-y-6 max-w-md">
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <CheckCircle2 className="h-24 w-24 text-white animate-scale-in" />
+                        <Sparkles className="h-8 w-8 text-white/80 absolute -top-2 -right-2 animate-pulse" />
+                      </div>
+                    </div>
+                    <h2 className="text-4xl font-bold animate-fade-in">Interview Complete!</h2>
+                    <p className="text-lg text-white/90 animate-fade-in">
+                      Thank you for participating. Your responses have been recorded successfully.
+                    </p>
+                    <div className="pt-4 animate-fade-in">
+                      <Button 
+                        onClick={() => setShowResults(true)} 
+                        variant="secondary" 
+                        size="lg"
+                        className="min-w-[200px] font-semibold"
+                      >
+                        View Results
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -345,10 +392,16 @@ export default function OldProctoring() {
             <div className="flex justify-center gap-4 mt-6">
               <Button
                 onClick={async () => {
-                  if (camReady && !interviewStopped) {
+                  if (camReady && !interviewStopped && !isEnding) {
+                    // End the interview
+                    setIsEnding(true);
                     await endInterview();
                     stopCam();
-                  } else {
+                    setInterviewEnded(true);
+                    // setTimeout(() => {
+                    //   navigate('/my-proposals');
+                    // }, 1500);
+                  } else if (!camReady) {
                     startCam();
                     if (!currentSession) {
                       const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
@@ -356,7 +409,7 @@ export default function OldProctoring() {
                     }
                   }
                 }}
-                disabled={interviewStopped && violationCount >= 2}
+                disabled={(interviewStopped && violationCount >= 2) || isEnding}
                 variant={camReady ? "destructive" : "default"}
                 size="lg"
                 className="min-w-[150px] font-semibold"
@@ -370,13 +423,22 @@ export default function OldProctoring() {
 
               <Button
                 onClick={toggleMic}
-                disabled={!camReady || interviewStopped || isSending}
+                disabled={!camReady || interviewStopped || isSending || interviewEnded}
                 variant={isRecording ? "destructive" : "default"}
                 size="lg"
-                className="gap-2 min-w-[120px] font-semibold"
+                className="gap-2 min-w-[120px] font-semibold relative"
               >
-                {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                {isSending ? "Processing..." : isRecording ? "Stop" : "Speak"}
+                {isSending ? (
+                  <>
+                    <Sparkles className="h-5 w-5 animate-pulse" />
+                    <span className="animate-pulse">Processing</span>
+                  </>
+                ) : (
+                  <>
+                    {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                    {isRecording ? "Stop" : "Speak"}
+                  </>
+                )}
               </Button>
 
               <Button
@@ -389,6 +451,13 @@ export default function OldProctoring() {
                 View Results
               </Button>
             </div>
+
+            {/* Processing State Overlay */}
+            {isSending && (
+              <div className="mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
+                <LoadingSpinner size="sm" message="Processing your response..." />
+              </div>
+            )}
           </CardContent>
         </Card>
 

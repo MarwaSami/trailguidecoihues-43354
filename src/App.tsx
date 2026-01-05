@@ -34,6 +34,9 @@ import ProctoringComponent from "./components/Proctoring";
 import AddPortfolio from "./pages/AddPortfolio";
 import ViewPortfolio from "./pages/ViewPortfolio";
 import Chat from "./pages/Chat";
+import AudioJobAssistant from "./pages/AudioJobAssistant";
+import AudioRecorderPage from "./pages/AudioRecorder";
+import EducationReport from "./pages/EducationReport";
 
 const queryClient = new QueryClient();
 
@@ -67,11 +70,14 @@ const App = () => (
             <Route path="/my-jobs" element={<ClientJobProvider><MyJobs /></ClientJobProvider>} />
             <Route path="/view-applicants/:jobId" element={<ApplicantProvider><ViewApplicants /></ApplicantProvider>} />
             <Route path="/job-posting" element={<JobPosting />} />
+            <Route path="/audio-job-assistant" element={<AudioJobAssistant />} />
+            <Route path="/audio-recorder" element={<AudioRecorderPage />} />
             <Route path="/candidate-discovery" element={<CandidateDiscovery />} />
 
             {/* Shared Routes */}
             <Route path="/skills" element={<Skills />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/education-report" element={<EducationReport />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

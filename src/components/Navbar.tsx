@@ -61,8 +61,8 @@ export const Navbar = () => {
       case 'proposal_accepted': return 'green';
       case 'new_job': return 'purple';
       case 'new_proposal': return 'primary';
-      case 'interview': return 'blue';
-      case 'interview_completed': return 'green';
+      // case 'interview': return 'blue';
+      // case 'interview_completed': return 'green';
       case 'job_match': return 'purple';
       default: return 'default';
     }
@@ -81,101 +81,101 @@ export const Navbar = () => {
     return `${diffDays}d ago`;
   };
 
-  const formattedNotifications = realtimeNotifications.map(notif => ({
-    id: notif.id,
-    type: notif.type,
-    text: notif.message,
-    time: getRelativeTime(notif.created_at),
-    link: notif.link || "/",
-    unread: !notif.read,
-    icon: getIconByType(notif.type),
-    color: getColorByType(notif.type)
-  }));
+  // const formattedNotifications = realtimeNotifications.map(notif => ({
+  //   id: notif.id,
+  //   type: notif.type,
+  //   text: notif.message,
+  //   time: getRelativeTime(notif.created_at),
+  //   link: notif.link || "/",
+  //   unread: !notif.read,
+  //   icon: getIconByType(notif.type),
+  //   color: getColorByType(notif.type)
+  // }));
 
   // Fallback to mock notifications if no real-time data
-  const notifications = formattedNotifications.length > 0 ? formattedNotifications : (isFreelancer ? [
-    { 
-      id: 1, 
-      type: 'proposal_status',
-      text: "Your proposal for 'Senior React Developer' was accepted", 
-      time: "5m ago", 
-      link: "/my-proposals", 
-      unread: true,
-      icon: 'checkCircle',
-      color: 'green'
-    },
-    { 
-      id: 2, 
-      type: 'new_job',
-      text: "New job matching your skills: 'Full Stack Engineer'", 
-      time: "1h ago", 
-      link: "/job-browse", 
-      unread: true,
-      icon: 'briefcase',
-      color: 'purple'
-    },
-    { 
-      id: 3, 
-      type: 'interview',
-      text: "Interview scheduled for tomorrow at 10 AM", 
-      time: "2h ago", 
-      link: "/interview-practice", 
-      unread: true,
-      icon: 'calendar',
-      color: 'blue'
-    },
-    { 
-      id: 4, 
-      type: 'proposal_status',
-      text: "Your proposal for 'UI Designer' is under review", 
-      time: "1d ago", 
-      link: "/my-proposals", 
-      unread: false,
-      icon: 'clock',
-      color: 'default'
-    },
-  ] : [
-    { 
-      id: 1, 
-      type: 'new_proposal',
-      text: "3 new candidates applied for 'Senior Developer'", 
-      time: "5m ago", 
-      link: "/my-jobs", 
-      unread: true,
-      icon: 'users',
-      color: 'primary'
-    },
-    { 
-      id: 2, 
-      type: 'job_match',
-      text: "AI found 5 matching candidates for your job", 
-      time: "1h ago", 
-      link: "/candidate-discovery", 
-      unread: true,
-      icon: 'target',
-      color: 'purple'
-    },
-    { 
-      id: 3, 
-      type: 'interview_completed',
-      text: "Candidate completed interview with 85% score", 
-      time: "3h ago", 
-      link: "/view-applicants/1", 
-      unread: false,
-      icon: 'award',
-      color: 'green'
-    },
-    { 
-      id: 4, 
-      type: 'job_published',
-      text: "Your job 'Backend Engineer' was published", 
-      time: "1d ago", 
-      link: "/my-jobs", 
-      unread: false,
-      icon: 'checkCircle',
-      color: 'default'
-    },
-  ]);
+  // const notifications = formattedNotifications.length > 0 ? formattedNotifications : (isFreelancer ? [
+  //   { 
+  //     id: 1, 
+  //     type: 'proposal_status',
+  //     text: "Your proposal for 'Senior React Developer' was accepted", 
+  //     time: "5m ago", 
+  //     link: "/my-proposals", 
+  //     unread: true,
+  //     icon: 'checkCircle',
+  //     color: 'green'
+  //   },
+  //   { 
+  //     id: 2, 
+  //     type: 'new_job',
+  //     text: "New job matching your skills: 'Full Stack Engineer'", 
+  //     time: "1h ago", 
+  //     link: "/job-browse", 
+  //     unread: true,
+  //     icon: 'briefcase',
+  //     color: 'purple'
+  //   },
+  //   { 
+  //     id: 3, 
+  //     type: 'interview',
+  //     text: "Interview scheduled for tomorrow at 10 AM", 
+  //     time: "2h ago", 
+  //     link: "/interview-practice", 
+  //     unread: true,
+  //     icon: 'calendar',
+  //     color: 'blue'
+  //   },
+  //   { 
+  //     id: 4, 
+  //     type: 'proposal_status',
+  //     text: "Your proposal for 'UI Designer' is under review", 
+  //     time: "1d ago", 
+  //     link: "/my-proposals", 
+  //     unread: false,
+  //     icon: 'clock',
+  //     color: 'default'
+  //   },
+  // ] : [
+  //   { 
+  //     id: 1, 
+  //     type: 'new_proposal',
+  //     text: "3 new candidates applied for 'Senior Developer'", 
+  //     time: "5m ago", 
+  //     link: "/my-jobs", 
+  //     unread: true,
+  //     icon: 'users',
+  //     color: 'primary'
+  //   },
+  //   { 
+  //     id: 2, 
+  //     type: 'job_match',
+  //     text: "AI found 5 matching candidates for your job", 
+  //     time: "1h ago", 
+  //     link: "/candidate-discovery", 
+  //     unread: true,
+  //     icon: 'target',
+  //     color: 'purple'
+  //   },
+  //   { 
+  //     id: 3, 
+  //     type: 'interview_completed',
+  //     text: "Candidate completed interview with 85% score", 
+  //     time: "3h ago", 
+  //     link: "/view-applicants/1", 
+  //     unread: false,
+  //     icon: 'award',
+  //     color: 'green'
+  //   },
+  //   { 
+  //     id: 4, 
+  //     type: 'job_published',
+  //     text: "Your job 'Backend Engineer' was published", 
+  //     time: "1d ago", 
+  //     link: "/my-jobs", 
+  //     unread: false,
+  //     icon: 'checkCircle',
+  //     color: 'default'
+  //   },
+  // ]);
   
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/50 shadow-[var(--shadow-glass)]">
@@ -278,17 +278,17 @@ export const Navbar = () => {
                 {/* Enhanced Notifications Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="relative rounded-full hover:bg-primary/10 hover:border-primary/50 transition-all">
+                    {/* <Button variant="outline" size="icon" className="relative rounded-full hover:bg-primary/10 hover:border-primary/50 transition-all">
                       <Bell className="w-5 h-5" />
                       {notifications.filter(n => n.unread).length > 0 && (
                         <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 text-white text-xs rounded-full flex items-center justify-center shadow-lg animate-pulse">
                           {notifications.filter(n => n.unread).length}
                         </span>
                       )}
-                    </Button>
+                    </Button> */}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-96 bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl border border-border/30 shadow-2xl">
-                    <DropdownMenuLabel className="text-lg font-bold flex items-center gap-2 pb-3">
+                    {/* <DropdownMenuLabel className="text-lg font-bold flex items-center gap-2 pb-3">
                       <Bell className="w-5 h-5 text-primary" />
                       Notifications
                       {notifications.filter(n => n.unread).length > 0 && (
@@ -296,9 +296,9 @@ export const Navbar = () => {
                           {notifications.filter(n => n.unread).length} new
                         </Badge>
                       )}
-                    </DropdownMenuLabel>
+                    </DropdownMenuLabel> */}
                     <DropdownMenuSeparator />
-                    <div className="max-h-96 overflow-y-auto">
+                    {/* <div className="max-h-96 overflow-y-auto">
                       {notifications.map((notif) => {
                         const getIcon = () => {
                           switch (notif.icon) {
@@ -354,13 +354,13 @@ export const Navbar = () => {
                           </DropdownMenuItem>
                         );
                       })}
-                    </div>
+                    </div> */}
                     <DropdownMenuSeparator />
-                    <div className="p-2">
+                    {/* <div className="p-2">
                       <Button variant="ghost" className="w-full text-sm hover:bg-primary/10 hover:text-primary font-medium">
                         View All Notifications
                       </Button>
-                    </div>
+                    </div> */}
                   </DropdownMenuContent>
                 </DropdownMenu>
 
