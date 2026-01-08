@@ -182,11 +182,24 @@ export const AIJobAssistant = () => {
           variant: "destructive",
         });
       } else {
-        // Filter messages to only show clean text responses (no JSON)
-        const cleanMessages = response.data.data.history.map((msg: ChatMessage) => ({
-          ...msg,
-          message: msg.role === "assistant" ? msg.message.replace(/\{[\s\S]*?\}/g, "").trim() : msg.message
-        }));
+        // Filter messages to remove any JSON content from assistant responses
+        const cleanMessages = response.data.data.history.map((msg: ChatMessage) => {
+          if (msg.role === "assistant") {
+            // Remove JSON objects, arrays, and common JSON patterns
+            let cleanMessage = msg.message
+              .replace(/```json[\s\S]*?```/gi, '') // Remove markdown JSON blocks
+              .replace(/```[\s\S]*?```/gi, '') // Remove any code blocks
+              .replace(/\{[\s\S]*?\}/g, '') // Remove JSON objects
+              .replace(/\[[\s\S]*?\]/g, '') // Remove JSON arrays
+              .replace(/"[^"]+"\s*:\s*"[^"]*"/g, '') // Remove key-value pairs
+              .replace(/"[^"]+"\s*:\s*\d+/g, '') // Remove key-number pairs
+              .replace(/^\s*[\[\]{}]\s*$/gm, '') // Remove standalone brackets
+              .replace(/\n{3,}/g, '\n\n') // Clean up multiple newlines
+              .trim();
+            return { ...msg, message: cleanMessage || msg.message };
+          }
+          return msg;
+        });
         setChatMessages(cleanMessages);
 
         if (response.data.data.job?.jobTitle) {
@@ -623,7 +636,9 @@ export const AIJobAssistant = () => {
                       : "bg-primary/10 border border-primary/20"
                   }`}
                 >
-                  <p className="text-sm leading-relaxed">{msg.message}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {msg.message || (msg.role === "assistant" ? "Processing your request..." : "")}
+                  </p>
                 </div>
               </div>
             ))}
