@@ -171,9 +171,11 @@ const FreelancerDashboard = () => {
                             Apply Now
                           </Button>
                           <JobDetailsDialog job={job} userType="freelancer" />
-                          <p className="w-full text-center text-muted-foreground">
-                            Proposal Status
-                          </p>
+                          {job.proposal_status && (
+                            <p className="w-full text-center text-muted-foreground">
+                              {job.proposal_status}
+                            </p>
+                          )}
 
                         </div>
                   </div>
