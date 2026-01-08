@@ -56,8 +56,8 @@ export const ProfileForm = () => {
 
       if (result.is_success) {
         toast({
-          title: "CV Uploaded Successfully",
-          description: `Score: ${result.profile.score}/100`,
+          title: "Upload Complete 🎉",
+          description: `Your CV has been uploaded and processed.`,
           variant: "success",
         });
       

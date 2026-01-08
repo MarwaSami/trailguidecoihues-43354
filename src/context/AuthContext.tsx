@@ -55,15 +55,15 @@ const signUp = async (email: string, password: string, username: string, user_ty
     );
         navigate('/auth'); 
    toast({
-      title: "Signup Sucessfullydone",
-      description: "user is created",
+      title: "Welcome 🎉",
+      description: "Your account was created successfully",
       variant:"success"
     });
     return { error: null };
   } catch (error: any) {
     toast({
-      title: "Signup failed",
-      description: error.response?.data?.message || "An error occurred.",
+      title: "Oops! Signup Failed",
+      description: error.response?.data?.message || "Please check your details and try again.",
       variant: "destructive"
     });
     return { error };
@@ -80,8 +80,8 @@ const signUp = async (email: string, password: string, username: string, user_ty
    // console.log(response);
      setuserinlocalstorage(response.data.user,response.data.access,response.data.refresh)
     toast({
-    title: "Login successful",
-    description: "You are now logged in.",
+    title: "Welcome back! 👋",
+    description: "You’ve logged in successfully.",
     variant: "success"
   });
 
