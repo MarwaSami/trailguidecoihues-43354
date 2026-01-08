@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   MapPin,
   Briefcase,
@@ -24,6 +25,7 @@ import {
   Globe,
   Award,
   Loader2,
+  CheckCircle,
 } from "lucide-react";
 import axios from "axios";
 import { baseURL, useAuth } from "@/context/AuthContext";
@@ -163,10 +165,7 @@ const JobProposal = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 pt-24 pb-12">
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="ml-4 text-lg">Generating your proposal...</p>
-          </div>
+          <LoadingSpinner size="lg" message="Generating your proposal..." />
         </main>
       </div>
     );
@@ -234,8 +233,9 @@ const JobProposal = () => {
       );
 
       toast({
-        title: "Proposal Submitted!",
-        description: "Your proposal has been sent to the client.",
+        title: "✓ Proposal Submitted!",
+        description: "Your proposal has been sent to the client successfully.",
+        className: "bg-green-50 border-green-200 text-green-800",
       });
 
       setTimeout(() => {
