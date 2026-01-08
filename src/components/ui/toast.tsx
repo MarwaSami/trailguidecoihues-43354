@@ -4,7 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { success } from "zod/v4-mini";
 
 const ToastProvider = ToastPrimitives.Provider;
 
@@ -85,13 +84,13 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-full p-1.5 text-foreground/50 opacity-0 transition-all group-hover:opacity-100 hover:bg-background/20 hover:text-foreground hover:scale-110 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary",
+      "absolute right-3 top-3 rounded-lg p-2 bg-background/30 backdrop-blur-sm text-foreground/70 opacity-100 transition-all hover:bg-background/50 hover:text-foreground hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm border border-border/30",
       className,
     )}
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-4 w-4" strokeWidth={2.5} />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
