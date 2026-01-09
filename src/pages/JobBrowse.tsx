@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useJobs } from "@/context/JobContext";
-import { Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Star, Eye } from "lucide-react";
+import { Search, MapPin, Briefcase, Clock, DollarSign, Bookmark, Send, Zap, TrendingUp, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { set } from "date-fns";
 import { JobDetailsDialog } from "@/components/JobDetailsDialog";
@@ -305,58 +305,20 @@ const JobBrowse = () => {
                     key={job.id}
                     className="p-6 bg-background/40 backdrop-blur-xl border border-border/50 hover:border-primary/30 shadow-[var(--shadow-glass)] hover:shadow-[var(--shadow-glow)] transition-all duration-400"
                   >
-                    <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex flex-col md:flex-row justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold">{job.title}</h3>
-                            </div>
-                            <p className="text-muted-foreground">Client Name: {job.client_name}</p>
+                            <h3 className="text-xl font-bold mb-1">{job.title}</h3>
+                            <p className="text-sm text-muted-foreground">{job.client_name}</p>
                           </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <Badge variant="secondary" className="mb-2">{job.status === "draft" ? "open" : job.status}</Badge>
-                            <Button variant="ghost" size="icon">
-                              <Bookmark className="w-5 h-5" />
-                            </Button>
-                            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-accent/10 px-3 py-2 rounded-lg">
-                              <Star className="w-5 h-5 text-primary fill-primary" />
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-primary">
-                                  {Math.floor(job.match_score * 100)}%
-                                </div>
-                                <div className="text-xs text-muted-foreground">Match</div>
-                              </div>
+                          <div className="text-right ml-4">
+                            <div className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                              {Math.floor(job.match_score * 100)}%
                             </div>
+                            <p className="text-xs text-muted-foreground">Match</p>
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {job.location}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
-                            {capitalize(String(job.job_type))}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4" />
-                            <span className="font-bold text-primary">
-                              {typeof job.budget === 'string' 
-                                ? job.budget 
-                                : `$${Number(job.budget).toLocaleString()}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {new Date(job.created_at).toLocaleDateString()}
-                          </div>
-                        </div>
-
-                        {/* <p className="text-muted-foreground mb-4 leading-relaxed">
-                          {job.description.substring(0,10)}
-                        </p> */}
 
                         <div className="flex flex-wrap gap-2 mb-3">
                           {job.required_skills?.map((skill, idx) => (
@@ -366,10 +328,14 @@ const JobBrowse = () => {
                           ))}
                         </div>
 
-                        <div className="text-sm text-muted-foreground">
-                          Experience Level:{" "}
-                          <span className="font-medium text-foreground">
-                            {job.experience_level}
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="font-bold text-primary">
+                            {typeof job.budget === 'string' 
+                              ? job.budget 
+                              : `$${Number(job.budget).toLocaleString()}`}
+                          </span>
+                          <span className="text-muted-foreground">
+                            Posted at {new Date(job.created_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
@@ -383,12 +349,12 @@ const JobBrowse = () => {
                           <Send className="w-4 h-4" />
                           Apply Now
                         </Button>
-                        <div className="flex gap-2">
-                          <JobDetailsDialog job={job} userType="freelancer" />
-                          <Button variant="outline" size="sm">
-                            <Bookmark className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <JobDetailsDialog job={job} userType="freelancer" />
+                        {job.proposal_status && (
+                          <p className="w-full text-center text-muted-foreground text-sm">
+                            {job.proposal_status}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </Card>
