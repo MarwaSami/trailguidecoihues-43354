@@ -162,21 +162,21 @@ const FreelancerDashboard = () => {
                       </div>
                     </div>
                      <div className="flex flex-col gap-3 lg:w-48">
-                          <Button
-                            variant="hero"
-                            className="gap-2"
-                            onClick={() => navigate("/job-proposal", { state: { job } })}
-                          >
-                            <Send className="w-4 h-4" />
-                            Apply Now
-                          </Button>
-                          <JobDetailsDialog job={job} userType="freelancer" />
-                          {job.proposal_status && (
-                            <p className="w-full text-center text-muted-foreground">
+                          {!job.proposal_status ? (
+                            <Button
+                              variant="hero"
+                              className="gap-2"
+                              onClick={() => navigate("/job-proposal", { state: { job } })}
+                            >
+                              <Send className="w-4 h-4" />
+                              Apply Now
+                            </Button>
+                          ) : (
+                            <Badge variant="secondary" className="w-full justify-center py-2">
                               {job.proposal_status}
-                            </p>
+                            </Badge>
                           )}
-
+                          <JobDetailsDialog job={job} userType="freelancer" />
                         </div>
                   </div>
                 </Card>
