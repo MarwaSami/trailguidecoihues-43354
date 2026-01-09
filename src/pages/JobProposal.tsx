@@ -233,11 +233,10 @@ const JobProposal = () => {
       );
 
       toast({
-        title: "✓ Proposal Submitted!",
-        description: "Your proposal has been sent to the client successfully.",
-        className: "bg-green-50 border-green-200 text-green-800",
-      });
-
+          title: "Proposal Submitted 🎉",
+          description: `Your proposal has been sent to the client successfully.`,
+          variant: "success",
+        });
       setTimeout(() => {
         navigate("/my-proposals");
       }, 2000);
