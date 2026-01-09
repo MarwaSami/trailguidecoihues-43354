@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CelebrationAnimation } from "@/components/CelebrationAnimation";
 import {
   MapPin,
   Briefcase,
@@ -93,6 +94,7 @@ const JobProposal = () => {
   const [proposalData, setProposalData] = useState<any>(null);
   const [proposalId, setProposalId] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Generate proposal on load
   useEffect(() => {
@@ -232,15 +234,18 @@ const JobProposal = () => {
         }
       );
 
+      // Show celebration animation
+      setShowCelebration(true);
+
       toast({
-        title: "✓ Proposal Submitted!",
+        title: "Proposal Submitted!",
         description: "Your proposal has been sent to the client successfully.",
-        className: "bg-green-50 border-green-200 text-green-800",
+        variant: "success",
       });
 
       setTimeout(() => {
         navigate("/my-proposals");
-      }, 2000);
+      }, 3000);
     } catch (error: any) {
       console.error("Error submitting proposal:", error);
       toast({
@@ -265,7 +270,8 @@ const JobProposal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <CelebrationAnimation show={showCelebration} onComplete={() => setShowCelebration(false)} />
       <Navbar />
 
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">

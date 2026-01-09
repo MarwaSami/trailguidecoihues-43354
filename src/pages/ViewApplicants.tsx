@@ -273,7 +273,7 @@ const ViewApplicants = () => {
                         </Button>
                       )}
                       <ProposalDetailsDialog proposalId={candidate.proposal_id} freelancerName={candidate.freelancer_name} freelancerLocation={candidate.freelancer_location} />
-                      {interviewAvailability && (
+                      {interviewAvailability && candidate.interview_score >= 0 && (
                         <Button variant="outline" className="gap-2 h-11" onClick={() => { setSelectedReport(candidate.report); setReportDialogOpen(true); }}>
                           <FileText className="w-4 h-4" />
                           View Report
@@ -299,6 +299,13 @@ const ViewApplicants = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AcceptanceDialog 
+        open={acceptDialogOpen} 
+        onOpenChange={setAcceptDialogOpen} 
+        candidateName={acceptedCandidateName}
+        jobId={jobId}
+      />
     </div>
   );
 };
