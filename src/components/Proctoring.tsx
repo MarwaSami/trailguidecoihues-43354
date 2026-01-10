@@ -396,11 +396,11 @@ export default function OldProctoring() {
 
             {/* Control Buttons */}
             <div className="flex justify-center gap-4 mt-6">
-              {/* Show Start/End Interview button only when not ending or ended */}
-              {!isEnding && !interviewEnded && (
+              {/* Show Start/End Interview button */}
+              {!interviewEnded && (
                 <Button
                   onClick={async () => {
-                    if (camReady && !interviewStopped) {
+                    if (camReady && !interviewStopped && !isEnding) {
                       // End the interview
                       setIsEnding(true);
                       await endInterview();
@@ -414,7 +414,7 @@ export default function OldProctoring() {
                       }
                     }
                   }}
-                  disabled={interviewStopped && violationCount >= 2}
+                  disabled={(interviewStopped && violationCount >= 2) || isEnding}
                   variant={camReady ? "destructive" : "default"}
                   size="lg"
                   className="min-w-[150px] font-semibold"
@@ -427,7 +427,7 @@ export default function OldProctoring() {
                 </Button>
               )}
 
-              {/* Show Speak button only when interview is active */}
+              {/* Hide Speak button when isEnding or interviewEnded */}
               {!isEnding && !interviewEnded && (
                 <Button
                   onClick={toggleMic}
