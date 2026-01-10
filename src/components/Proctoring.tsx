@@ -293,20 +293,26 @@ export default function OldProctoring() {
 
   // Auto-end interview when AI says "Thank you for your time"
   useEffect(() => {
-    if (currentSession && currentSession.transcript.length > 0 && !isEnding) {
+    if (currentSession && currentSession.transcript.length > 0 && !isEnding && !interviewEnded) {
       const lastEntry = currentSession.transcript[currentSession.transcript.length - 1];
-      if (lastEntry.role === 'ai' && lastEntry.text.includes("Thank you for your time")) {
+      if (lastEntry.role === 'ai' && lastEntry.text.toLowerCase().includes("thank you for your time")) {
         // Auto-trigger end interview
         setIsEnding(true);
-        // setTimeout(async () => {
-        //   await endInterview();
-        //   stopCam();
-        //   setInterviewEnded(true);
-        //   toast.success("Interview completed successfully", { duration: 4000 });
-        // }, 2000); // Small delay to let user see the message
+        setTimeout(async () => {
+          try {
+            await endInterview();
+            stopCam();
+            setInterviewEnded(true);
+            toast.success("Interview completed successfully", { duration: 4000 });
+          } catch (err) {
+            console.error("Failed to end interview:", err);
+            toast.error("Failed to end interview");
+            setIsEnding(false);
+          }
+        }, 2000); // Small delay to let user see the message
       }
     }
-  }, [currentSession?.transcript, isEnding]);
+  }, [currentSession?.transcript, isEnding, interviewEnded]);
 
   /* ------------------- UI ------------------- */
   return (
