@@ -10,19 +10,24 @@ import { useToast } from "@/hooks/use-toast";
 import { AddProfileinDB, Profile, uploadCvTodb, useProfileData } from "@/context/ProfileContext";
 import { useNavigate } from "react-router-dom";
 
-// Predefined location options
+// Predefined location options (countries)
 const LOCATION_OPTIONS = [
   { value: "Remote", label: "Remote", icon: Globe },
-  { value: "New York, USA", label: "New York, USA", icon: MapPin },
-  { value: "San Francisco, USA", label: "San Francisco, USA", icon: MapPin },
-  { value: "London, UK", label: "London, UK", icon: MapPin },
-  { value: "Berlin, Germany", label: "Berlin, Germany", icon: MapPin },
-  { value: "Toronto, Canada", label: "Toronto, Canada", icon: MapPin },
-  { value: "Sydney, Australia", label: "Sydney, Australia", icon: MapPin },
-  { value: "Dubai, UAE", label: "Dubai, UAE", icon: MapPin },
+  { value: "Egypt", label: "Egypt", icon: MapPin },
+  { value: "United States", label: "United States", icon: MapPin },
+  { value: "United Kingdom", label: "United Kingdom", icon: MapPin },
+  { value: "Germany", label: "Germany", icon: MapPin },
+  { value: "Canada", label: "Canada", icon: MapPin },
+  { value: "Australia", label: "Australia", icon: MapPin },
+  { value: "United Arab Emirates", label: "United Arab Emirates", icon: MapPin },
+  { value: "Saudi Arabia", label: "Saudi Arabia", icon: MapPin },
+  { value: "France", label: "France", icon: MapPin },
+  { value: "Netherlands", label: "Netherlands", icon: MapPin },
   { value: "Singapore", label: "Singapore", icon: MapPin },
-  { value: "Tokyo, Japan", label: "Tokyo, Japan", icon: MapPin },
-  { value: "Paris, France", label: "Paris, France", icon: MapPin },
+  { value: "Japan", label: "Japan", icon: MapPin },
+  { value: "India", label: "India", icon: MapPin },
+  { value: "Brazil", label: "Brazil", icon: MapPin },
+  { value: "South Africa", label: "South Africa", icon: MapPin },
 ];
 
 export const ProfileForm = () => {
