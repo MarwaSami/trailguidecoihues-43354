@@ -396,66 +396,71 @@ export default function OldProctoring() {
 
             {/* Control Buttons */}
             <div className="flex justify-center gap-4 mt-6">
-              <Button
-                onClick={async () => {
-                  if (camReady && !interviewStopped && !isEnding) {
-                    // End the interview
-                    setIsEnding(true);
-                    await endInterview();
-                    stopCam();
-                    setInterviewEnded(true);
-                    // setTimeout(() => {
-                    //   navigate('/my-proposals');
-                    // }, 1500);
-                  } else if (!camReady) {
-                    startCam();
-                    if (!currentSession) {
-                      const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
-                      await startInterview(freelancerId, ["React", "TypeScript"]);
+              {/* Show Start/End Interview button only when not ending or ended */}
+              {!isEnding && !interviewEnded && (
+                <Button
+                  onClick={async () => {
+                    if (camReady && !interviewStopped) {
+                      // End the interview
+                      setIsEnding(true);
+                      await endInterview();
+                      stopCam();
+                      setInterviewEnded(true);
+                    } else if (!camReady) {
+                      startCam();
+                      if (!currentSession) {
+                        const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
+                        await startInterview(freelancerId, ["React", "TypeScript"]);
+                      }
                     }
-                  }
-                }}
-                disabled={(interviewStopped && violationCount >= 2) || isEnding}
-                variant={camReady ? "destructive" : "default"}
-                size="lg"
-                className="min-w-[150px] font-semibold"
-              >
-                {interviewStopped && violationCount >= 2 
-                  ? "No Retries Left" 
-                  : camReady 
-                    ? "End Interview" 
-                    : "Start Interview"}
-              </Button>
+                  }}
+                  disabled={interviewStopped && violationCount >= 2}
+                  variant={camReady ? "destructive" : "default"}
+                  size="lg"
+                  className="min-w-[150px] font-semibold"
+                >
+                  {interviewStopped && violationCount >= 2 
+                    ? "No Retries Left" 
+                    : camReady 
+                      ? "End Interview" 
+                      : "Start Interview"}
+                </Button>
+              )}
 
-              <Button
-                onClick={toggleMic}
-                disabled={!camReady || interviewStopped || isSending || interviewEnded}
-                variant={isRecording ? "destructive" : "default"}
-                size="lg"
-                className="gap-2 min-w-[120px] font-semibold relative"
-              >
-                {isSending ? (
-                  <>
-                    <Sparkles className="h-5 w-5 animate-pulse" />
-                    <span className="animate-pulse">Processing</span>
-                  </>
-                ) : (
-                  <>
-                    {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                    {isRecording ? "Stop" : "Speak"}
-                  </>
-                )}
-              </Button>
+              {/* Show Speak button only when interview is active */}
+              {!isEnding && !interviewEnded && (
+                <Button
+                  onClick={toggleMic}
+                  disabled={!camReady || interviewStopped || isSending}
+                  variant={isRecording ? "destructive" : "default"}
+                  size="lg"
+                  className="gap-2 min-w-[120px] font-semibold relative"
+                >
+                  {isSending ? (
+                    <>
+                      <Sparkles className="h-5 w-5 animate-pulse" />
+                      <span className="animate-pulse">Processing</span>
+                    </>
+                  ) : (
+                    <>
+                      {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                      {isRecording ? "Stop" : "Speak"}
+                    </>
+                  )}
+                </Button>
+              )}
 
-              <Button
-                onClick={() => setShowResults(true)}
-                disabled={!currentSession || currentSession.status !== 'completed'}
-                variant="outline"
-                size="lg"
-                className="min-w-[150px] font-semibold"
-              >
-                View Results
-              </Button>
+              {/* Show View Results when interview is ending or ended */}
+              {(isEnding || interviewEnded) && (
+                <Button
+                  onClick={() => setShowResults(true)}
+                  variant="default"
+                  size="lg"
+                  className="min-w-[150px] font-semibold"
+                >
+                  View Results
+                </Button>
+              )}
             </div>
 
             {/* Processing State Overlay */}
