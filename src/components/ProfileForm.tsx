@@ -1,5 +1,5 @@
 import { baseURL, useAuth } from "@/context/AuthContext";
-import { Plus, X } from "lucide-react";
+import { Plus, X, MapPin, Globe } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,19 +8,66 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { AddProfileinDB, Profile, uploadCvTodb, useProfileData } from "@/context/ProfileContext";
-import { number } from "zod/v4-mini";
-import { set } from "date-fns";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
+// Predefined location options
+const LOCATION_OPTIONS = [
+  { value: "Remote", label: "Remote", icon: Globe },
+  { value: "New York, USA", label: "New York, USA", icon: MapPin },
+  { value: "San Francisco, USA", label: "San Francisco, USA", icon: MapPin },
+  { value: "London, UK", label: "London, UK", icon: MapPin },
+  { value: "Berlin, Germany", label: "Berlin, Germany", icon: MapPin },
+  { value: "Toronto, Canada", label: "Toronto, Canada", icon: MapPin },
+  { value: "Sydney, Australia", label: "Sydney, Australia", icon: MapPin },
+  { value: "Dubai, UAE", label: "Dubai, UAE", icon: MapPin },
+  { value: "Singapore", label: "Singapore", icon: MapPin },
+  { value: "Tokyo, Japan", label: "Tokyo, Japan", icon: MapPin },
+  { value: "Paris, France", label: "Paris, France", icon: MapPin },
+];
 
 export const ProfileForm = () => {
   const { toast } = useToast();
-  const [uploading, setUploading] = useState(false); // handles spinner
-  const [isProcessing, setIsProcessing] = useState(false); // handles API CV processing state
+  const [uploading, setUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { user, token } = useAuth();
   const { profile, setProfile } = useProfileData();
   const [newSkill, setNewSkill] = useState("");
+  const [newLocation, setNewLocation] = useState("");
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const navigate = useNavigate();
+
+  // Parse preferred_location as array
+  const getLocationsArray = (): string[] => {
+    if (!profile?.preferred_location) return [];
+    if (Array.isArray(profile.preferred_location)) return profile.preferred_location;
+    return profile.preferred_location.split(',').map(l => l.trim()).filter(Boolean);
+  };
+
+  const setLocationsArray = (locations: string[]) => {
+    setProfile({
+      ...profile,
+      preferred_location: locations.join(', ')
+    });
+  };
+
+  const addLocation = (location: string) => {
+    const current = getLocationsArray();
+    if (!current.includes(location)) {
+      setLocationsArray([...current, location]);
+    }
+    setNewLocation("");
+    setShowLocationSuggestions(false);
+  };
+
+  const removeLocation = (location: string) => {
+    const current = getLocationsArray();
+    setLocationsArray(current.filter(l => l !== location));
+  };
+
+  const filteredLocationOptions = LOCATION_OPTIONS.filter(
+    opt => !getLocationsArray().includes(opt.value) &&
+    opt.label.toLowerCase().includes(newLocation.toLowerCase())
+  );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,18 +202,122 @@ const handleSubmit = async (e: React.FormEvent) => {
           }
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="preferred_location">Preferred Location</Label>
-        <Input
-          id="preferred_location"
-          value={profile.preferred_location || ""}
-          onChange={(e) =>
-            setProfile({
-              ...profile,
-              preferred_location: e.target.value,
-            })
-          }
-        />
+      {/* ===== PREFERRED LOCATIONS SECTION ===== */}
+      <div className="space-y-3">
+        <Label className="text-base font-semibold flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          Preferred Locations
+        </Label>
+        
+        {/* Current Locations as Badges */}
+        <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg min-h-[60px] border border-border/50">
+          {getLocationsArray().length > 0 ? (
+            getLocationsArray().map((location, index) => (
+              <Badge 
+                key={index} 
+                variant="secondary" 
+                className={`px-3 py-1.5 gap-2 text-sm transition-colors ${
+                  location === "Remote" 
+                    ? "bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300" 
+                    : "bg-primary/10 hover:bg-primary/20"
+                }`}
+              >
+                {location === "Remote" ? (
+                  <Globe className="w-3 h-3" />
+                ) : (
+                  <MapPin className="w-3 h-3" />
+                )}
+                {location}
+                <button
+                  type="button"
+                  onClick={() => removeLocation(location)}
+                  className="hover:text-destructive transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No locations added. Select or type your preferred work locations.</p>
+          )}
+        </div>
+
+        {/* Quick Select Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {LOCATION_OPTIONS.slice(0, 5).filter(opt => !getLocationsArray().includes(opt.value)).map((opt) => (
+            <Button
+              key={opt.value}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => addLocation(opt.value)}
+              className={`gap-1.5 text-xs ${
+                opt.value === "Remote" 
+                  ? "border-emerald-500/50 hover:bg-emerald-500/10 hover:border-emerald-500" 
+                  : ""
+              }`}
+            >
+              <opt.icon className="w-3 h-3" />
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Add Custom Location */}
+        <div className="relative">
+          <div className="flex gap-2">
+            <Input
+              value={newLocation}
+              onChange={(e) => {
+                setNewLocation(e.target.value);
+                setShowLocationSuggestions(true);
+              }}
+              onFocus={() => setShowLocationSuggestions(true)}
+              placeholder="Search or add custom location..."
+              className="bg-background/50 backdrop-blur-sm"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (newLocation.trim() && !getLocationsArray().includes(newLocation.trim())) {
+                    addLocation(newLocation.trim());
+                  }
+                }
+              }}
+            />
+            <Button 
+              type="button" 
+              onClick={() => {
+                if (newLocation.trim() && !getLocationsArray().includes(newLocation.trim())) {
+                  addLocation(newLocation.trim());
+                }
+              }}
+              variant="secondary"
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          </div>
+          
+          {/* Suggestions Dropdown */}
+          {showLocationSuggestions && newLocation && filteredLocationOptions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-48 overflow-auto">
+              {filteredLocationOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => addLocation(opt.value)}
+                  className={`w-full px-4 py-2.5 text-left text-sm hover:bg-accent flex items-center gap-2 transition-colors ${
+                    opt.value === "Remote" ? "text-emerald-600 dark:text-emerald-400" : ""
+                  }`}
+                >
+                  <opt.icon className="w-4 h-4" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {/* ===== SKILLS SECTION ===== */}
       <div className="space-y-3">
