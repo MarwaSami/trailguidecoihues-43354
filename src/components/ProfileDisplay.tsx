@@ -1,7 +1,8 @@
 import { Profile } from "@/context/ProfileContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, Briefcase, MapPin, Clock, Globe, Linkedin, Github, FolderOpen } from "lucide-react";
+import { Download, Briefcase, MapPin, Clock, Globe, Linkedin, Github, FolderOpen, Pencil } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 
 interface ProfileDisplayProps {
@@ -9,6 +10,7 @@ interface ProfileDisplayProps {
 }
 
 export const ProfileDisplay = ({ profile }: ProfileDisplayProps) => {
+  const navigate = useNavigate();
   const exportToPDF = () => {
     const doc = new jsPDF();
 
@@ -68,13 +70,24 @@ export const ProfileDisplay = ({ profile }: ProfileDisplayProps) => {
 
   return (
     <div className="space-y-8">
-      {/* Header with Export Button */}
+      {/* Header with Export & Edit Buttons */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Profile Details</h2>
-        <Button onClick={exportToPDF} className="gap-2">
-          <Download className="w-4 h-4" />
-          Export PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/freelancer-profile', { state: { editMode: true } })} 
+            className="gap-2"
+            style={{ borderColor: '#794dde', color: '#794dde' }}
+          >
+            <Pencil className="w-4 h-4" />
+            Edit Profile
+          </Button>
+          <Button onClick={exportToPDF} className="gap-2">
+            <Download className="w-4 h-4" />
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       {/* Main Info Cards */}
@@ -108,10 +121,10 @@ export const ProfileDisplay = ({ profile }: ProfileDisplayProps) => {
         )}
 
         {hasValue(profile.preferred_location) && (
-          <div className="bg-gradient-to-br from-secondary/50 to-secondary/30 rounded-xl p-4 border border-border/50">
+          <div className="bg-gradient-to-br from-[#794dde]/10 to-[#794dde]/5 rounded-xl p-4 border border-[#794dde]/20">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-secondary rounded-lg">
-                <MapPin className="w-5 h-5 text-foreground" />
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(121, 77, 222, 0.2)' }}>
+                <MapPin className="w-5 h-5" style={{ color: '#794dde' }} />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Location</p>
@@ -206,8 +219,8 @@ export const ProfileDisplay = ({ profile }: ProfileDisplayProps) => {
             {profile.skills.map((skill, index) => (
               <Badge 
                 key={index} 
-                variant="secondary" 
-                className="px-3 py-1.5 text-sm bg-gradient-to-r from-primary/10 to-accent/10 hover:from-primary/20 hover:to-accent/20 transition-colors"
+                className="px-3 py-1.5 text-sm text-white transition-colors"
+                style={{ backgroundColor: '#974dde', opacity: 1 }}
               >
                 {skill}
               </Badge>
