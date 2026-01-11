@@ -122,14 +122,8 @@ const FreelancerProfile = () => {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="pt-4 border-t border-border/50">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 rounded-lg bg-primary/10">
-                      <p className="text-2xl font-bold text-primary">
-                        {profile?.score || 0}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Profile Score</p>
-                    </div>
+                {hasProfile && profile && (
+                  <div className="pt-4 border-t border-border/50">
                     <div className="text-center p-3 rounded-lg bg-accent/10">
                       <p className="text-2xl font-bold text-accent">
                         {profile?.skills?.length || 0}
@@ -137,7 +131,7 @@ const FreelancerProfile = () => {
                       <p className="text-xs text-muted-foreground">Skills</p>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
