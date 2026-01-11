@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Play } from "lucide-react";
 import { Link } from "react-router-dom";
-const HeroSection =() => {
+import HeroSlider from "./HeroSlider";
+
+const HeroSection = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-subtle overflow-hidden">
       {/* Background decoration */}
@@ -73,19 +75,14 @@ const HeroSection =() => {
             </div>
           </div>
           
-          {/* Right side - Hero image */}
+          {/* Right side - Hero Slider */}
           <div className="relative animate-scale-in" style={{ animationDelay: '0.3s' }}>
-            <div className="relative rounded-2xl overflow-hidden shadow-strong">
-              <img 
-                src={"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"} 
-                alt="Professional interview coaching platform showing diverse professionals in modern office setting"
-                className="w-full h-auto object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-primary/10"></div>
+            <div className="relative h-[400px] md:h-[500px]">
+              <HeroSlider />
             </div>
             
             {/* Floating cards */}
-            <div className="absolute -top-6 -left-6 bg-card border shadow-medium rounded-xl p-4 animate-float">
+            <div className="absolute -top-6 -left-6 bg-card border shadow-medium rounded-xl p-4 animate-float z-10">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-success-foreground" />
@@ -97,7 +94,7 @@ const HeroSection =() => {
               </div>
             </div>
             
-            <div className="absolute -bottom-6 -right-6 bg-card border shadow-medium rounded-xl p-4 animate-float" style={{ animationDelay: '1.5s' }}>
+            <div className="absolute -bottom-6 -right-6 bg-card border shadow-medium rounded-xl p-4 animate-float z-10" style={{ animationDelay: '1.5s' }}>
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                   <Play className="w-5 h-5 text-primary-foreground" />

@@ -17,8 +17,8 @@ import {
   Award
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
-import freelancerHappy from "@/assets/freelancer-happy.png";
-import clientHappy from "@/assets/client-happy.png";
+import freelancerReal from "@/assets/freelancer-real.jpg";
+import clientReal from "@/assets/client-real.jpg";
 import HeroSection from "@/components/HeroSection";
 
 const Home = () => {
@@ -149,9 +149,9 @@ const Home = () => {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-accent/20 rounded-3xl blur-2xl" />
                   <img 
-                    src={freelancerHappy} 
+                    src={freelancerReal} 
                     alt="Happy Freelancer" 
-                    className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl"
+                    className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl object-cover aspect-[3/4]"
                   />
                 </div>
               </div>
@@ -201,9 +201,9 @@ const Home = () => {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl" />
                   <img 
-                    src={clientHappy} 
+                    src={clientReal} 
                     alt="Happy Client" 
-                    className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl"
+                    className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl object-cover aspect-[3/4]"
                   />
                 </div>
               </div>
