@@ -4,7 +4,7 @@ import { ProfileDisplay } from "@/components/ProfileDisplay";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ProfileformProvider, useProfileData, fetchProfileById } from "@/context/ProfileContext";
+import { ProfileformProvider, useProfileData, fetchFreelancerProfiles } from "@/context/ProfileContext";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const FreelancerProfile = () => {
@@ -13,7 +13,6 @@ const FreelancerProfile = () => {
   const navigate = useNavigate();
   const [hasProfile, setHasProfile] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const profilestep = 1;
 
   useEffect(() => {
     // if (!loading && !user) {
@@ -23,12 +22,22 @@ const FreelancerProfile = () => {
 
   useEffect(() => {
     const checkProfile = async () => {
-      const profileId = localStorage.getItem('freelancer_profile_id');
-      if (profileId && token) {
+      if (token) {
         try {
-          const data = await fetchProfileById(profileId, token);
-          setProfile(data);
-          setHasProfile(true);
+          // Fetch profiles from the Python backend endpoint
+          const profiles = await fetchFreelancerProfiles(token);
+          if (profiles && profiles.length > 0) {
+            // Use the first profile (or you can add logic to select specific one)
+            const userProfile = profiles[0];
+            setProfile(userProfile);
+            setHasProfile(true);
+            // Store profile ID for future reference
+            if (userProfile.id) {
+              localStorage.setItem('freelancer_profile_id', userProfile.id.toString());
+            }
+          } else {
+            setHasProfile(false);
+          }
         } catch (error) {
           console.error('Failed to fetch profile:', error);
           setHasProfile(false);
