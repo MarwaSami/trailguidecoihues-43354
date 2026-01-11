@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import axios from "axios";
 import { baseURL } from "./AuthContext";
 
-// Define the profile structure
+// Define the profile structure matching Python backend
 export interface Profile {
   id?: number;
   skills: string[];
@@ -10,12 +10,15 @@ export interface Profile {
   hourly_rate: string;
   portfolio_website: string;
   preferred_location: string;
-  job_type: string;
+  job_type_preferences: string;
   linked_in_profile: string;
   github_profile: string;
-  category: string;
-  cv: string;
+  categories_of_expertise: string;
+  cv?: string;
   score?: number;
+  // Legacy fields for compatibility
+  job_type?: string;
+  category?: string;
 }
 
 export interface CvUploadedResponse {
@@ -33,16 +36,16 @@ const ProfileformContext = createContext<ProfileformContextType | undefined>(und
 
 export const ProfileformProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>({
-  skills: [],
-  experience_years: 0,
-  hourly_rate: "",
-  portfolio_website: "",
-  preferred_location: "",
-  job_type: "",
-  linked_in_profile: "",
-  github_profile: "",
-  category: "",
-  cv: "",
+    skills: [],
+    experience_years: 0,
+    hourly_rate: "",
+    portfolio_website: "",
+    preferred_location: "",
+    job_type_preferences: "",
+    linked_in_profile: "",
+    github_profile: "",
+    categories_of_expertise: "",
+    cv: "",
   });
 
   return (
@@ -84,6 +87,17 @@ export const AddProfileinDB = async (profile: Profile, token: string, user_id: n
   const response = await axios.post<{data: Profile, is_success: boolean}>(`${baseURL}jobs/freelancer-profiles/`, profile, {
     headers: {
       Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+// Fetch all profiles for current user
+export const fetchFreelancerProfiles = async (token: string): Promise<Profile[]> => {
+  const response = await axios.get<Profile[]>(`${baseURL}jobs/freelancer-profiles/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
   });
   return response.data;
