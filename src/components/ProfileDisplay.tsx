@@ -44,11 +44,6 @@ export const ProfileDisplay = ({ profile }: ProfileDisplayProps) => {
       y += 8;
     });
 
-    if (profile.score) {
-      y += 10;
-      doc.text(`Profile Score: ${profile.score}/100`, 20, y);
-    }
-
     doc.save("freelancer-profile.pdf");
   };
 
@@ -229,22 +224,6 @@ export const ProfileDisplay = ({ profile }: ProfileDisplayProps) => {
         </div>
       )}
 
-      {/* Score Section */}
-      {profile.score && (
-        <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-xl p-6 border border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Profile Score</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                {profile.score}/100
-              </p>
-            </div>
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">{profile.score}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
