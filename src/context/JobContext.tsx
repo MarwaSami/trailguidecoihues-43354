@@ -22,6 +22,7 @@ export interface allfreelancerJobs {
 export enum proposal_status{
   DRAFTED="DRAFTED",
   SUBMITTED="SUBMITTED",
+  PENDING="PENDING",
   ACCEPTED="ACCEPTED",
   REJECTED="REJECTED"
 }
@@ -46,7 +47,7 @@ export const JobProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem("token");
-   //   console.log("Using token:", token);
+     //console.log("Jobs", jobs);
       if (!token) {
         console.log("error");
         

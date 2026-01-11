@@ -244,7 +244,7 @@ const JobProposal = () => {
         });
       setTimeout(() => {
         navigate("/my-proposals");
-      }, 3000);
+      }, 5000);
     } catch (error: any) {
       console.error("Error submitting proposal:", error);
       toast({
@@ -270,8 +270,8 @@ const JobProposal = () => {
 
   return (
     <div className="min-h-screen bg-background relative">
-      <CelebrationAnimation show={showCelebration} onComplete={() => setShowCelebration(false)} />
       <Navbar />
+      <CelebrationAnimation show={showCelebration} onComplete={() => setShowCelebration(false)} />
 
       <main className="container mx-auto px-4 pt-24 pb-12 animate-fade-in">
         <Button

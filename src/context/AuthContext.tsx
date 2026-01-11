@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { log } from '@tensorflow/tfjs';
 
 interface AuthContextType {
   user: any | null; // Adjusted to `any` since the user structure may differ
@@ -61,6 +62,15 @@ const signUp = async (email: string, password: string, username: string, user_ty
     });
     return { error: null };
   } catch (error: any) {
+    console.error("Signup error:", error);
+    if(error.message.includes("Network Error")){
+      toast({
+        title: "Network Error",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive"
+      })
+      return { error };
+      }
     toast({
       title: "Oops! Signup Failed",
       description: error.response?.data?.message || "Please check your details and try again.",
