@@ -5,62 +5,102 @@ interface CelebrationAnimationProps {
   onComplete?: () => void;
 }
 
-// Balloon SVG component
-const Balloon = ({ color, size }: { color: string; size: number }) => (
-  <svg
-    width={size}
-    height={size * 1.3}
-    viewBox="0 0 40 52"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    {/* Balloon body */}
-    <ellipse cx="20" cy="18" rx="18" ry="18" fill={color} />
-    {/* Shine effect */}
-    <ellipse cx="12" cy="12" rx="4" ry="6" fill="white" fillOpacity="0.3" />
-    {/* Balloon knot */}
-    <path d="M18 36L20 38L22 36L20 34L18 36Z" fill={color} />
-    {/* String */}
-    <path
-      d="M20 38C20 42 18 46 20 50"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      style={{ filter: "brightness(0.7)" }}
+// Confetti piece component
+const ConfettiPiece = ({ color, shape, size }: { color: string; shape: 'ribbon' | 'circle' | 'square' | 'star' | 'streamer'; size: number }) => {
+  if (shape === 'ribbon') {
+    return (
+      <svg width={size * 2} height={size * 4} viewBox="0 0 20 40" fill="none">
+        <path
+          d="M2 0C2 0 8 10 2 20C-4 30 12 40 12 40"
+          stroke={color}
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+    );
+  }
+  
+  if (shape === 'streamer') {
+    return (
+      <svg width={size * 3} height={size * 5} viewBox="0 0 30 50" fill="none">
+        <path
+          d="M15 0C15 0 5 15 15 25C25 35 10 50 10 50"
+          stroke={color}
+          strokeWidth="4"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+    );
+  }
+  
+  if (shape === 'star') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+        <path d="M12 2L14.09 8.26L21 9.27L16.5 14.14L17.18 21.02L12 17.77L6.82 21.02L7.5 14.14L3 9.27L9.91 8.26L12 2Z" />
+      </svg>
+    );
+  }
+  
+  if (shape === 'circle') {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          backgroundColor: color,
+        }}
+      />
+    );
+  }
+  
+  // Square
+  return (
+    <div
+      style={{
+        width: size,
+        height: size * 0.6,
+        backgroundColor: color,
+        borderRadius: 2,
+      }}
     />
-  </svg>
-);
+  );
+};
 
-// Colorful balloon colors like a birthday party
-const balloonColors = [
+// Festive confetti colors
+const confettiColors = [
   "#FF6B6B", // Red
-  "#4ECDC4", // Teal
-  "#FFE66D", // Yellow
-  "#95E1D3", // Mint
-  "#F38181", // Coral
+  "#FFD93D", // Yellow
+  "#6BCB77", // Green
+  "#4D96FF", // Blue
+  "#FF8B94", // Pink
   "#AA96DA", // Purple
-  "#FCBAD3", // Pink
-  "#A8E6CF", // Light Green
-  "#FF8B94", // Salmon
-  "#88D8B0", // Sea Green
+  "#F38181", // Coral
+  "#95E1D3", // Mint
+  "#FFB6C1", // Light Pink
+  "#87CEEB", // Sky Blue
   "#FFEAA7", // Light Yellow
   "#DDA0DD", // Plum
-  "#87CEEB", // Sky Blue
-  "#F0E68C", // Khaki
-  "#FFB6C1", // Light Pink
+  "#98D8C8", // Sea Green
+  "#F7DC6F", // Gold
+  "#BB8FCE", // Lavender
 ];
 
+const shapes: Array<'ribbon' | 'circle' | 'square' | 'star' | 'streamer'> = ['ribbon', 'circle', 'square', 'star', 'streamer'];
+
 export const CelebrationAnimation = ({ show, onComplete }: CelebrationAnimationProps) => {
-  const [balloons, setBalloons] = useState<number[]>([]);
+  const [confetti, setConfetti] = useState<number[]>([]);
 
   useEffect(() => {
     if (show) {
-      // Create 25 balloons for a festive effect
-      const newBalloons = Array.from({ length: 25 }, (_, i) => i);
-      setBalloons(newBalloons);
+      // Create 40 confetti pieces for a festive effect
+      const newConfetti = Array.from({ length: 40 }, (_, i) => i);
+      setConfetti(newConfetti);
 
       const timer = setTimeout(() => {
-        setBalloons([]);
+        setConfetti([]);
         onComplete?.();
       }, 4500);
 
@@ -68,29 +108,32 @@ export const CelebrationAnimation = ({ show, onComplete }: CelebrationAnimationP
     }
   }, [show, onComplete]);
 
-  if (!show || balloons.length === 0) return null;
+  if (!show || confetti.length === 0) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-      {balloons.map((i) => {
-        const color = balloonColors[Math.floor(Math.random() * balloonColors.length)];
+      {confetti.map((i) => {
+        const color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+        const shape = shapes[Math.floor(Math.random() * shapes.length)];
         const startX = Math.random() * 100;
-        const size = 30 + Math.random() * 25;
+        const size = 8 + Math.random() * 12;
         const delay = Math.random() * 1.5;
-        const duration = 3.5 + Math.random() * 1.5;
+        const duration = 3 + Math.random() * 2;
+        const rotateStart = Math.random() * 360;
         
         return (
           <div
             key={i}
-            className="absolute animate-balloon-fall"
+            className="absolute animate-confetti-fall"
             style={{
               left: `${startX}%`,
-              top: 0,
+              top: -20,
               animationDelay: `${delay}s`,
               animationDuration: `${duration}s`,
+              transform: `rotate(${rotateStart}deg)`,
             }}
           >
-            <Balloon color={color} size={size} />
+            <ConfettiPiece color={color} shape={shape} size={size} />
           </div>
         );
       })}
