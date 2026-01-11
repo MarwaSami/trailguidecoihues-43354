@@ -17,6 +17,8 @@ import {
   Award
 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
+import freelancerHappy from "@/assets/freelancer-happy.png";
+import clientHappy from "@/assets/client-happy.png";
 import HeroSection from "@/components/HeroSection";
 
 const Home = () => {
@@ -140,88 +142,109 @@ const Home = () => {
       {/* For Freelancers & Clients */}
       <section className="py-24" id="about">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-16">
             {/* For Freelancers */}
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20">
-                <Users className="w-4 h-4 text-secondary" />
-                <span className="text-sm font-medium text-secondary">For Freelancers</span>
+            <div className="flex flex-col lg:flex-row gap-8 items-center">
+              <div className="lg:w-1/2 flex-shrink-0">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-accent/20 rounded-3xl blur-2xl" />
+                  <img 
+                    src={freelancerHappy} 
+                    alt="Happy Freelancer" 
+                    className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl"
+                  />
+                </div>
               </div>
-              
-              <h2 className="text-4xl font-bold">
-                Grow Your Career with AI
-              </h2>
-              
-              <p className="text-lg text-muted-foreground">
-                Get matched with opportunities that fit your skills, receive AI-powered interview 
-                preparation, and track your growth with detailed analytics.
-              </p>
-              
-              <ul className="space-y-4">
-                {[
-                  "AI-powered job recommendations",
-                  "Automated proposal generation",
-                  "Interview practice with AI",
-                  "Skill evaluation & feedback",
-                  //"Performance analytics"
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="w-4 h-4 text-secondary" />
-                    </div>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Link to="/freelancer-profile">
-                <Button variant="secondary" size="lg" className="gap-2 mt-4">
-                  View Freelancer Features
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
+              <div className="lg:w-1/2 space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20">
+                  <Users className="w-4 h-4 text-secondary" />
+                  <span className="text-sm font-medium text-secondary">For Freelancers</span>
+                </div>
+                
+                <h2 className="text-3xl font-bold">
+                  Grow Your Career with AI
+                </h2>
+                
+                <p className="text-muted-foreground">
+                  Get matched with opportunities that fit your skills, receive AI-powered interview 
+                  preparation, and track your growth.
+                </p>
+                
+                <ul className="space-y-3">
+                  {[
+                    "AI-powered job recommendations",
+                    "Automated proposal generation",
+                    "Interview practice with AI",
+                    "Skill evaluation & feedback",
+                  ].map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="w-3 h-3 text-secondary" />
+                      </div>
+                      <span className="text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <Link to="/freelancer-profile">
+                  <Button variant="secondary" size="lg" className="gap-2 mt-4">
+                    View Freelancer Features
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
             
             {/* For Clients */}
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                <Briefcase className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-primary">For Clients</span>
+            <div className="flex flex-col lg:flex-row-reverse gap-8 items-center">
+              <div className="lg:w-1/2 flex-shrink-0">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl" />
+                  <img 
+                    src={clientHappy} 
+                    alt="Happy Client" 
+                    className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl"
+                  />
+                </div>
               </div>
-              
-              <h2 className="text-4xl font-bold">
-                Hire Top Talent Faster
-              </h2>
-              
-              <p className="text-lg text-muted-foreground">
-                Post jobs and let AI find the perfect candidates. Automated screening, skill 
-                assessment, and intelligent ranking make hiring effortless.
-              </p>
-              
-              <ul className="space-y-4">
-                {[
-                  "Automatic Proposal filtering",
-                  "AI-assisted job posting",
-                  "Validated skill assessments",
-                  // "Custom interview creation",
-                  "Candidate ranking & comparison",
-                  // "Detailed evaluation reports"
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="w-4 h-4 text-primary" />
-                    </div>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Link to="/client-dashboard">
-                <Button variant="hero" size="lg" className="gap-2 mt-4">
-                  View Client Features
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
+              <div className="lg:w-1/2 space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                  <Briefcase className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">For Clients</span>
+                </div>
+                
+                <h2 className="text-3xl font-bold">
+                  Hire Top Talent Faster
+                </h2>
+                
+                <p className="text-muted-foreground">
+                  Post jobs and let AI find the perfect candidates. Automated screening and 
+                  intelligent ranking make hiring effortless.
+                </p>
+                
+                <ul className="space-y-3">
+                  {[
+                    "Automatic Proposal filtering",
+                    "AI-assisted job posting",
+                    "Validated skill assessments",
+                    "Candidate ranking & comparison",
+                  ].map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="w-3 h-3 text-primary" />
+                      </div>
+                      <span className="text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <Link to="/client-dashboard">
+                  <Button variant="hero" size="lg" className="gap-2 mt-4">
+                    View Client Features
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

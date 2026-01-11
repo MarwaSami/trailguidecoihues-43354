@@ -151,27 +151,27 @@ All colors MUST be HSL.
     }
   }
 
-  @keyframes balloon-fall {
+  @keyframes confetti-fall {
     0% {
-      transform: translateY(-100%) rotate(0deg) scale(0.8);
+      transform: translateY(-100%) rotate(0deg) scale(0.5);
       opacity: 0;
     }
     10% {
       opacity: 1;
-      transform: translateY(-80%) rotate(5deg) scale(1);
+      transform: translateY(-50%) rotate(45deg) scale(1);
     }
-    30% {
-      transform: translateY(20%) rotate(-8deg) scale(1);
+    25% {
+      transform: translateY(10vh) rotate(90deg) translateX(20px) scale(1);
     }
     50% {
-      transform: translateY(40%) rotate(10deg) scale(1);
+      transform: translateY(40vh) rotate(180deg) translateX(-15px) scale(1);
     }
-    70% {
-      transform: translateY(60%) rotate(-5deg) scale(1);
+    75% {
+      transform: translateY(70vh) rotate(270deg) translateX(25px) scale(0.9);
     }
     100% {
-      transform: translateY(120vh) rotate(15deg) scale(1);
-      opacity: 0.8;
+      transform: translateY(110vh) rotate(360deg) translateX(-10px) scale(0.8);
+      opacity: 0;
     }
   }
 
@@ -179,7 +179,7 @@ All colors MUST be HSL.
     animation: float-up 5s ease-in forwards;
   }
 
-  .animate-balloon-fall {
-    animation: balloon-fall 4s ease-in-out forwards;
+  .animate-confetti-fall {
+    animation: confetti-fall 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
 }
