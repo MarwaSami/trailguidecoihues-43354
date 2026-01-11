@@ -24,8 +24,10 @@ const FreelancerProfile = () => {
     const checkProfile = async () => {
       if (token) {
         try {
-          // Fetch profiles from the Python backend endpoint
+       
           const profiles = await fetchFreelancerProfiles(token);
+          console.log("profile",profile);
+          
           if (profiles && profiles.length > 0) {
             // Use the first profile (or you can add logic to select specific one)
             const userProfile = profiles[0];

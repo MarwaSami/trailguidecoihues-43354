@@ -329,10 +329,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         <Label className="text-base font-semibold">Skills *</Label>
         
         {/* Current Skills as Badges */}
-        <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg min-h-[60px] border border-border/50">
+        <div className="flex flex-wrap gap-2 p-4  rounded-lg min-h-[60px] border border-border/50">
           {profile.skills && profile.skills.length > 0 ? (
             profile.skills.map((skill, index) => (
-              <Badge key={index} variant="secondary" className="px-3 py-1.5 gap-2 text-sm bg-primary/10 hover:bg-primary/20 transition-colors">
+              <Badge key={index} variant="secondary" className="px-3 py-1.5 gap-2 text-sm ">
                 {skill}
                 <button
                   type="button"
