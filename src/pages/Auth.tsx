@@ -140,7 +140,7 @@ const Auth = () => {
               <Brain className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              AI Freelance
+              SmartLance
             </span>
           </Link>
 
@@ -148,7 +148,7 @@ const Auth = () => {
             <h1 className="text-4xl font-bold mb-3">
               {isLogin?"Welcome back" : "Let's go "}
             </h1>
-            <p className="text-muted-foreground">
+            {/* <p className="text-muted-foreground">
               New here?{" "}
               <button
                 onClick={() => setIsLogin(false)}
@@ -156,7 +156,7 @@ const Auth = () => {
               >
                 Create an account
               </button>
-            </p>
+            </p> */}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -285,11 +285,12 @@ const Auth = () => {
             </Button> */}
 
             {isLogin && (
-              <p className="text-center text-sm text-muted-foreground pt-4">
+              <p className="text-center text-sm text-muted-foreground pt-4 ">
                 Don't have an account?{" "}
                 <button
                   onClick={() => setIsLogin(false)}
-                  className="text-primary hover:underline font-medium"
+                  className="text-gradient-primary text-lg  font-bold
+ "
                 >
                   Sign up
                 </button>
@@ -301,7 +302,7 @@ const Auth = () => {
                 Already have an account?{" "}
                 <button
                   onClick={() => setIsLogin(true)}
-                  className="text-primary hover:underline font-medium"
+                  className="text-gradient-primary text-lg  font-bold"
                 >
                   Sign in
                 </button>
@@ -310,7 +311,7 @@ const Auth = () => {
           </form>
 
           <div className="mt-8 text-center text-xs text-muted-foreground">
-            Copyrights © 2024 AI Freelance. Built with AI
+            Copyrights © 2025 Smartlance. All rights reserved.
           </div>
         </div>
       </div>

@@ -149,7 +149,7 @@ const Home = () => {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-accent/20 rounded-3xl blur-2xl" />
                   <img 
-                    src={freelancerReal} 
+                    src="https://images.unsplash.com/photo-1682668938117-a45b79fb4476?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8ZnJlZWxhbmNlcnxlbnwwfHwwfHx8Mg%3D%3D"
                     alt="Happy Freelancer" 
                     className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl object-cover aspect-[3/4]"
                   />
@@ -201,7 +201,7 @@ const Home = () => {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl" />
                   <img 
-                    src={clientReal} 
+                    src="https://images.unsplash.com/photo-1613909207039-6b173b755cc1?q=80&w=1247&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Happy Client" 
                     className="relative w-full max-w-[280px] mx-auto rounded-2xl shadow-xl object-cover aspect-[3/4]"
                   />

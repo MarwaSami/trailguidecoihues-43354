@@ -4,19 +4,20 @@ import { Button } from "@/components/ui/button";
 
 const HERO_IMAGES = [
   {
-    url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1534430071631-854ff55eec78?q=80&w=715&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    
     alt: "Diverse team collaborating on a project",
   },
   {
-    url: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1603969409447-ba86143a03f6?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     alt: "Freelancer working from home office",
   },
   {
-    url: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1610473068872-908afb1a7317?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fGZyZWVsYW5jZXJ8ZW58MHx8MHx8fDI%3D",
     alt: "Professional woman at work",
   },
   {
-    url: "https://images.unsplash.com/photo-1553484771-371a605b060b?w=1200&q=80",
+    url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y2xpZW50cyUyMG9uJTIwd2VifGVufDB8fDB8fHwy",
     alt: "Team meeting and planning",
   },
   {

@@ -116,6 +116,10 @@ All colors MUST be HSL.
 .text-primary{
   color:black !important
 }
+.text-gradient-primary{
+  color:#794DDE;
+
+}
 @layer base {
   * {
     @apply border-border;
