@@ -43,6 +43,9 @@ export default function OldProctoring() {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [interviewEnded, setInterviewEnded] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 
 
@@ -314,6 +317,54 @@ export default function OldProctoring() {
     }
   }, [currentSession?.transcript, isEnding, interviewEnded]);
 
+  // Start 30 second countdown after AI finishes speaking
+  useEffect(() => {
+    if (currentSession && currentSession.transcript.length > 0 && camReady && !interviewStopped && !isEnding && !interviewEnded && !isSending) {
+      const lastEntry = currentSession.transcript[currentSession.transcript.length - 1];
+      // When AI just spoke and we're not already counting down or recording
+      if (lastEntry.role === 'ai' && !isRecording && !isCountdownActive) {
+        // Start the 30 second countdown
+        setCountdown(30);
+        setIsCountdownActive(true);
+        
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+        
+        countdownIntervalRef.current = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+              }
+              setIsCountdownActive(false);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    }
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [currentSession?.transcript, camReady, interviewStopped, isEnding, interviewEnded, isSending, isRecording]);
+
+  // Stop countdown when user starts recording
+  useEffect(() => {
+    if (isRecording && countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+      setIsCountdownActive(false);
+      setCountdown(0);
+    }
+  }, [isRecording]);
+
   /* ------------------- UI ------------------- */
   return (
     <>
@@ -429,25 +480,63 @@ export default function OldProctoring() {
 
               {/* Hide Speak button when isEnding or interviewEnded */}
               {!isEnding && !interviewEnded && (
-                <Button
-                  onClick={toggleMic}
-                  disabled={!camReady || interviewStopped || isSending}
-                  variant={isRecording ? "destructive" : "default"}
-                  size="lg"
-                  className="gap-2 min-w-[120px] font-semibold relative"
-                >
-                  {isSending ? (
-                    <>
-                      <Sparkles className="h-5 w-5 animate-pulse" />
-                      <span className="animate-pulse">Processing</span>
-                    </>
-                  ) : (
-                    <>
-                      {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                      {isRecording ? "Stop" : "Speak"}
-                    </>
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    onClick={toggleMic}
+                    disabled={!camReady || interviewStopped || isSending}
+                    variant={isRecording ? "destructive" : "default"}
+                    size="lg"
+                    className="gap-2 min-w-[120px] font-semibold relative"
+                  >
+                    {isSending ? (
+                      <>
+                        <Sparkles className="h-5 w-5 animate-pulse" />
+                        <span className="animate-pulse">Processing</span>
+                      </>
+                    ) : (
+                      <>
+                        {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                        {isRecording ? "Stop" : "Speak"}
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Countdown Timer Display */}
+                  {isCountdownActive && countdown > 0 && !isRecording && !isSending && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="relative w-10 h-10">
+                        <svg className="w-10 h-10 transform -rotate-90">
+                          <circle
+                            cx="20"
+                            cy="20"
+                            r="16"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            fill="none"
+                            className="text-muted"
+                          />
+                          <circle
+                            cx="20"
+                            cy="20"
+                            r="16"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            fill="none"
+                            strokeDasharray={100}
+                            strokeDashoffset={100 - (countdown / 30) * 100}
+                            className="text-primary transition-all duration-1000"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-primary">
+                          {countdown}
+                        </span>
+                      </div>
+                      <span className="text-muted-foreground font-medium">
+                        seconds to respond
+                      </span>
+                    </div>
                   )}
-                </Button>
+                </div>
               )}
 
               {/* Show View Results when interview is ending or ended */}
