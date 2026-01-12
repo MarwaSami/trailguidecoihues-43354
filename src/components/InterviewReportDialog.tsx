@@ -33,6 +33,8 @@ export const InterviewReportDialog: React.FC<InterviewReportDialogProps> = ({
     // Try to parse as JSON first
     try {
       const parsed = JSON.parse(reportText);
+      console.log("Reported Text :", reportText);
+      console.log("Parsed report:", parsed);
       return {
         summary: parsed.summary || reportText,
         strengths: parsed.strengths || [],

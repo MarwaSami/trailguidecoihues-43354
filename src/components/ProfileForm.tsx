@@ -439,7 +439,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         />
       </div>
 
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <Label htmlFor="github_profile">GitHub Profile</Label>
         <Input
           id="github_profile"
@@ -451,7 +451,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             })
           }
         />
-      </div>
+      </div> */}
  <div className="space-y-2">
        <Label htmlFor="hourly_rate">Hourly Rate</Label>
        <Input
