@@ -34,6 +34,7 @@ export const ProfileForm = () => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { user, token } = useAuth();
   const { profile, setProfile } = useProfileData();
   const [newSkill, setNewSkill] = useState("");
@@ -140,6 +141,9 @@ const handleSubmit = async (e: React.FormEvent) => {
       return;
     }
 
+    // Start saving loader
+    setIsSaving(true);
+
     // Send data to backend
     const response = await AddProfileinDB(profile, token, user.id);
     console.log(response);
@@ -160,8 +164,9 @@ const handleSubmit = async (e: React.FormEvent) => {
       description: error.message,
       variant: "destructive",
     });
+  } finally {
+    setIsSaving(false);
   }
-
 };
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
@@ -461,13 +466,24 @@ const handleSubmit = async (e: React.FormEvent) => {
        />
      </div>
       
-      <Button type="submit" className="w-full" disabled={uploading}>
-        {uploading ? (
-             <LoadingSpinner size="lg" message="CV..." />
+      <Button type="submit" className="w-full" disabled={uploading || isSaving}>
+        {isSaving ? (
+          <div className="flex items-center gap-2">
+            <LoadingSpinner size="sm" />
+            <span>Saving Profile...</span>
+          </div>
+        ) : uploading ? (
+          <LoadingSpinner size="sm" message="Processing CV..." />
         ) : (
           "Save Profile"
         )}
       </Button>
+      
+      {isSaving && (
+        <div className="flex justify-center mt-4">
+          <LoadingSpinner size="md" message="Saving your profile, please wait..." />
+        </div>
+      )}
     </form>
   );
 }
