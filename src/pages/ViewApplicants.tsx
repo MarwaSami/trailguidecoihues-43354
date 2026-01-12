@@ -10,7 +10,6 @@ import {
   MapPin,
   Briefcase,
   Mail,
-  Heart,
   CheckCircle,
   Clock,
   Users,
@@ -23,14 +22,8 @@ import axios from "axios";
 import { baseURL } from "@/context/AuthContext";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { AcceptanceDialog } from "@/components/AcceptanceDialog";
+import { InterviewReportDialog } from "@/components/InterviewReportDialog";
 
 const ViewApplicants = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -39,6 +32,8 @@ const ViewApplicants = () => {
   const { toast } = useToast();
   const [interviewAvailability, setInterviewAvailability] = useState(false);
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [selectedScore, setSelectedScore] = useState<number>(0);
+  const [selectedCandidateName, setSelectedCandidateName] = useState<string>("");
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [acceptedCandidateName, setAcceptedCandidateName] = useState("");
@@ -274,7 +269,12 @@ const ViewApplicants = () => {
                       )}
                       <ProposalDetailsDialog proposalId={candidate.proposal_id} freelancerName={candidate.freelancer_name} freelancerLocation={candidate.freelancer_location} />
                       {interviewAvailability && candidate.interview_score >= 0 && (
-                        <Button variant="outline" className="gap-2 h-11" onClick={() => { setSelectedReport(candidate.report); setReportDialogOpen(true); }}>
+                        <Button variant="outline" className="gap-2 h-11" onClick={() => { 
+                          setSelectedReport(candidate.report); 
+                          setSelectedScore(candidate.interview_score);
+                          setSelectedCandidateName(candidate.freelancer_name);
+                          setReportDialogOpen(true); 
+                        }}>
                           <FileText className="w-4 h-4" />
                           View Report
                         </Button>
@@ -288,17 +288,13 @@ const ViewApplicants = () => {
         </div>
       </main>
 
-      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Interview Report</DialogTitle>
-            <DialogDescription>Candidate interview performance details</DialogDescription>
-          </DialogHeader>
-          <div className="mt-4">
-            <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg">{selectedReport}</pre>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <InterviewReportDialog 
+        open={reportDialogOpen} 
+        onOpenChange={setReportDialogOpen}
+        report={selectedReport}
+        score={selectedScore}
+        candidateName={selectedCandidateName}
+      />
 
       <AcceptanceDialog 
         open={acceptDialogOpen} 
