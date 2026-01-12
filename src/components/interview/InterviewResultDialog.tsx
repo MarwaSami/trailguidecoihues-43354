@@ -3,8 +3,120 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useInterview } from '@/context/InterviewContext';
-import { Award, TrendingUp, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
+import { Award, TrendingUp, AlertCircle, CheckCircle2, Sparkles, Target, MessageSquare, Presentation, BookOpen, Globe } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+
+interface SkillAssessment {
+  [key: string]: string;
+}
+
+const skillIcons: { [key: string]: React.ReactNode } = {
+  communication: <MessageSquare className="w-4 h-4" />,
+  presentation: <Presentation className="w-4 h-4" />,
+  English_fluency: <Globe className="w-4 h-4" />,
+  teaching: <BookOpen className="w-4 h-4" />,
+};
+
+const formatSkillName = (key: string): string => {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+    .trim();
+};
+
+// Parse the report to extract summary, strengths, weaknesses, and skills
+const parseReport = (reportText: string | null | undefined) => {
+  if (!reportText) {
+    return {
+      summary: 'No interview report available.',
+      strengths: [],
+      weaknesses: [],
+      skills: {} as SkillAssessment
+    };
+  }
+
+  // Try to parse as JSON first
+  try {
+    const parsed = JSON.parse(reportText);
+    return {
+      summary: parsed.summary || reportText,
+      strengths: parsed.strengths || [],
+      weaknesses: parsed.weaknesses || parsed.areas_for_improvement || [],
+      skills: parsed.skills || {} as SkillAssessment
+    };
+  } catch {
+    // Parse the specific format: ['array1'] \n ['array2'] \n summary text \n {'key': 'value'}
+    try {
+      // Match arrays using regex - find content within square brackets
+      const arrayPattern = /\[(.*?)\]/gs;
+      const matches = [...reportText.matchAll(arrayPattern)];
+      
+      let strengths: string[] = [];
+      let weaknesses: string[] = [];
+      let skills: SkillAssessment = {};
+      let summary = '';
+
+      // Parse first array as strengths
+      if (matches[0]) {
+        const strengthsStr = matches[0][1];
+        strengths = strengthsStr
+          .split("','")
+          .map(s => s.replace(/^'|'$/g, '').trim())
+          .filter(s => s.length > 0);
+      }
+
+      // Parse second array as weaknesses
+      if (matches[1]) {
+        const weaknessesStr = matches[1][1];
+        weaknesses = weaknessesStr
+          .split("','")
+          .map(s => s.replace(/^'|'$/g, '').trim())
+          .filter(s => s.length > 0);
+      }
+
+      // Find the skills dictionary at the end
+      const dictPattern = /\{[^{}]*'[^']+'\s*:\s*'[^']+(?:'[^']*)*'[^{}]*\}/g;
+      const dictMatch = reportText.match(dictPattern);
+      
+      if (dictMatch && dictMatch.length > 0) {
+        const dictStr = dictMatch[dictMatch.length - 1];
+        // Parse the Python-style dictionary
+        const keyValuePattern = /'([^']+)'\s*:\s*'([^']+(?:'[^']*?)*)'/g;
+        let kvMatch;
+        while ((kvMatch = keyValuePattern.exec(dictStr)) !== null) {
+          skills[kvMatch[1]] = kvMatch[2].replace(/\\'/g, "'");
+        }
+      }
+
+      // Extract summary - text between the last array and the dictionary
+      const lastArrayEnd = matches[1] ? reportText.indexOf(matches[1][0]) + matches[1][0].length : 0;
+      const dictStart = dictMatch ? reportText.lastIndexOf(dictMatch[dictMatch.length - 1]) : reportText.length;
+      
+      if (lastArrayEnd < dictStart) {
+        summary = reportText.substring(lastArrayEnd, dictStart).trim();
+        // Clean up the summary
+        summary = summary.replace(/^\s*\n+/, '').replace(/\n+\s*$/, '');
+      }
+
+      return {
+        summary: summary || 'Performance analysis completed.',
+        strengths,
+        weaknesses,
+        skills
+      };
+    } catch {
+      return {
+        summary: reportText,
+        strengths: [],
+        weaknesses: [],
+        skills: {} as SkillAssessment
+      };
+    }
+  }
+};
 
 export const InterviewResultDialog: React.FC<{
   open: boolean;
@@ -12,7 +124,7 @@ export const InterviewResultDialog: React.FC<{
 }> = ({ open, onOpenChange }) => {
   const { currentSession } = useInterview();
 
-  const result = currentSession?.result ?? {
+  const rawResult = currentSession?.result ?? {
     score: 70,
     summary:
       'The candidate demonstrates a fundamental understanding of Angular and has experience in developing web applications, specifically e-commerce. However, they need to show a deeper knowledge of state management and responsive design principles to meet the requirements fully.',
@@ -20,66 +132,81 @@ export const InterviewResultDialog: React.FC<{
     weaknesses: ['Lacks depth in explaining state management', 'Limited detailed experience with responsive design'],
   };
 
-  const score = result.score ?? 70;
+  // Check if result has a report string that needs parsing
+  const reportString = (rawResult as any).report;
+  const parsedReport = reportString ? parseReport(reportString) : null;
+
+  const result = parsedReport || {
+    summary: rawResult.summary || '',
+    strengths: rawResult.strengths || [],
+    weaknesses: rawResult.weaknesses || [],
+    skills: {} as SkillAssessment
+  };
+
+  const score = rawResult.score ?? 70;
   const chartData = [
     { name: 'Score', value: score },
     { name: 'Remaining', value: 100 - score }
   ];
   
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--muted))'];
-  
   const getScoreColor = (score: number) => {
+    if (score >= 80) return '#22c55e';
+    if (score >= 60) return 'hsl(var(--primary))';
+    return '#f97316';
+  };
+
+  const getScoreTextColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
     if (score >= 60) return 'text-primary';
     return 'text-orange-500';
   };
 
   const getScoreBadge = (score: number) => {
-    if (score >= 80) return { text: 'Excellent', variant: 'default' as const };
-    if (score >= 60) return { text: 'Good', variant: 'outline' as const };
-    return { text: 'Needs Improvement', variant: 'secondary' as const };
+    if (score >= 80) return { text: 'Excellent', color: 'bg-green-500 text-white' };
+    if (score >= 60) return { text: 'Good', color: 'bg-primary text-primary-foreground' };
+    return { text: 'Needs Improvement', color: 'bg-orange-500 text-white' };
   };
+
+  const COLORS = [getScoreColor(score), 'hsl(var(--muted))'];
+  const hasSkills = Object.keys(result.skills).length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-gradient-to-br from-card/95 via-card/90 to-card/95 backdrop-blur-xl border border-border/30 shadow-2xl overflow-hidden">
-        {/* Animated Background Effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-50" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl opacity-60" />
-        
-        <DialogHeader className="relative z-10 space-y-4">
+      <DialogContent className="max-w-5xl bg-card border border-border/40 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="space-y-2 pb-4 border-b border-border/30">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
               <Award className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+              <DialogTitle className="text-2xl font-bold text-foreground">
                 Interview Results
               </DialogTitle>
-              <DialogDescription className="text-base">
+              <DialogDescription className="text-sm text-muted-foreground">
                 Comprehensive performance analysis and feedback
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="mt-6 space-y-6 relative z-10">
-          {/* Score Section with Circular Chart */}
+        <div className="mt-6 space-y-6">
+          {/* Score Section with Circular Chart and Summary */}
           <div className="grid md:grid-cols-2 gap-6">
             {/* Circular Score Chart */}
-            <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-primary/10 via-accent/10 to-primary/10 rounded-2xl border border-primary/20 backdrop-blur-sm shadow-lg">
-              <div className="relative w-48 h-48">
+            <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 rounded-2xl">
+              <div className="relative w-44 h-44">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={chartData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={55}
+                      outerRadius={72}
                       startAngle={90}
                       endAngle={-270}
                       dataKey="value"
+                      strokeWidth={0}
                     >
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index]} />
@@ -88,22 +215,23 @@ export const InterviewResultDialog: React.FC<{
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className={`text-5xl font-bold ${getScoreColor(score)}`}>{score}</p>
-                  <p className="text-sm text-muted-foreground font-medium">out of 100</p>
+                  <p className={`text-5xl font-bold ${getScoreTextColor(score)}`}>{score}</p>
+                  <p className="text-xs text-muted-foreground font-medium mt-1">out of 100</p>
                 </div>
               </div>
-              <Badge className="mt-4 px-4 py-1 text-sm font-semibold shadow-md" variant={getScoreBadge(score).variant}>
+              
+              <Badge className={`mt-4 px-6 py-1.5 text-sm font-semibold ${getScoreBadge(score).color}`}>
                 {getScoreBadge(score).text}
               </Badge>
             </div>
 
             {/* Summary Card */}
-            <div className="p-6 bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl border border-border/30 backdrop-blur-sm shadow-lg space-y-3">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="p-6 bg-muted/30 rounded-2xl flex flex-col">
+              <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-bold text-foreground">Performance Summary</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap flex-1">
                 {result.summary}
               </p>
             </div>
@@ -112,44 +240,84 @@ export const InterviewResultDialog: React.FC<{
           {/* Strengths and Weaknesses */}
           <div className="grid md:grid-cols-2 gap-6">
             {/* Strengths */}
-            <div className="p-6 bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-2xl border border-green-500/20 backdrop-blur-sm shadow-lg space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+            <div className="p-5 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 rounded-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <h4 className="text-lg font-bold text-foreground">Strengths</h4>
               </div>
-              <ul className="space-y-3">
-                {(result.strengths || []).map((s: string, i: number) => (
-                  <li key={i} className="flex items-start gap-3 group">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm text-foreground leading-relaxed">{s}</span>
-                  </li>
-                ))}
-              </ul>
+              {result.strengths.length > 0 ? (
+                <div className="space-y-3">
+                  {result.strengths.map((s: string, i: number) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-white/60 dark:bg-white/5 rounded-xl">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                      <p className="text-sm text-foreground leading-relaxed">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No specific strengths identified.</p>
+              )}
             </div>
 
-            {/* Weaknesses */}
-            <div className="p-6 bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-2xl border border-orange-500/20 backdrop-blur-sm shadow-lg space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
+            {/* Areas for Improvement */}
+            <div className="p-5 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 rounded-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
                   <AlertCircle className="w-5 h-5 text-white" />
                 </div>
                 <h4 className="text-lg font-bold text-foreground">Areas for Improvement</h4>
               </div>
-              <ul className="space-y-3">
-                {(result.weaknesses || []).map((w: string, i: number) => (
-                  <li key={i} className="flex items-start gap-3 group">
-                    <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm text-foreground leading-relaxed">{w}</span>
-                  </li>
-                ))}
-              </ul>
+              {result.weaknesses.length > 0 ? (
+                <div className="space-y-3">
+                  {result.weaknesses.map((w: string, i: number) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-white/60 dark:bg-white/5 rounded-xl">
+                      <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" />
+                      <p className="text-sm text-foreground leading-relaxed">{w}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No specific areas for improvement identified.</p>
+              )}
             </div>
           </div>
 
+          {/* Skills Assessment Section */}
+          {hasSkills && (
+            <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-100/50 dark:from-blue-950/30 dark:to-indigo-900/20 rounded-2xl">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                  <Target className="w-5 h-5 text-white" />
+                </div>
+                <h4 className="text-lg font-bold text-foreground">Skills Assessment</h4>
+              </div>
+              <div className="grid gap-4">
+                {Object.entries(result.skills).map(([key, value], index) => (
+                  <div 
+                    key={index} 
+                    className="p-4 bg-white/70 dark:bg-white/5 rounded-xl border border-blue-100 dark:border-blue-800/30 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white">
+                        {skillIcons[key] || <Target className="w-4 h-4" />}
+                      </div>
+                      <h5 className="font-semibold text-foreground text-base">
+                        {formatSkillName(key)}
+                      </h5>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed pl-11">
+                      {String(value)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Action Button */}
-          <div className="pt-4 flex justify-end">
+          <div className="pt-4 flex justify-end border-t border-border/30">
             <Button 
               onClick={() => onOpenChange(false)}
               className="h-11 px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg transition-all font-semibold"
