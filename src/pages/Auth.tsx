@@ -9,10 +9,18 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 
 const signUpSchema = z.object({
-  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
+  fullName: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .regex(/^\S+$/, "Username cannot contain spaces"),
   email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-  password: z.string().min(8, "Password must be at least 8 characters").regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])/,
-    "Password must contain at least 1 number and 1 special character"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least 1 number")
+    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "Password must contain at least 1 special character (!@#$%^&*...)"),
   role: z.enum(['freelancer', 'client'])
 });
 
