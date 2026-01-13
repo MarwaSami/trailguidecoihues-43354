@@ -1,5 +1,5 @@
 import { baseURL, useAuth } from "@/context/AuthContext";
-import { Plus, X, MapPin, Globe } from "lucide-react";
+import { Plus, X, MapPin, Globe, AlertCircle, CheckCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { AddProfileinDB, Profile, uploadCvTodb, useProfileData } from "@/context/ProfileContext";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Predefined location options (countries)
 const LOCATION_OPTIONS = [
@@ -35,11 +36,14 @@ export const ProfileForm = () => {
   const [uploading, setUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cvUploaded, setCvUploaded] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { user, token } = useAuth();
   const { profile, setProfile } = useProfileData();
   const [newSkill, setNewSkill] = useState("");
   const [newLocation, setNewLocation] = useState("");
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Parse preferred_location as array
@@ -79,8 +83,12 @@ export const ProfileForm = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Clear previous errors
+    setUploadError(null);
+
     // validation
     if (file.size > 5 * 1024 * 1024) {
+      setUploadError("CV must be less than 5MB. Please upload a smaller file.");
       toast({
         title: "File too large",
         description: "CV must be less than 5MB",
@@ -90,6 +98,7 @@ export const ProfileForm = () => {
     }
 
     if (file.type !== "application/pdf") {
+      setUploadError("Only PDF files are allowed. Please upload a PDF document.");
       toast({
         title: "Invalid file type",
         description: "Only PDF files are allowed",
@@ -115,14 +124,18 @@ export const ProfileForm = () => {
         });
       
         setProfile(result.profile);
+        setCvUploaded(true);
+        setUploadError(null);
       } else {
         throw new Error(result.detail || "Upload failed");
       }
     } catch (error: any) {
       console.error("Upload error:", error);
+      const errorMessage = error.response?.data?.detail || error.message || "An error occurred during upload. Please try again.";
+      setUploadError(errorMessage);
       toast({
         title: "Upload failed",
-        description: "An error occurred during upload",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -131,16 +144,48 @@ export const ProfileForm = () => {
       setIsProcessing(false);
     }
   };
+const validateProfile = (): string[] => {
+  const errors: string[] = [];
+  
+  // Check if CV is uploaded
+  if (!cvUploaded && !profile.cv) {
+    errors.push("Please upload your CV before submitting.");
+  }
+  
+  // Preferred location is required
+  const locations = getLocationsArray();
+  if (locations.length === 0) {
+    errors.push("Please select at least one preferred location.");
+  }
+  
+  // Skills - one or more required
+  if (!profile.skills || profile.skills.length === 0) {
+    errors.push("Please add at least one skill.");
+  }
+  
+  return errors;
+};
+
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  try {
-    // Optional: simple validation
-    if (!profile.skills || profile.skills.length === 0) {
-      toast({ title: "Please add your skills", variant: "destructive" });
-      return;
-    }
+  // Clear previous validation errors
+  setValidationErrors([]);
 
+  // Validate profile
+  const errors = validateProfile();
+  
+  if (errors.length > 0) {
+    setValidationErrors(errors);
+    toast({
+      title: "Missing Required Information",
+      description: errors[0],
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
     // Start saving loader
     setIsSaving(true);
 
@@ -170,9 +215,26 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+      {/* ===== VALIDATION ERRORS ALERT ===== */}
+      {validationErrors.length > 0 && (
+        <Alert variant="destructive" className="animate-fade-in">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1">
+              {validationErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* ===== FILE UPLOAD ===== */}
       <div className="space-y-2">
-        <Label htmlFor="cv">Upload CV (PDF)</Label>
+        <Label htmlFor="cv" className="flex items-center gap-2">
+          Upload CV (PDF) <span className="text-destructive">*</span>
+          {cvUploaded && <CheckCircle className="w-4 h-4 text-green-500" />}
+        </Label>
         <div className="flex items-center gap-3">
           <div className="relative">
             <input
@@ -182,14 +244,22 @@ const handleSubmit = async (e: React.FormEvent) => {
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
-            <div className="flex items-center gap-3 px-4 py-3 bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg hover:border-primary/50 hover:bg-background/70 transition-all cursor-pointer">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
+            <div className={`flex items-center gap-3 px-4 py-3 bg-background/50 backdrop-blur-sm border rounded-lg hover:border-primary/50 hover:bg-background/70 transition-all cursor-pointer ${
+              cvUploaded ? 'border-green-500/50' : uploadError ? 'border-destructive/50' : 'border-border/50'
+            }`}>
+              <div className={`p-2 rounded-lg ${cvUploaded ? 'bg-green-500/10' : 'bg-primary/10'}`}>
+                {cvUploaded ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                )}
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">Choose PDF file</span>
+                <span className="text-sm font-medium text-foreground">
+                  {cvUploaded ? 'CV Uploaded Successfully' : 'Choose PDF file'}
+                </span>
                 <span className="text-xs text-muted-foreground">Max 5MB</span>
               </div>
             </div>
@@ -198,8 +268,30 @@ const handleSubmit = async (e: React.FormEvent) => {
              <LoadingSpinner size="lg" message="Processing CV, please wait..." />
           )}
         </div>
+        {/* Upload Error Message */}
+        {uploadError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
+        )}
       </div>
-     <div className="space-y-2">
+
+      {/* Hide form fields until CV is uploaded */}
+      {!cvUploaded && !profile.cv && (
+        <div className="text-center py-8 px-4 bg-muted/30 rounded-lg border border-dashed border-border">
+          <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Upload Your CV First</h3>
+          <p className="text-sm text-muted-foreground">
+            Please upload your CV to auto-fill your profile information and continue with the form.
+          </p>
+        </div>
+      )}
+
+      {(cvUploaded || profile.cv) && (
+        <>
+      {/* Job Title */}
+      <div className="space-y-2">
         <Label htmlFor="categories_of_expertise">Job Title</Label>
         <Input
           id="profiecategories_of_expertiseleViews"
@@ -216,11 +308,13 @@ const handleSubmit = async (e: React.FormEvent) => {
       <div className="space-y-3">
         <Label className="text-base font-semibold flex items-center gap-2">
           <MapPin className="w-4 h-4" />
-          Preferred Locations
+          Preferred Locations <span className="text-destructive">*</span>
         </Label>
         
         {/* Current Locations as Badges */}
-        <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg min-h-[60px] border border-border/50">
+        <div className={`flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg min-h-[60px] border ${
+          validationErrors.some(e => e.includes('location')) ? 'border-destructive/50' : 'border-border/50'
+        }`}>
           {getLocationsArray().length > 0 ? (
             getLocationsArray().map((location, index) => (
               <Badge 
@@ -331,10 +425,14 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
       {/* ===== SKILLS SECTION ===== */}
       <div className="space-y-3">
-        <Label className="text-base font-semibold">Skills *</Label>
+        <Label className="text-base font-semibold">
+          Skills <span className="text-destructive">*</span>
+        </Label>
         
         {/* Current Skills as Badges */}
-        <div className="flex flex-wrap gap-2 p-4  rounded-lg min-h-[60px] border border-border/50">
+        <div className={`flex flex-wrap gap-2 p-4 rounded-lg min-h-[60px] border ${
+          validationErrors.some(e => e.includes('skill')) ? 'border-destructive/50' : 'border-border/50'
+        }`}>
           {profile.skills && profile.skills.length > 0 ? (
             profile.skills.map((skill, index) => (
               <Badge key={index} variant="secondary" className="px-3 py-1.5 gap-2 text-sm ">
@@ -466,7 +564,7 @@ const handleSubmit = async (e: React.FormEvent) => {
        />
      </div>
       
-      <Button type="submit" className="w-full" disabled={uploading || isSaving}>
+      <Button type="submit" className="w-full" disabled={uploading || isSaving || (!cvUploaded && !profile.cv)}>
         {isSaving ? (
           <div className="flex items-center gap-2">
             <LoadingSpinner size="sm" />
@@ -483,6 +581,8 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="flex justify-center mt-4">
           <LoadingSpinner size="md" message="Saving your profile, please wait..." />
         </div>
+      )}
+      </>
       )}
     </form>
   );
