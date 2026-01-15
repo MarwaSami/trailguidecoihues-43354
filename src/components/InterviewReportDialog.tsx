@@ -22,6 +22,7 @@ export const InterviewReportDialog: React.FC<InterviewReportDialogProps> = ({
 }) => {
   // Parse the report to extract summary, strengths, and weaknesses
   const parseReport = (reportText: string | null) => {
+    console.log("Raw report text:", reportText);
     if (!reportText) {
       return {
         summary: 'No interview report available.',
@@ -51,7 +52,7 @@ export const InterviewReportDialog: React.FC<InterviewReportDialogProps> = ({
   };
 
   const result = parseReport(report);
-  
+  console.log("Parsed Result:", result);  
   const chartData = [
     { name: 'Score', value: score },
     { name: 'Remaining', value: 100 - score }
