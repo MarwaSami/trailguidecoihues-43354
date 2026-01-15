@@ -8,6 +8,7 @@ import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import toast from "react-hot-toast";
 import { useInterview } from "@/context/InterviewContext";
 import InterviewResultDialog from '@/components/interview/InterviewResultDialog';
+import PreInterviewInstructions from '@/components/interview/PreInterviewInstructions';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, MicOff, Eye, CheckCircle2, Sparkles } from "lucide-react";
@@ -45,6 +46,8 @@ export default function OldProctoring() {
   const [isEnding, setIsEnding] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isCountdownActive, setIsCountdownActive] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [instructionsAccepted, setInstructionsAccepted] = useState(false);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 
@@ -458,11 +461,8 @@ export default function OldProctoring() {
                       stopCam();
                       setInterviewEnded(true);
                     } else if (!camReady) {
-                      startCam();
-                      if (!currentSession) {
-                        const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
-                        await startInterview(freelancerId, ["React", "TypeScript"]);
-                      }
+                      // Show instructions dialog first
+                      setShowInstructions(true);
                     }
                   }}
                   disabled={(interviewStopped && violationCount >= 2) || isEnding}
@@ -636,6 +636,24 @@ export default function OldProctoring() {
     </div>
     {/* Result dialog */}
     <InterviewResultDialog open={showResults} onOpenChange={(o) => setShowResults(o)} />
+    
+    {/* Pre-Interview Instructions Dialog */}
+    <PreInterviewInstructions 
+      open={showInstructions && !instructionsAccepted && !camReady}
+      onAccept={async () => {
+        setInstructionsAccepted(true);
+        setShowInstructions(false);
+        startCam();
+        if (!currentSession) {
+          const freelancerId = localStorage.getItem('interview_freelancer_id') || "freelancer-1";
+          await startInterview(freelancerId, ["React", "TypeScript"]);
+        }
+      }}
+      onCancel={() => {
+        setShowInstructions(false);
+        navigate(-1);
+      }}
+    />
     </>
   );
 }

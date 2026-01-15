@@ -176,38 +176,65 @@ const JobProposal = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
+    // Validation with expressive messages
     const validateProposalForm = (data: typeof formData) => {
-      const errors: string[] = [];
+      const errors: { field: string; message: string }[] = [];
 
       if (!data.cover_letter?.trim()) {
-        errors.push("Cover letter is required.");
+        errors.push({ 
+          field: "cover_letter", 
+          message: "Cover letter is required. Tell the client why you're the perfect fit for this role." 
+        });
+        setFieldErrors(prev => ({ ...prev, cover_letter: "Cover letter is required" }));
       }
 
       const proposedBudget = parseFloat(data.proposed_budget);
       if (!data.proposed_budget?.trim() || isNaN(proposedBudget) || proposedBudget <= 0) {
-        errors.push("Please provide a valid positive proposed rate.");
+        errors.push({ 
+          field: "proposed_budget", 
+          message: "Please provide a valid hourly rate. This helps clients understand your expectations." 
+        });
+        setFieldErrors(prev => ({ ...prev, proposed_budget: "Valid hourly rate is required" }));
       }
 
       const duration = parseInt(data.duration_in_days);
       if (!data.duration_in_days?.trim() || isNaN(duration) || duration <= 0) {
-        errors.push("Please provide a valid project duration in days.");
+        errors.push({ 
+          field: "duration_in_days", 
+          message: "Please specify the project duration. How many days will this project take?" 
+        });
+        setFieldErrors(prev => ({ ...prev, duration_in_days: "Valid duration is required" }));
       }
 
       if (!data.experience?.trim()) {
-        errors.push("Experience summary is required.");
+        errors.push({ 
+          field: "experience", 
+          message: "Relevant experience is required. Share your past work that relates to this job." 
+        });
+        setFieldErrors(prev => ({ ...prev, experience: "Experience is required" }));
       }
 
       return errors;
     };
 
-    const validationErrors = validateProposalForm(formData);
-    if (validationErrors.length > 0) {
+    // Clear previous errors
+    setFieldErrors({});
+
+    const errors = validateProposalForm(formData);
+    if (errors.length > 0) {
+      // Show first error as toast
       toast({
-        title: "Validation Error",
-        description: validationErrors.join(" "),
+        title: "Missing Required Information",
+        description: errors[0].message,
         variant: "destructive",
       });
+      
+      // Scroll to first error field
+      const firstErrorField = document.getElementById(errors[0].field);
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.focus();
+      }
       return;
     }
 
